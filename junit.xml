@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="15" failures="0" errors="0" time="8.431">
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2023-07-27T18:04:38" time="3.977" tests="1">
+    <testcase classname=" test_runner" name=" test_runner" time="0.009">
+    </testcase>
+  </testsuite>
+  <testsuite name="TreeManager" errors="0" failures="0" skipped="0" timestamp="2023-07-27T18:04:38" time="5.623" tests="4">
+    <testcase classname="TreeManager conversion" name="TreeManager conversion" time="0.031">
+    </testcase>
+    <testcase classname="TreeManager initial" name="TreeManager initial" time="0.053">
+    </testcase>
+    <testcase classname="TreeManager caching" name="TreeManager caching" time="0.047">
+    </testcase>
+    <testcase classname="TreeModelManager initialise" name="TreeModelManager initialise" time="0.053">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2023-07-27T18:04:38" time="7.05" tests="10">
+    <testcase classname=" context understanding" name=" context understanding" time="0.035">
+    </testcase>
+    <testcase classname="TierModel complete meta meta" name="TierModel complete meta meta" time="0.05">
+    </testcase>
+    <testcase classname="TierModel complete meta name" name="TierModel complete meta name" time="0.054">
+    </testcase>
+    <testcase classname="TierModel complete meta description" name="TierModel complete meta description" time="0.031">
+    </testcase>
+    <testcase classname="TierModel complete meta additionalMeta" name="TierModel complete meta additionalMeta" time="0.046">
+    </testcase>
+    <testcase classname="TierModel missing meta no meta" name="TierModel missing meta no meta" time="0.024">
+    </testcase>
+    <testcase classname="TierModel missing meta missing description" name="TierModel missing meta missing description" time="0.031">
+    </testcase>
+    <testcase classname="TierBrowserModel initial" name="TierBrowserModel initial" time="0.046">
+    </testcase>
+    <testcase classname="TierBrowserModel updating" name="TierBrowserModel updating" time="0.039">
+    </testcase>
+    <testcase classname="TierBrowserModel additionalColumns" name="TierBrowserModel additionalColumns" time="0.056">
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,84 @@
+.cas-tier-widget {
+  min-height: 200px;
+  min-width: 100%;
+}
+.cas-tier-widget-content {
+  min-height: 200px;
+  overflow-y: auto;
+}
+.cas-tier-widget-content h1, h2{
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+.cas-MarkdownEditor {
+  display: flex;
+  overflow: auto;
+  min-height: 100px;
+}
+
+.cas-markdown-editor-content {
+  flex-grow: 1;
+  border: var(--jp-border-width) solid var(--jp-cell-editor-border-color)
+}
+
+.cas-icon-area {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+}
+
+.cas-row-icon-area {
+  display: flex;
+  flex-direction: row-reverse;
+  background-color: var(--jp-layout-color1);
+}
+
+.cas-TierNotebookHeader {
+  /* min-height: 200px !important; */
+  padding: inherit;
+  border-bottom: var(--jp-border-width) solid var(--jp-border-color2)
+}
+
+.cas-TierNotebookHeader-content {
+  min-height: 200px;
+  overflow-y: auto;
+}
+
+.cas-TierNotebookHeader-content-child {
+  min-height: 200px;
+}
+
+.cas-CassiniCrumbs-box {
+  position: relative;
+  border-bottom: var(--jp-border-color2) solid 1px;
+}
+
+.cas-CassiniCrumbs-row {
+  display: flex;
+  position: inherit;
+}
+
+
+.cas-tier-name {
+  font-weight: bold;
+}
+
+.cas-ChildrenTable-table {
+  width: 100%;
+}
+
+.cas-ChildrenTable-table tr:hover {
+  background-color: var(--jp-layout-color2);
+}
+
+.cas-ChildrenSummaryTable-table {
+  width: 100%;
+}
+
+.cas-ChildrenSummaryTable-table tr:hover {
+  background-color: var(--jp-layout-color2);
+}

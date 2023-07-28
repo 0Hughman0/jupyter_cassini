@@ -1,0 +1,81 @@
+/* eslint-disable prettier/prettier */
+import {
+  JupyterFrontEnd,
+  JupyterFrontEndPlugin
+} from '@jupyterlab/application';
+
+import { ICommandPalette } from '@jupyterlab/apputils';
+
+import { IDocumentManager } from '@jupyterlab/docmanager';
+
+import { ILauncher } from '@jupyterlab/launcher';
+import { IEditorServices } from '@jupyterlab/codeeditor';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+
+import { WidgetExtension } from './widgetextension';
+
+import { cassini } from './core';
+
+/**
+ * Initialization data for the jupyter_cassini extension.
+ */
+const extension: JupyterFrontEndPlugin<void> = {
+  id: 'jupyter-cassini',
+  autoStart: true,
+  requires: [
+    ICommandPalette,
+    IDocumentManager,
+    IEditorServices,
+    IRenderMimeRegistry,
+    ILauncher
+  ],
+  activate: (
+    app: JupyterFrontEnd,
+    palette: ICommandPalette,
+    docManager: IDocumentManager,
+    editorService: IEditorServices,
+    rendermimeRegistry: IRenderMimeRegistry,
+    launcher: ILauncher
+  ) => {
+    console.log(
+      'JupyterLab extension jupyter-cassini is activated holy cow that was hard!'
+    );
+    const { commands } = app;
+    const command = 'cascommand';
+
+    cassini.initialize(
+      app,
+      docManager.services,
+      editorService.factoryService,
+      rendermimeRegistry,
+      commands
+    );
+
+    console.log(cassini)
+
+    commands.addCommand(command, {
+      label: args => (args['isPalette'] ? 'What key' : 'Browser'),
+      caption: 'Launch a Cassini Browser Window',
+      execute: cassini.launchTierBrowserCommand
+    });
+
+    palette.addItem({ command, category: 'Cassini' });
+
+    launcher.add({
+      command,
+      category: 'Cassini',
+      rank: 1
+    });
+  }
+};
+
+const notebookExtension: JupyterFrontEndPlugin<void> = {
+  id: 'jupyter-cassini:notebookExtension',
+  description: 'Adds a widget to the notebook header.',
+  autoStart: true,
+  activate: app => {
+    app.docRegistry.addWidgetExtension('Notebook', new WidgetExtension());
+  }
+};
+
+export default [extension, notebookExtension];

@@ -1,0 +1,44 @@
+{
+  "name": "Home",
+  "folder": "WorkPackages",
+  "started": "2021-01-01T00:00:00",
+  "children": {
+    "1": {
+      "name": "WP1",
+      "folder": "WorkPackages/WP1",
+      "metaPath": "WorkPackages/.wps/WP1.json",
+      "additionalMeta": {},
+      "info": "No way is this working?",
+      "started": "2021-01-01T00:00:00"
+    },
+    "2": {
+      "name": "WP2",
+      "folder": "WorkPackages/WP2",
+      "metaPath": "WorkPackages/.wps/WP2.json",
+      "additionalMeta": { "caslib_version": "hfhf" },
+      "info": "dfghjkl",
+      "started": "2022-10-31T00:00:00",
+      "notebookPath": "WorkPackages/WP2.ipynb"
+    },
+    "3": {
+      "name": "WP3",
+      "folder": "WorkPackages/WP3",
+      "metaPath": "WorkPackages/.wps/WP3.json",
+      "additionalMeta": { "caslib_version": "132456" },
+      "info": "Now there's 3",
+      "started": "2022-10-31T00:00:00",
+      "notebookPath": "WorkPackages/WP3.ipynb"
+    },
+    "5": {
+      "name": "WP5",
+      "folder": "WorkPackages/WP5",
+      "metaPath": "WorkPackages/.wps/WP5.json",
+      "additionalMeta": { "caslib_version": "sdgh" },
+      "info": "no verification",
+      "started": "2022-10-31T00:00:00",
+      "notebookPath": "WorkPackages/WP5.ipynb"
+    }
+  },
+  "childMetas": ["caslib_version"],
+  "childTemplates": []
+}

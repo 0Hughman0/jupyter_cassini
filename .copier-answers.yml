@@ -1,0 +1,14 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.0.7
+_src_path: https://github.com/jupyterlab/extension-template
+author_email: hugh.o.ramsden@gmail.com
+author_name: Hugh Ramsden
+has_binder: false
+has_settings: false
+kind: server
+labextension_name: jupyter_cassini
+project_short_description: Jupyterlab extension for interacting with Cassini projects
+python_name: jupyter_cassini_server
+repository: https://github.com/github_username/jupyter_cassini_server.git
+test: true
+
