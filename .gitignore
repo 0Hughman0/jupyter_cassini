@@ -129,3 +129,9 @@ dmypy.json
 
 # vscode
 .vscode/
+
+# demo
+demo/*
+!demo/launch.bat
+!demo/project.py
+
