@@ -10,7 +10,17 @@ import { TierViewer } from './tierviewer';
 export interface ILaunchable extends TierModel.IOptions {}
 export interface IViewable extends TierModel.IOptions {}
 
-
+/**
+ * BrowserPanel contains a TierBrowser, and TierViewer.
+ * 
+ * Sits as a tab in the main area.
+ * 
+ * TODO, open and launch are confusing, open is reffered to as preview to users (better name?)
+ * 
+ * launch refered to as open.
+ * 
+ * 
+ */
 export class BrowserPanel extends Widget {
   model: TierTreeModel;
   panel: SplitPanel;
@@ -67,6 +77,12 @@ export class BrowserPanel extends Widget {
     });
   }
 
+  /**
+   * View a tier in the brower's TierViewer, which is kinda like a preview.
+   * 
+   * @param casPath { string[] } - not currently used. 
+   * @param tierData { TierModel.IOptions } - info required to open (preview?) a tier in a tierView
+   */
   openTier(casPath: string[], tierData: TierModel.IOptions): void {
     this.viewer.setHidden(true);
     this.viewer.dispose();
@@ -88,6 +104,10 @@ export class BrowserPanel extends Widget {
     SplitPanel.setStretch(newTier, 1);
   }
 
+  /**
+   * 'Launch' or 'open' a tier i.e. if it has a notebook, open the notebook. If does not, open explorer on its folder.
+   * @param tier 
+   */
   launchTier(tier: ILaunchable): void {
       cassini.launchTier(tier)
   }

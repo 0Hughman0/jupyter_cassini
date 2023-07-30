@@ -18,6 +18,9 @@ import { cassini } from './core';
 
 /**
  * Initialization data for the jupyter_cassini extension.
+ * 
+ * This plugin provides the cassini instance that looks after the state of the application and also creates the cassini browser extension. 
+ * 
  */
 const extension: JupyterFrontEndPlugin<void> = {
   id: 'jupyter-cassini',
@@ -69,6 +72,10 @@ const extension: JupyterFrontEndPlugin<void> = {
   }
 };
 
+
+/**
+ * Adds the cassini toolbar to the notebook panel.
+ */
 const notebookExtension: JupyterFrontEndPlugin<void> = {
   id: 'jupyter-cassini:notebookExtension',
   description: 'Adds a widget to the notebook header.',

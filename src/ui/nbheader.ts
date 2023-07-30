@@ -14,7 +14,15 @@ import { TierModel } from '../models';
 import { ChildrenSummaryWidget, ChildrenSummaryRow } from './nbheadercomponents';
 
 
-
+/**
+ * Additional toolbar to insert at the top of notebooks that correspond to tiers.
+ * 
+ * Currently just provides a button for showing the tier in the browser.
+ * 
+ * Also indicates the 'dirty' status of the TierModel with a lil' asterix. 
+ * 
+ * Saving is bolted onto the notebook save... which I think is smart but maybe isn't(?)
+ */
 export class TierNotebookHeaderTB extends BoxPanel {
   toolbar: Toolbar;
   model: TierModel;
@@ -55,6 +63,12 @@ export class TierNotebookHeaderTB extends BoxPanel {
     this.model.changed.connect(() => this.onContentChanged())
   }
 
+  /**
+   * 
+   * @param panel Notebook panel to attach the widget to
+   * @param context The context for that panel. Name from the path is used to fetch the tier model (same as editor and header mimes)
+   * @returns 
+   */
   static attachToNotebook(panel: NotebookPanel, context: DocumentRegistry.IContext<INotebookModel>): Promise<TierNotebookHeaderTB | undefined> {
     const tierName = PathExt.basename(context.path, '.ipynb');
 
@@ -75,10 +89,16 @@ export class TierNotebookHeaderTB extends BoxPanel {
     });
   }
 
+  /**
+   * Show the tier this notebook corresponds to in the browser
+   */
   showInBrowser() {
     cassini.launchTierBrowser(this.model.identifiers)
   }
 
+  /**
+   * Handle a change to the TierModel.
+   */
   onContentChanged() {
     if (this.model.dirty) {
       this.nameLabel.node.textContent = this.model.name + '*'
@@ -88,6 +108,14 @@ export class TierNotebookHeaderTB extends BoxPanel {
   }
 }
 
+
+/**
+ * Widget to go at the top of notebooks, allowing for editing and nice rendering of conclusion and description.
+ * 
+ * Also has table of children, this is useful for opening datasets. 
+ * 
+ * TODO add a new child button to the childrenTable.
+ */
 export class TierNotebookHeader extends Panel {
   _path: string;
   model: TierModel;
@@ -167,6 +195,9 @@ export class TierNotebookHeader extends Panel {
     cassini.launchTierBrowser(this.model.identifiers)
   }
 
+  /**
+   * Update content of the widget when the model changes
+   */
   onContentChanged() {
     this.descriptionEditor.source = this.model.description
     this.conclusionEditor.source = this.model.conclusion
@@ -174,10 +205,8 @@ export class TierNotebookHeader extends Panel {
 }
 
 /**
- * A notebook widget extension that adds a widget in the notebook header (widget below the toolbar).
+ * Wrapper of the TierNotebookHeader widget that works as a mimetype renderer.
  */
-
-
 export class RMHeader
   extends Panel
   implements IRenderMime.IRenderer {

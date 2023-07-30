@@ -13,7 +13,11 @@ namespace RenderMimeMetaEditor {
   };
 }
 
-
+/**
+ * Adds a new rendermime render for application/cassini.metaeditor+json 
+ * 
+ * Which creates a MetaEditorWidget.
+ */
 const rmMetaEditorExtension: IRenderMime.IExtension = {
   id: 'jupyter-cassini:metaeditor',
   rendererFactory: RenderMimeMetaEditor.rendererFactory,
@@ -31,6 +35,11 @@ namespace RenderMimeHeader {
   };
 }
 
+/**
+ * Adds a new rendermime renderer for application/cassini.header+json 
+ * 
+ * Which creates a TierHeader widget.
+ */
 const rmHeaderExtension: IRenderMime.IExtension = {
   id: 'jupyter-cassini:header',
   rendererFactory: RenderMimeHeader.rendererFactory,

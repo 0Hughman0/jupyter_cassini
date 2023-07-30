@@ -43,6 +43,7 @@ import {
 } from './dialogwidgets';
 import { ILaunchable, IViewable } from './browser';
 
+
 interface IBrowserProps {
   model: TierBrowserModel;
   onTierSelected: (casPath: string[], tierData: IViewable) => void;
@@ -56,6 +57,11 @@ interface IBrowserState {
   additionalColumns: Set<string>;
 }
 
+/**
+ * Widget for navigating the tier tree. Wraps the ChildrenTable
+ * 
+ *  
+ */
 export class BrowserComponent extends React.Component<
   IBrowserProps,
   IBrowserState
@@ -84,6 +90,11 @@ export class BrowserComponent extends React.Component<
     });
   }
 
+  /**
+   * Opens a right click menu to modify the additional columns in the table.
+   * @param event 
+   * @returns 
+   */
   openContextMenu(event: React.MouseEvent | null): void {
     const allColumns = new Set([
       ...this.state.additionalColumns,
@@ -169,6 +180,14 @@ export interface ICasSearchProps {
   model: TierBrowserModel;
 }
 
+/**
+ * Widget for searching through tiers. Currently can only get a tier by name.
+ * 
+ * Would like to be able to do more.
+ * 
+ * @param props 
+ * @returns 
+ */
 const CasSearch = (props: ICasSearchProps) => {
   const [query, setQuery] = useState('');
 
@@ -197,6 +216,7 @@ const CasSearch = (props: ICasSearchProps) => {
   );
 };
 
+
 interface ICrumbsProps {
   model: TierBrowserModel;
   onTierSelected: (casPath: string[], tierData: IViewable) => void;
@@ -208,6 +228,9 @@ export interface ICrumbsState {
   currentTier: ITreeData | null;
 }
 
+/**
+ * Crumbs are like a visual representation of the currentPath
+ */
 export class CassiniCrumbs extends React.Component<ICrumbsProps, ICrumbsState> {
   constructor(props: ICrumbsProps) {
     super(props);
@@ -321,6 +344,11 @@ export interface IChildrenState {
   currentTier: ITreeData | null;
 }
 
+/**
+ * Component that renders a tiers children. 
+ * @param props 
+ * @returns 
+ */
 function ChildrenTable(props: IChildrenTableProps) {
   const model = props.model
   const onTierLaunched = props.onTierLaunched;
@@ -561,6 +589,9 @@ function ChildrenTable(props: IChildrenTableProps) {
   );
 }
 
+/**
+ * A widget that creates a dialog for creating a new tier child.
+ */
 export class NewChildWidget extends Widget {
   parentName: string;
 
@@ -624,6 +655,10 @@ export class NewChildWidget extends Widget {
     }
   }
 
+  /**
+   * Serilaises the contents of the dialogs widgets into an object and returns them for handling.
+   * @returns 
+   */
   getValue() {
     const values: { [name: string]: any } = {};
     for (const name in this.subInputs) {
@@ -652,6 +687,15 @@ export interface ITierSelectedSignal {
   tier: ILaunchable;
 }
 
+/**
+ * Widget for navigating the tier tree. Should probably be called TierNavigator or something. 
+ * 
+ * Has a search box for going to a tier by name.
+ * 
+ * Has the crumbs to indicate where we currently are and allow a bit of naviation back up the tree.
+ * 
+ * Has the children table for heading into the tree.
+ */
 export class TierBrowser extends ReactWidget {
   constructor(model: TierBrowserModel) {
     super();
@@ -673,6 +717,14 @@ export class TierBrowser extends ReactWidget {
     return this._tierLaunched;
   }
 
+  /**
+   * Opens a big dialog asking the user to provide values for a new tier.
+   * 
+   * Uses the `Dialog` class from jlab.
+   * 
+   * 
+   * @param tier 
+   */
   openNewChildDialog(tier: ITreeData): void {
     const body = new NewChildWidget(tier);
     const dialog = new textAreaAbleDialog({

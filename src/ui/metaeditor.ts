@@ -12,6 +12,9 @@ import { JSONValue } from '@lumino/coreutils';
 import { cassini } from '../core';
 
 
+/**
+ * Widget for modifying the meta of a TierModel.
+ */
 export class MetaEditor extends Panel {
   protected model: TierModel;
   table: MetaTableWidget
@@ -35,10 +38,18 @@ export class MetaEditor extends Panel {
   }
 
   ready() {
+    /**
+     * Does the widget have all the data it needs to render correctly? 
+     */
     return this.model.ready;
   }
 
   onMetaUpdate(attribute: string, newValue: string): void {
+    /**
+     * TODO this is badly named and maybe not the best implementation
+     * 
+     * inserts updated meta into model.
+     */
     const meta = this.model.metaFile?.model.toJSON() as JSONObject
   
     meta[attribute] = JSON.parse(newValue);
@@ -47,6 +58,11 @@ export class MetaEditor extends Panel {
   }
 
   onRemoveMeta(attribute: string) {
+    /**
+     * TODO this is badly named and maybe not the best implementation
+     * 
+     * Removes a meta from the model
+     */
     const meta = this.model.metaFile?.model.toJSON() as JSONObject
     delete meta[attribute]
 
@@ -54,6 +70,9 @@ export class MetaEditor extends Panel {
   }
 
   render(attributes: string[]) {
+    /**
+     * Asks the widget to re-render with the attributes provided. This is a bit odd, but is kinda needed because of how mimetype renders.
+     */
     this.ready().then(() => {
 
       const meta: {[name: string]: JSONValue} = {}
@@ -75,17 +94,30 @@ export interface IMetaEditorRendorMimeData {
 }
 
 
+/**
+ * Version of MetaEditor that works as a RenderMime Renderer i.e. implements a renderModel method.
+ */
 export class RenderMimeMetaEditor
   extends Panel
   implements IRenderMime.IRenderer {
-  /**
-   * Construct a new output widget.
-   */
   protected _path: string;
   protected tierModel: TierModel;
   protected editor: MetaEditor;
   private fetchModel: Promise<TierModel | undefined>;
 
+  /**
+  * Strange thing is that the data from the rendermime are not passed at initialisation, but during renderModel, hence we have to be ready for that.
+  * 
+  * The widget needs to know what tier it is creating an editor for. Because tier names are unique. Extracting the name from the provided URLResolver is the
+  * solution I've gone with. 
+  * 
+  * TODO there should probably be a check that the whole path to the notebook matches that expected for the widget, to avoid name clashing documents from tricking
+  * cassini into thinking its a tier notebook. (or maybe that's a helpful hack) - the issue is and remains that the notebook intepretter can think a notebook corresponds 
+  * to a tier that it doesn't. 
+  * 
+  * @param options 
+  * 
+  */
   constructor(options: IRenderMime.IRendererOptions) {
     super();
 
@@ -114,7 +146,11 @@ export class RenderMimeMetaEditor
     })
   }
 
+  /**
+  * Is the widget model ready?
+  */
   ready(): Promise<void> {
+    
     return this.fetchModel.then(model => model?.ready.then(() => {}));
   }
 
@@ -126,6 +162,14 @@ export class RenderMimeMetaEditor
     return PathExt.basename(this.path, '.ipynb');
   }
 
+  /**
+   * Is called by the notebook to actually update the contents of the widget.
+   * 
+   * In theory this can be called multiple times by the notebook, after the widget instance has been created.
+   * 
+   * @param model 
+   * @returns 
+   */
   renderModel(model: IRenderMime.IMimeModel): Promise<void> {
     // mimedata seems to have to be an Object, or it won't be save properly
     const data = model.data[this._mimeType] as any as IMetaEditorRendorMimeData;

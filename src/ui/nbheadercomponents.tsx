@@ -17,13 +17,22 @@ export type ChildrenSummaryRow = {
   id: string
 }
 
+/**
+ * @property onChildLaunch - callback for when the launch button is pressed for a child
+ * @property onChildView - callback for when the child view button is pressed.
+ */
 export interface IMetaTableProps {
     children: ChildrenSummaryRow[]
     onChildLaunch: (id: string) => void
     onChildView: (id: string) => void
 }
 
-
+/**
+ * Component that creates a table that summarises children, like a less detailed version of the ChildrenTable.
+ * 
+ * @param props { IMetaTableProps }
+ * @returns 
+ */
 export function ChildrenSummary(props: IMetaTableProps) {
     const onChildLaunch = props.onChildLaunch;
     const onChildView = props.onChildView
@@ -94,23 +103,26 @@ export function ChildrenSummary(props: IMetaTableProps) {
   }
 
 
-  export class ChildrenSummaryWidget extends ReactWidget {
-    data: ChildrenSummaryRow[]
-    onChildLaunch: (id: string) => void
-    onChildView: (id: string) => void
+/**
+ * ReactWidget wrapper of ChildrenSummary component.
+ */
+export class ChildrenSummaryWidget extends ReactWidget {
+  data: ChildrenSummaryRow[]
+  onChildLaunch: (id: string) => void
+  onChildView: (id: string) => void
 
-    constructor(data: ChildrenSummaryRow[], onChildLaunch: (id: string) => void, onChildView: (id: string) => void) {
-      super()
-      this.data = data
-      this.onChildLaunch = onChildLaunch
-      this.onChildView = onChildView
-    }
-    
-    render() {
-      return (
-      <div>
-        <ChildrenSummary children={this.data} onChildLaunch={this.onChildLaunch} onChildView={this.onChildView}/>
-      </div>
-      )
-    }
+  constructor(data: ChildrenSummaryRow[], onChildLaunch: (id: string) => void, onChildView: (id: string) => void) {
+    super()
+    this.data = data
+    this.onChildLaunch = onChildLaunch
+    this.onChildView = onChildView
   }
+  
+  render() {
+    return (
+    <div>
+      <ChildrenSummary children={this.data} onChildLaunch={this.onChildLaunch} onChildView={this.onChildView}/>
+    </div>
+    )
+  }
+}

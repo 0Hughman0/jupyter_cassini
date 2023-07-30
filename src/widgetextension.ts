@@ -9,7 +9,7 @@ export class WidgetExtension
   implements DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel>
 {
   /**
-   * Create a new extension object.
+   * Attaches an additional toolbar to the NotebookPanel widget.
    */
   createNew(
     panel: NotebookPanel,

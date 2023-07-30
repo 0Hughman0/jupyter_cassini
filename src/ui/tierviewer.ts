@@ -28,6 +28,13 @@ export function createElementWidget(
   return widget;
 }
 
+/**
+ * Widget for editing markdown content.
+ * 
+ * Can render the content as markdown.
+ * 
+ * TODO reimplement with signals rather than callbacks.
+ */
 export class MarkdownEditor extends Panel {
   editor: CodeEditorWrapper
   _rendered: boolean
@@ -37,6 +44,12 @@ export class MarkdownEditor extends Panel {
   
   onContentChanged: (content: string) => void
 
+  /**
+   * 
+   * @param content 
+   * @param rendered 
+   * @param onContentChanged - callback that's called with the content of the widget when the check Button is pressed...
+   */
   constructor(content: string, rendered: boolean, onContentChanged: (content: string) => void) {
     super()
 
@@ -81,6 +94,9 @@ export class MarkdownEditor extends Panel {
     this.setRendered(rendered)
   }
 
+  /**
+   * The content of the text editor.
+   */
   get source(): string {
     return this.editor.model.sharedModel.source
   }
@@ -102,6 +118,9 @@ export class MarkdownEditor extends Panel {
     }
   }
 
+  /**
+   * Handle a change to the content.
+   */
   onStateChanged(): void {
     if (this.rendered) {
       
@@ -134,7 +153,11 @@ export class MarkdownEditor extends Panel {
   }
 }
 
-
+/**
+ * Widget that summarises a TierModel which a tier in your project.
+ * 
+ * 
+ */
 export class TierViewer extends BoxPanel {
   tierTitle: Widget;
   descriptionCell: MarkdownEditor;
@@ -227,6 +250,10 @@ export class TierViewer extends BoxPanel {
     this.model.changed.connect((model) => this.onContentChanged())
   }
 
+  /**
+   * Handle the model changing and update the contents of the widget.
+   * @returns 
+   */
   onContentChanged(): void {
     if (!this.model.metaFile) {
       return;

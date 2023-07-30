@@ -33,7 +33,14 @@ export interface IMetaTableProps {
     onRemoveMeta: ((attribute: string) => void) | null
 }
 
-
+/**
+ * Table that displays meta of a tier. 
+ * 
+ * Also allows editing and adding of new meta.
+ * 
+ * @param props
+ * @returns 
+ */
 export function MetaTable(props: IMetaTableProps) {
     const onMetaUpdate = props.onMetaUpdate;
     const onRemoveMeta = props.onRemoveMeta;
@@ -143,63 +150,86 @@ export function MetaTable(props: IMetaTableProps) {
   }
 
 
-  export class MetaTableWidget extends ReactWidget {
-    attributes: { [name: string]: JSONValue | undefined}
-    onMetaUpdate: ((attribute: string, newValue: string) => void)
-    onRemoveMeta: ((attribute: string) => void) | null
+/**
+ * Widget wrapper to MetaTable Component.
+ * 
+ * TODO: Should probably use signals really. This would allow multiple objects to listen out for changes, plus the names are confusing.
+ * 
+ * @property { ((attribute: string, newValue: string) => void) | null } onMetaUpdate - callback that's called when an entry in the TierTable is updated.
+ * @property { ((attribute: string) => void) | null } - onRemoveMeta callback that's when an entry is removed from the TierTable.
+ * 
+ */
+export class MetaTableWidget extends ReactWidget {
+  attributes: { [name: string]: JSONValue | undefined}
+  onMetaUpdate: ((attribute: string, newValue: string) => void)
+  onRemoveMeta: ((attribute: string) => void) | null
 
-    constructor(attributes: { [name: string]: JSONValue | undefined}, 
-      onMetaUpdate: ((attribute: string, newValue: string) => void),
-      onRemoveMeta: ((attribute: string) => void) | null, 
-      metaChanged: ISignal<TierModel, void>) {
-      super()
-      this.attributes = attributes
-      this.onMetaUpdate = onMetaUpdate
-      this.onRemoveMeta = onRemoveMeta
+  constructor(attributes: { [name: string]: JSONValue | undefined}, 
+    onMetaUpdate: ((attribute: string, newValue: string) => void),
+    onRemoveMeta: ((attribute: string) => void) | null, 
+    metaChanged: ISignal<TierModel, void>) {
+    super()
+    this.attributes = attributes
+    this.onMetaUpdate = onMetaUpdate
+    this.onRemoveMeta = onRemoveMeta
 
-      metaChanged.connect((model) => this.onMetaChanged(model.additionalMeta))
-    }
+    metaChanged.connect((model) => this.onMetaChanged(model.additionalMeta))
+  }
 
-    onMetaChanged(newMeta: { [name: string]: JSONValue}) {
-      const meta: {[name: string]: JSONValue} = {}
+  /**
+   * Confusingly, this method handles changes to the meta from the model which are provided as a signal at construction...
+   * 
+   * Rerenders the widget with new meta
+   * 
+   * @param newMeta 
+   */
+  onMetaChanged(newMeta: { [name: string]: JSONValue}) {
+    const meta: {[name: string]: JSONValue} = {}
 
-      for (const key of Object.keys(this.attributes)) {
-        const val = newMeta[key]
-        meta[key] = val
-      }
-      
-      this.attributes = meta
-      this.update()
-    }
-
-    onNewMetaKey(key: string) {
-      this.attributes[key] = undefined
-      this.update()
+    for (const key of Object.keys(this.attributes)) {
+      const val = newMeta[key]
+      meta[key] = val
     }
     
-    render() {
-      const metas = []
-
-      for (const name of Object.keys(this.attributes)) {
-        const editor = new CodeEditorWrapper({
-          model: new CodeEditor.Model({ mimeType: 'application/json'}),
-          factory: cassini.contentFactory.newInlineEditor,
-          editorOptions: { config: { lineNumbers: false } },
-        });
-
-        const val = this.attributes[name]
-
-        editor.model.sharedModel.setSource(val ? JSON.stringify(val): '')
-
-        metas.push({name: name, editor: () => editor})
-      }
-
-      const onNewMetaKey = this.onNewMetaKey.bind(this)
-
-      return (
-      <div>
-        <MetaTable metas={metas} onMetaUpdate={this.onMetaUpdate} onNewMetaKey={onNewMetaKey} onRemoveMeta={this.onRemoveMeta}/>
-      </div>
-      )
-    }
+    this.attributes = meta
+    this.update()
   }
+
+  /**
+   * Adds a new entry on the meta table.
+   * 
+   * onMetaUpdate is only called if a value is subsequently set.
+   * 
+   * @param key 
+   */
+  onNewMetaKey(key: string) {
+    this.attributes[key] = undefined
+    this.update()
+  }
+  
+  render() {
+    const metas = []
+
+    for (const name of Object.keys(this.attributes)) {
+      const editor = new CodeEditorWrapper({
+        model: new CodeEditor.Model({ mimeType: 'application/json'}),
+        factory: cassini.contentFactory.newInlineEditor,
+        editorOptions: { config: { lineNumbers: false } },
+      });
+
+      const val = this.attributes[name]
+
+      editor.model.sharedModel.setSource(val ? JSON.stringify(val): '')
+
+      metas.push({name: name, editor: () => editor})
+    }
+
+    const onNewMetaKey = this.onNewMetaKey.bind(this)
+
+    return (
+    <div>
+      <MetaTable metas={metas} onMetaUpdate={this.onMetaUpdate} onNewMetaKey={onNewMetaKey} onRemoveMeta={this.onRemoveMeta}/>
+    </div>
+    )
+  }
+}
