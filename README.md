@@ -7,6 +7,12 @@ This project creates a GUI for [Cassini](https://github.com/0Hughman0/Cassini) t
 
 Once installed, head to the `demo` folder and run `launch.bat` (or equivalent commands) to try cassini and jupyter_cassini out.
 
+Scroll to the bottom of the launcher to launch the Cassini browser and start your project.
+
+See the [Cassini](https://github.com/0Hughman0/Cassini) repo for some information on the Python-side of things.
+
+Try creating highlights for a 'tier' by using the magic `%%hlt Highlight name`, the captured out will be displayed in the cassini browser.
+
 In this repo there is a Python package named `jupyter_cassini_server`
 for the server extension and a NPM package named `jupyter_cassini`
 for the frontend extension.

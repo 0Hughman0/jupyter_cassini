@@ -10,14 +10,15 @@ import { CassiniServer, ITreeResponse, ITreeChildResponse } from './services';
 import { TierModel } from './models';
 import { BrowserPanel } from './ui/browser';
 
+/**
+ * All ITreeData instances must implement ITreeChild data.
+ * 
+ * The lack of children on ITreeChild data prevents the structure being recursive.
+ * 
+ * children can then be overwritten with ITreeData to add a new level.
+ */
 export interface ITreeData extends Omit<ITreeResponse, 'started' | 'children'> {
-  /**
-   * All ITreeData instances must implement ITreeChild data.
-   * 
-   * The lack of children on ITreeChild data prevents the structure being recursive.
-   * 
-   * children can then be overwritten with ITreeData to add a new level.
-   */
+
   started: Date | null;
   children: { [id: string]: ITreeChildData };
   identifiers: string[]
@@ -28,19 +29,18 @@ export interface ITreeChildData extends Omit<ITreeChildResponse, 'started'> {
   started: Date | null;
 }
 
-
+/**
+ * Looks after the 'tree' of tiers. Idea is to match the file structure of a cassini project. Because asking the server to generate this tree is 
+ * expensive, the treeManager looks after a cache of this structure.
+ * 
+ * There should only be one instance of this class. 
+ * 
+ * All TierBrowserModels should be fetching their contents from the global instance.
+ * 
+ * @property cache - The object that stores the tree. Is a nested structure. I'm too dumb to work out how to do a proper type definition :(
+ * 
+ */
 export class TreeManager {
-  /**
-   * Looks after the 'tree' of tiers. Idea is to match the file structure of a cassini project. Because asking the server to generate this tree is 
-   * expensive, the treeManager looks after a cache of this structure.
-   * 
-   * There should only be one instance of this class. 
-   * 
-   * All TierBrowserModels should be fetching their contents from the global instance.
-   * 
-   * @property cache - The object that stores the tree. Is a nested structure. I'm too dumb to work out how to do a proper type definition :(
-   * 
-   */
   cache: any;
   nameCache: { [name: string]: ITreeData }; // name -> identifiers
 
