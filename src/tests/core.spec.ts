@@ -2,7 +2,7 @@ import { Contents } from '@jupyterlab/services';
 
 import { ITreeData, TreeManager, TierModelTreeManager, Cassini } from '../core';
 import { TierModel } from '../models';
-import { ITreeResponse, CassiniServer } from '../services';
+import { ITreeResponse } from '../services';
 
 import { HOME_RESPONSE, 
          WP1_RESPONSE, 
@@ -56,8 +56,6 @@ describe('TreeManager', () => {
     expect(treeManager.cache).toMatchObject(homeData);
 
     expect(treeManager.get([])).resolves.toBe(first);
-
-    expect(CassiniServer.tree).lastCalledWith([]);
   });
 
   test('forcing-fetch', async () => {

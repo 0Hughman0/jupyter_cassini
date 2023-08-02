@@ -1,11 +1,13 @@
 import { JSONObject } from '@lumino/coreutils'
 
-import { Contents, ServiceManager } from '@jupyterlab/services'
+import { URLExt } from '@jupyterlab/coreutils'
+import { Contents, ServiceManager, ServerConnection } from '@jupyterlab/services'
 import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
 
 
 import { cassini } from '../core';
-import { CassiniServer, ITreeResponse } from '../services';
+import { ITreeResponse, ITierInfo } from '../services';
+
 
 export const TEST_META_CONTENT: JSONObject = {
     description: 'this is a test',
@@ -42,41 +44,59 @@ export async function createTierFiles(metaContent: JSONObject, hltsContent?: JSO
     return {manager, metaFile, hltsFile}
 }
 
+
 export function mockServer() {
-    CassiniServer.tree = jest.fn(
-        query => new Promise(resolve => {
-            switch (query.toString()) {
-                case [].toString(): {
-                resolve(Object.assign({}, HOME_RESPONSE)) // ensures requests to server return new objects
+    ServerConnection.makeRequest = jest.fn((url, init, settings) => {
+        const { pathname, search } = URLExt.parse(url)
+    
+        const query = search ? URLExt.queryStringToObject(search.slice(1)): {}
+    
+        switch (pathname) {
+            case ("/jupyter_cassini/tree"): {
+                let responseData: ITreeResponse
+                
+                switch (query.identifiers?.toString()) {
+                    case [].toString(): {
+                        responseData = HOME_RESPONSE
+                        break
+                    }
+                    case ['1'].toString(): {
+                        responseData = WP1_RESPONSE
+                        break
+                    }
+                    case ['1', '1'].toString(): {
+                        responseData = WP1_1_RESPONSE
+                        break
+                    }
+                    default: {
+                        throw "No mock data for request"
+                    }                    
                 }
-                case ['1'].toString(): {
-                resolve(Object.assign({}, WP1_RESPONSE))
+                return new Promise(resolve => resolve(new Response(JSON.stringify(responseData))))
+            }
+            
+            case ("/jupyter_cassini/lookup"): {
+                let responseData: ITierInfo
+    
+                switch (query.id) {
+                    case 'Home': {
+                        responseData = {identifiers: [], ...HOME_RESPONSE as any}
+                        break
+                    }
+                    case 'WP1': {
+                        responseData = {identifiers: ['1'], ...WP1_RESPONSE as any}
+                        break
+                    }
+                    case 'WP1.1': {
+                        responseData = {identifiers: ['1', '1'], ...WP1_1_RESPONSE as any}
+                        break
+                    }
+                    default: {
+                        throw "No mock data for request"
+                    }
                 }
-
-                case ['1', '1'].toString(): {
-                resolve(Object.assign({}, WP1_1_RESPONSE))
-                }
-                default: {
-                    throw "No mock data for request"
-                }
-            }
-        })
-    ) as jest.Mocked<typeof CassiniServer.tree>;
-
-    CassiniServer.lookup = jest.fn(query => new Promise(resolve => {
-        switch (query.toString()) {
-            case 'Home': {
-                resolve({identifiers: [], ...HOME_RESPONSE as any})
-            }
-            case 'WP1': {
-            resolve({identifiers: ['1'], ...WP1_RESPONSE as any})
-            }
-            case 'WP1.1': {
-            resolve({identifiers: ['1', '1'], ...WP1_1_RESPONSE as any})
-            }
-            default: {
-                throw "No mock data for request"
+                return new Promise(resolve => resolve(new Response(JSON.stringify(responseData))))
             }
         }
-    }))
+    }) as jest.Mocked<typeof ServerConnection.makeRequest>
 }
