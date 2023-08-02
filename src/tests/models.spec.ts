@@ -1,24 +1,15 @@
-import { TierModel, TierBrowserModel } from '../models';
-import { cassini, TreeManager } from '../core';
-
 import { Contents } from '@jupyterlab/services'
 import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
 
-import { ITreeResponse, CassiniServer } from '../services';
+import { TierModel, TierBrowserModel } from '../models';
+import { TreeManager } from '../core';
+
+
+import { CassiniServer } from '../services';
+
+import { HOME_RESPONSE, createTierFiles, TEST_META_CONTENT, TEST_HLT_CONTENT } from './tools';
 
 import 'jest';
-import { JSONObject } from '@lumino/coreutils';
-
-const TEST_META_CONTENT: JSONObject = {
-  description: 'this is a test',
-  conclusion: 'concluded',
-  started: '01/22/2023',
-  temperature: 273
-};
-
-const TEST_HLT_CONTENT = {"cos": [{"data": {"text/markdown": "## cos"}, "metadata": {}, "transient": {}}]}
-
-const HOME_RESPONSE: ITreeResponse = require('./test_home_branch.json');
 
 
 describe('TierModel', () => {
@@ -26,30 +17,8 @@ describe('TierModel', () => {
   let metaFile: Contents.IModel
   let hltsFile: Contents.IModel
   
-  async function createTierFiles(metaContent: JSONObject, hltsContent?: JSONObject) {
-      manager = new ServiceManagerMock();
-      cassini.contentService = manager;
-      
-      const metaFile = await manager.contents.newUntitled({
-        path: '/WorkPackages/WP1/.exps/',
-        type: 'file'
-      }) as any;
-  
-      (metaFile as any)['content'] = JSON.stringify(metaContent)
-      
-      const hltsFile = await manager.contents.newUntitled({
-          path: '/WorkPackages/WP1/.exps/', // filename is set as unique
-          type: 'file'
-        });
-  
-      (hltsFile as any)['content'] = JSON.stringify(hltsContent)
-      
-  
-      return [metaFile, hltsFile]
-  }
-
   beforeEach(async () => {
-    [metaFile, hltsFile] = await createTierFiles(TEST_META_CONTENT, TEST_HLT_CONTENT);      
+    ({manager, metaFile, hltsFile} = await createTierFiles(TEST_META_CONTENT, TEST_HLT_CONTENT));      
   });
 
 

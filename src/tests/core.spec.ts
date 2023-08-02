@@ -1,40 +1,23 @@
-import { JSONObject } from '@lumino/coreutils';
-import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
 import { Contents } from '@jupyterlab/services';
 
-import { cassini, ITreeData, TreeManager, TierModelTreeManager } from '../core';
+import { ITreeData, TreeManager, TierModelTreeManager } from '../core';
 import { TierModel } from '../models';
 import { ITreeResponse, CassiniServer } from '../services';
 
-import 'jest';
+import { HOME_RESPONSE, 
+         WP1_RESPONSE, 
+         WP1_1_RESPONSE,
+         mockServer, 
+         TEST_HLT_CONTENT,
+         TEST_META_CONTENT,
+         createTierFiles } from './tools';
 
-const HOME_RESPONSE: ITreeResponse = require('./test_home_branch.json');
-const WP1_RESPONSE: ITreeResponse = require('./test_WP1_branch.json');
-const WP1_1_RESPONSE: ITreeResponse = require('./test_WP1_1_branch.json');
+import 'jest';
 
 describe('TreeManager', () => {
 
   beforeEach(() => {
-    CassiniServer.tree = jest.fn(
-      query => new Promise(resolve => {
-        switch (query.toString()) {
-          case [].toString(): {
-            resolve(Object.assign({}, HOME_RESPONSE)) // ensures requests to server return new objects
-          }
-          case ['1'].toString(): {
-            resolve(Object.assign({}, WP1_RESPONSE))
-          }
-
-          case ['1', '1'].toString(): {
-            resolve(Object.assign({}, WP1_1_RESPONSE))
-          }
-          default: {
-            throw "No mock data for request"
-          }
-
-        }
-      })
-    ) as jest.Mocked<typeof CassiniServer.tree>;
+    mockServer()
   });
 
   test('conversion', () => {
@@ -138,35 +121,23 @@ describe('TreeManager', () => {
 });
 
 describe('TreeModelManager', () => {
-  let manager = new ServiceManagerMock();
   let modelManager: TierModelTreeManager;
-
-  async function setupMeta(metaContent: JSONObject): Promise<Contents.IModel> {
-    manager = new ServiceManagerMock();
-    cassini.contentService = manager;
-    return manager.contents.newUntitled({
-      path: '/WorkPackages/WP1/.exps/',
-      type: 'file'
-    });
-  }
-
+  let metaFile: Contents.IModel
+  
   beforeEach(async () => {
+    ({ metaFile } = await createTierFiles(TEST_META_CONTENT, TEST_HLT_CONTENT));      
+    
     modelManager = new TierModelTreeManager();
   });
 
   test('initialise', async () => {
-    const file = await setupMeta({
-      name: 'WP1',
-      description: 'heyo'
-    });
-
-    const first = modelManager.get('WP1')({ name: 'WP1', metaPath: file.path, identifiers: ['1'] });
+    const first = modelManager.get('WP1')({ name: 'WP1', metaPath: metaFile.path, identifiers: ['1'] });
 
     expect(first).toBeInstanceOf(TierModel);
 
     const cachedFirst = modelManager.get('WP1')({
       name: 'WP1',
-      metaPath: file.path,
+      metaPath: metaFile.path,
       identifiers: ['1']
     });
 
@@ -174,7 +145,7 @@ describe('TreeModelManager', () => {
 
     const second = modelManager.get('WP1.2')({
       name: 'WP1.2',
-      metaPath: file.path,
+      metaPath: metaFile.path,
       identifiers: ['1', '2']
     });
 
@@ -182,7 +153,7 @@ describe('TreeModelManager', () => {
 
     const cachedSecond = modelManager.get('WP1.2')({
       name: 'WP1.2',
-      metaPath: file.path,
+      metaPath: metaFile.path,
       identifiers: ['1', '2']
     });
 
