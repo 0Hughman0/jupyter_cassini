@@ -15,7 +15,7 @@ export const TEST_META_CONTENT: JSONObject = {
 };
   
 export const TEST_HLT_CONTENT = {"cos": [{"data": {"text/markdown": "## cos"}, "metadata": {}, "transient": {}}]}
-  
+
 export const HOME_RESPONSE: ITreeResponse = require('./test_home_branch.json');
 export const WP1_RESPONSE: ITreeResponse = require('./test_WP1_branch.json');
 export const WP1_1_RESPONSE: ITreeResponse = require('./test_WP1_1_branch.json');

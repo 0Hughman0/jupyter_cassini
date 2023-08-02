@@ -44,30 +44,37 @@ export class TierModel {
   readonly started: Date;
 
   readonly hltsPath: string | undefined
+  
 
   readonly children: {[id: string]: {name: string}}; // should be observable
 
   metaFile?: Context<DocumentRegistry.ICodeModel>;
   hltsFile?: Context<DocumentRegistry.ICodeModel>;
+
+  protected _required: Promise<any>[]
   
   constructor(options: TierModel.IOptions) {
     this.name = options.name;
     this.identifiers = options.identifiers;
     this.notebookPath = options.notebookPath;
-
+    
     this.hltsPath = options.hltsPath
     
     this.children = options.children || {}
 
+    this._required = [];
+
     if (options.metaPath) {
-      this.metaFile = new Context<DocumentRegistry.ICodeModel>({
+      const metaFile = this.metaFile = new Context<DocumentRegistry.ICodeModel>({
         manager: cassini.contentService,
         factory: new TextModelFactory(),
         path: options.metaPath as string
       });
-      this.metaFile.initialize(false);
-      this.metaFile.ready.then(() => {
-        this.metaFile?.model.sharedModel.changed.connect(() => this._changed.emit(), this)
+      this._required.push(metaFile.ready)
+
+      metaFile.initialize(false);
+      metaFile.ready.then(() => {
+        metaFile.model.sharedModel.changed.connect(() => this._changed.emit(), this)
       })
     }
 
@@ -80,7 +87,8 @@ export class TierModel {
           factory: new TextModelFactory(),
           path: options.hltsPath as string,
         });
-        hltsFile.model.readOnly = true;
+        this._required.push(hltsFile.ready)
+
         hltsFile.initialize(false);
         
         this.hltsFile.ready.then(() => {
@@ -105,11 +113,8 @@ export class TierModel {
    */
   get ready(): Promise<TierModel> {
 
-    const required = [this.metaFile?.ready, this.hltsFile?.ready]
-
-    return Promise.all(required).then(
-      () => this
-    );
+    return Promise.all(this._required).then(
+      () => this);
   }
 
   /**

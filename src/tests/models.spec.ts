@@ -143,9 +143,15 @@ describe('TierModel', () => {
       const tier = new TierModel({name: 'WP1', identifiers: ['1'], metaPath: metaFile.path, hltsPath: hltsFile.path})
       await tier.ready
 
+      expect(tier.dirty).toBe(false)
+
       tier.description = 'completely new thing'
 
+      expect(tier.dirty).toBe(true)
+
       await tier.save()
+      
+      expect(tier.dirty).toBe(false)
 
       const contentModel = await manager.contents.get(tier.metaFile?.path as string, {content: true}) as any
 
@@ -157,9 +163,14 @@ describe('TierModel', () => {
 
       expect(tier.description).toBe('completely new thing')
 
+      tier.description = 'changing again'
+
+      expect(tier.dirty).toBe(true)
+
       await tier.revert()
 
       expect(tier.description).toBe('load from file')
+      expect(tier.dirty).toBe(false)
 
     })
   })
