@@ -1,5 +1,5 @@
-import { TierModel } from '../models';
-import { createTierFiles, TEST_HLT_CONTENT, TEST_META_CONTENT } from './tools'
+import { TierBrowserModel, TierModel } from '../models';
+import { createTierFiles, mockServer, TEST_HLT_CONTENT, TEST_META_CONTENT } from './tools'
 
 import 'jest'
 
@@ -62,6 +62,33 @@ describe('tier-model', () => {
         await tier.save()
 
         expect(sentinal).toBeCalledTimes(6) // apparently saving causes an update(?)
+    })
+})
+
+describe('tree-model', () => {
+    beforeEach(() => {
+        mockServer()
+    })
+
+    test('currentPath', async () => {
+        const browserModel = new TierBrowserModel()
+        
+        const childrenSentinal = jest.fn()
+        browserModel.childrenUpdated.connect(childrenSentinal)
+
+        const pathSentinal = jest.fn()
+
+        browserModel.currentPath.changed.connect(pathSentinal)
+
+        browserModel.currentPath.push('1')
+
+        expect(pathSentinal).toBeCalledTimes(1)
+        expect(childrenSentinal).toBeCalledTimes(1)
+
+        await browserModel.refresh()
+
+        expect(childrenSentinal).toBeCalledTimes(2)
+        expect(pathSentinal).toBeCalledTimes(1)
     })
 })
 

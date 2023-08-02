@@ -283,6 +283,8 @@ export class Cassini {
   tierModelManager: TierModelTreeManager;
   commandRegistry: CommandRegistry;
 
+  protected resolveReady: (value: void | PromiseLike<void>) => void
+
   ready: Promise<void>
 
   /**
@@ -291,6 +293,10 @@ export class Cassini {
   constructor() {
     this.treeManager = new TreeManager();
     this.tierModelManager = new TierModelTreeManager();
+
+    this.ready = new Promise((resolve, reject) => {
+      this.resolveReady = resolve
+    })
   }
   
   /**
@@ -313,11 +319,14 @@ export class Cassini {
     this.rendermimeRegistry = rendermimeRegistry;
     this.commandRegistry = commandRegistry;
 
-    this.ready = this.treeManager.initialize().then()
+    this.treeManager.initialize().then(() => this.resolveReady())
     return this.ready;
   }
 
+  /* istanbul ignore next */
   /**
+   * 
+   * 
    * Creates a TierBrowser widget, attaches it to the main area and shows it.
    * 
    * identifiers paramter determines where the browser inializes and the tierView/
@@ -325,6 +334,7 @@ export class Cassini {
    * If there's already a window open that has the same indentifiers, it will just show that window.
    * 
    * @param {string[]} [identifiers] - the identifiers for the tier to be opened. if not provided will just open a new window... I think!
+   * 
    */
   async launchTierBrowser(identifiers?: string[]) {
     
@@ -357,6 +367,7 @@ export class Cassini {
     this.app.shell.activateById(mainArea.id);
   }
 
+  /* istanbul ignore next */
   /** 
    * Creates a CommandFunc to add to the command registry. Wraps around `this.launchTierBrowser`.
    * 
@@ -368,6 +379,7 @@ export class Cassini {
     }
   }
 
+  /* istanbul ignore next */
   /**
    * 'launches' a tier. I actually use open externally, so maybe should be open idk.
    * 

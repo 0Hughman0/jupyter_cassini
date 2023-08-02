@@ -57,9 +57,26 @@ export function mockServer() {
                 resolve(Object.assign({}, WP1_1_RESPONSE))
                 }
                 default: {
-                throw "No mock data for request"
+                    throw "No mock data for request"
                 }
             }
         })
     ) as jest.Mocked<typeof CassiniServer.tree>;
+
+    CassiniServer.lookup = jest.fn(query => new Promise(resolve => {
+        switch (query.toString()) {
+            case 'Home': {
+                resolve({identifiers: [], ...HOME_RESPONSE as any})
+            }
+            case 'WP1': {
+            resolve({identifiers: ['1'], ...WP1_RESPONSE as any})
+            }
+            case 'WP1.1': {
+            resolve({identifiers: ['1', '1'], ...WP1_1_RESPONSE as any})
+            }
+            default: {
+                throw "No mock data for request"
+            }
+        }
+    }))
 }

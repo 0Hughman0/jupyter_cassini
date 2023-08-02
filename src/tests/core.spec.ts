@@ -1,6 +1,6 @@
 import { Contents } from '@jupyterlab/services';
 
-import { ITreeData, TreeManager, TierModelTreeManager } from '../core';
+import { ITreeData, TreeManager, TierModelTreeManager, Cassini } from '../core';
 import { TierModel } from '../models';
 import { ITreeResponse, CassiniServer } from '../services';
 
@@ -118,6 +118,30 @@ describe('TreeManager', () => {
 
     expect(second).toBe(first)
   });
+
+  test('lookup', async () => {
+    const treeManager = new TreeManager()
+    await treeManager.initialize()
+
+    const first = await treeManager.lookup('WP1')
+
+    const wp1_1_Data = TreeManager._treeResponseToData(WP1_RESPONSE, ['1']);
+
+    expect(first).toMatchObject(wp1_1_Data)
+
+    expect(Object.keys(treeManager.nameCache)).toContain(wp1_1_Data.name)
+
+    const second = await treeManager.lookup('WP1')
+
+    expect(first).toBe(second)
+
+    // cached via get
+
+    const thirdGet = await treeManager.get(['1', '1'])
+    const thirdLookup = await treeManager.lookup('WP1.1')
+
+    expect(thirdLookup).toBe(thirdGet)
+  })
 });
 
 describe('TreeModelManager', () => {
@@ -163,3 +187,16 @@ describe('TreeModelManager', () => {
     expect(modelManager.cache['WP1.2']).toBe(second);
   });
 });
+
+describe('cassini', () => {
+  test('init', async () => {
+    const cassini = new Cassini()
+    expect(cassini.ready).toBeDefined()
+
+    const { manager } = await createTierFiles(TEST_META_CONTENT, TEST_HLT_CONTENT)
+    
+    await cassini.initialize(null as any, manager, null as any, null as any, null as any)
+
+    expect(cassini.ready).resolves.toBe(undefined)
+  })
+})
