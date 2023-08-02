@@ -67,7 +67,7 @@ export class TierModel {
       });
       this.metaFile.initialize(false);
       this.metaFile.ready.then(() => {
-        this.metaFile?.model.sharedModel.changed.connect(() => this._changed.emit())
+        this.metaFile?.model.sharedModel.changed.connect(() => this._changed.emit(), this)
       })
     }
 
@@ -78,18 +78,17 @@ export class TierModel {
         const hltsFile = this.hltsFile = new Context({
           manager: cassini.contentService,
           factory: new TextModelFactory(),
-          path: options.hltsPath as string
+          path: options.hltsPath as string,
         });
+        hltsFile.model.readOnly = true;
         hltsFile.initialize(false);
-      }).catch((reason) => reason) // fails if file doesn't exist
-      
-      if (this.hltsFile) {
+        
         this.hltsFile.ready.then(() => {
           this.hltsFile?.model.sharedModel.changed.connect(() => {
             this._changed.emit()
-          })
+          }, this)
         })
-      }
+      }).catch((reason) => reason) // fails if file doesn't exist
     }
   }
 
@@ -146,7 +145,7 @@ export class TierModel {
   }
   set description(value: string) {
     if (!this.metaFile) {
-      return;
+      throw "Tier has no meta, cannot store description"
     }
 
     const oldMeta = this.meta;
@@ -159,7 +158,7 @@ export class TierModel {
   }
   set conclusion(value: string) {
     if (!this.metaFile) {
-      return;
+      throw "Tier has no meta, cannot store conclusion"
     }
 
     const oldMeta = this.meta;

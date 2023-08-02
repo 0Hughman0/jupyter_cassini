@@ -45,7 +45,7 @@ export class TreeManager {
   nameCache: { [name: string]: ITreeData }; // name -> identifiers
 
   constructor() {
-    this.cache = null;
+    this.cache = {};
     this.nameCache = {};
   }
 
@@ -57,7 +57,7 @@ export class TreeManager {
   initialize(): Promise<ITreeData | null> {
 
     return this.fetchTierData([]).then(homeBranch => {
-      this.cache = homeBranch as ITreeData;
+      //this.cache = homeBranch as ITreeData;
       return homeBranch;
     });
   }
@@ -128,7 +128,7 @@ export class TreeManager {
    * 
    * 
    */
-  cacheTreeData(ids: string[], treeData: ITreeData) {
+  cacheTreeData(ids: string[], treeData: ITreeData): ITreeData {
     
     let branch = this.cache;
 
@@ -138,9 +138,11 @@ export class TreeManager {
       }
 
       let children = branch.children;
+      
       if (children === undefined) {
         children = branch.children = {};
       }
+
       if (children[id] === undefined) {
         children[id] = {};
       }
@@ -148,11 +150,11 @@ export class TreeManager {
       branch = children[id];
     }
 
-    if (branch) {
-      Object.assign(branch, treeData);
+    Object.assign(branch, treeData);
 
-      this.nameCache[treeData.name] = treeData;
-    }
+    this.nameCache[treeData.name] = treeData;
+
+    return branch
   }
 
   /**
@@ -163,11 +165,9 @@ export class TreeManager {
   fetchTierData(ids: string[]): Promise<ITreeData | null> {
     return CassiniServer.tree(ids)
       .then(treeResponse => {
-        const newTree = TreeManager._treeResponseToData(treeResponse, ids);
+        let newTree = TreeManager._treeResponseToData(treeResponse, ids);
 
-        this.cacheTreeData(ids, newTree);
-
-        return newTree as ITreeData;
+        return this.cacheTreeData(ids, newTree) as ITreeData;
       })
       .catch(reason => {
         return null;
