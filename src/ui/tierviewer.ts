@@ -90,8 +90,6 @@ export class MarkdownEditor extends Panel {
     
     output.node.ondblclick = (event) => {this.setRendered(false)};
     this.editor.node.addEventListener('focusout', (ev) => {this.setRendered(true)})
-
-    this.setRendered(rendered)
   }
 
   /**
