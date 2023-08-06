@@ -449,8 +449,8 @@ function ChildrenTable(props: IChildrenTableProps) {
                   <span>{props.getValue()}</span>
                 </span>
               );
-            }
-          }
+            },
+          },
         )
       );
     }
@@ -462,11 +462,15 @@ function ChildrenTable(props: IChildrenTableProps) {
           <span onClick={event => props.onSelectMetas(event)}>
             <ToolbarButtonComponent icon={editIcon} tooltip='Edit columns'/>
           </span>
-        )
+        ),
+        enableResizing: false,
+        size: 20     
       }),
       columnHelper.display({
         id: 'actions',
         header: '',
+        enableResizing: false,
+        size: 40,
         cell: props => {
           let child: ITreeChildData | null;
           try {
@@ -518,13 +522,16 @@ function ChildrenTable(props: IChildrenTableProps) {
     },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel()
+    getSortedRowModel: getSortedRowModel(),
+    columnResizeMode: 'onChange'
   });
 
   return (
     <div>
       <h1>{ currentTier?.name }</h1>
-      <table className="cas-ChildrenTable-table">
+      <table className="cas-ChildrenTable-table" 
+        // style={{width: table.getCenterTotalSize()}}
+        >
         <thead onContextMenu={event => props.onSelectMetas(event)}>
           <tr>
             {table.getFlatHeaders().map(header => (
@@ -535,6 +542,7 @@ function ChildrenTable(props: IChildrenTableProps) {
                     ? ''
                     : 'jp-DirListing-headerItem jp-id-name'
                 }
+                style={{width: `${(header.getSize() / table.getCenterTotalSize()) * 100}%`}}
               >
                 <span
                   className={
@@ -553,6 +561,15 @@ function ChildrenTable(props: IChildrenTableProps) {
                     desc: <caretDownIcon.react tag="span" />
                   }[header.column.getIsSorted() as string] ?? null}
                 </span>
+                { 
+                  header.column.getCanResize() ? <div
+                      {...{
+                        onMouseDown: header.getResizeHandler(),
+                        onTouchStart: header.getResizeHandler(),
+                        className: 'cas-table-resizer'
+                      }}
+                    /> : null
+                }
               </th>
             ))}
           </tr>

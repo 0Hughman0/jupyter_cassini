@@ -35,6 +35,7 @@
   display: flex;
   flex-direction: row-reverse;
   background-color: var(--jp-layout-color1);
+  width: fit-content;
 }
 
 .cas-TierNotebookHeader {
@@ -73,6 +74,21 @@
 
 .cas-ChildrenTable-table {
   width: 100%;
+  table-layout: auto;
+}
+
+.cas-ChildrenTable-table th{
+  position: relative;
+}
+
+
+.cas-table-resizer {
+  position: absolute;
+  right: -2px;
+  top: 0px;
+  height: 100%;
+  cursor: col-resize;
+  width: 4px;
 }
 
 .cas-ChildrenTable-table tr:hover {
