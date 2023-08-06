@@ -12,6 +12,7 @@ import { ITreeData, cassini } from '../core';
 import { MarkdownEditor } from './tierviewer';
 import { TierModel } from '../models';
 import { ChildrenSummaryWidget, ChildrenSummaryRow } from './nbheadercomponents';
+import { IObservableMap } from '@jupyterlab/observables';
 
 
 /**
@@ -123,6 +124,7 @@ export class TierNotebookHeader extends Panel {
 
   descriptionEditor: MarkdownEditor
   conclusionEditor: MarkdownEditor
+  childrenSummary: ChildrenSummaryWidget;
 
   constructor(tierInfo: ITreeData) {
     super();
@@ -172,9 +174,9 @@ export class TierNotebookHeader extends Panel {
     childrenLabel.textContent = "Children"
     childrenBox.addWidget(new Widget ({node: childrenLabel}))
 
-    const data = Object.entries(this.model.children).map((val) => new Object({name: val[1].name, id: val[0]}) as ChildrenSummaryRow )
+    const data = TierNotebookHeader._childrenToData(this.model.children)
     
-    const childrenSummary = new ChildrenSummaryWidget(data, 
+    const childrenSummary = this.childrenSummary = new ChildrenSummaryWidget(data, 
       (id) => {
         cassini.treeManager.get([...this.model.identifiers, id]).then((data) => data && cassini.launchTier(data))
       },
@@ -191,6 +193,10 @@ export class TierNotebookHeader extends Panel {
     this.model.ready.then(() => this.onContentChanged())
   }
 
+  static _childrenToData(children: IObservableMap<{name: string}>): ChildrenSummaryRow[] {
+    return children.keys().map((id) => new Object({name: children.get(id)?.name, id: id}) as ChildrenSummaryRow )
+  }
+
   showInBrowser() {
     cassini.launchTierBrowser(this.model.identifiers)
   }
@@ -201,6 +207,8 @@ export class TierNotebookHeader extends Panel {
   onContentChanged() {
     this.descriptionEditor.source = this.model.description
     this.conclusionEditor.source = this.model.conclusion
+    const data = TierNotebookHeader._childrenToData(this.model.children)
+    this.childrenSummary.data = data
   }
 }
 

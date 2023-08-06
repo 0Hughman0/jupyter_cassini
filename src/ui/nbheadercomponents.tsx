@@ -107,15 +107,23 @@ export function ChildrenSummary(props: IMetaTableProps) {
  * ReactWidget wrapper of ChildrenSummary component.
  */
 export class ChildrenSummaryWidget extends ReactWidget {
-  data: ChildrenSummaryRow[]
+  _data: ChildrenSummaryRow[]
   onChildLaunch: (id: string) => void
   onChildView: (id: string) => void
 
   constructor(data: ChildrenSummaryRow[], onChildLaunch: (id: string) => void, onChildView: (id: string) => void) {
     super()
-    this.data = data
+    this._data = data
     this.onChildLaunch = onChildLaunch
     this.onChildView = onChildView
+  }
+
+  get data(): ChildrenSummaryRow[] {
+    return this._data
+  }
+  set data(val: ChildrenSummaryRow[]) {
+    this._data = val
+    this.update()
   }
   
   render() {

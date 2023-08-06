@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { ObservableList } from '@jupyterlab/observables';
+import { ObservableList, ObservableMap } from '@jupyterlab/observables';
 import {
   DocumentRegistry,
   Context,
@@ -45,8 +45,7 @@ export class TierModel {
 
   readonly hltsPath: string | undefined
   
-
-  readonly children: {[id: string]: {name: string}}; // should be observable
+  readonly children: ObservableMap<{name: string}>;
 
   metaFile?: Context<DocumentRegistry.ICodeModel>;
   hltsFile?: Context<DocumentRegistry.ICodeModel>;
@@ -60,7 +59,8 @@ export class TierModel {
     
     this.hltsPath = options.hltsPath
     
-    this.children = options.children || {}
+    this.children = new ObservableMap({values: options.children || {}})
+    this.children.changed.connect(() => this._changed.emit(), this)
 
     this._required = [];
 

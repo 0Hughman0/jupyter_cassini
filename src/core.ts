@@ -6,9 +6,15 @@ import { ServiceManager } from '@jupyterlab/services';
 import { IEditorFactoryService } from '@jupyterlab/codeeditor';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import { CassiniServer, ITreeResponse, ITreeChildResponse } from './services';
+import { CassiniServer, ITreeResponse, ITreeChildResponse, INewChildInfo } from './services';
 import { TierModel } from './models';
 import { BrowserPanel } from './ui/browser';
+
+export interface ILaunchable {
+  name: string
+  notebookPath?: string
+}
+export interface IViewable extends TierModel.IOptions {}
 
 /**
  * All ITreeData instances must implement ITreeChild data.
@@ -387,7 +393,7 @@ export class Cassini {
    * 
    * If it does not, then ask CassiniServer to open it, which means call the tier.open_folder() method serverside.
    */
-  launchTier(tier: TierModel.IOptions) {
+  launchTier(tier: ILaunchable) {
     
     if (tier.notebookPath) {
       this.app.commands.execute('docmanager:open', {
@@ -400,6 +406,14 @@ export class Cassini {
         }
       });
     }
+  }
+
+  newChild(parentTier: ITreeData, newChildInfo: INewChildInfo): Promise<ITreeData | null> {
+    return CassiniServer.newChild(newChildInfo).then((treeResponse) => {
+      const parentModel = this.tierModelManager.get(parentTier.name)(parentTier)
+      parentModel.children.set(newChildInfo.id, {name: treeResponse.name}) // add new child
+      return this.treeManager.fetchTierData(parentTier.identifiers); // refresh the tree.
+    })
   }
 }
 

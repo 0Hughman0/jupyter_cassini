@@ -30,11 +30,10 @@ import {
   SortingState
 } from '@tanstack/react-table';
 
-import { ITreeData, ITreeChildData } from '../core';
+import { ITreeData, ITreeChildData, ILaunchable, IViewable, cassini } from '../core';
 import { TierBrowserModel } from '../models';
 import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
-import { ILaunchable, IViewable } from './browser';
 import { NewChildWidget } from './newchilddialog';
 
 
@@ -598,7 +597,7 @@ class textAreaAbleDialog extends Dialog<any> {
 
 export interface ITierSelectedSignal {
   path: string[];
-  tier: ILaunchable;
+  tier: IViewable;
 }
 
 /**
@@ -647,25 +646,15 @@ export class TierBrowser extends ReactWidget {
     });
     dialog.launch().then(outcome => {
       if (outcome.value) {
-        const id = outcome.value.id as string
-
-        CassiniServer.newChild(outcome.value)
-          .then(value => {
-            const newTierData = {
-              ...value,
-              identifiers: [...this.model.currentPath, id]
-            }
-            this._tierLaunched.emit(newTierData)
-          })
-          .then(() => {
-            this.model.refresh();
-          });
+        cassini.newChild(tier, outcome.value).then(
+          () => this.model.refresh()
+        )
       }
     });
   }
 
   render(): JSX.Element {
-    const onTierSelected = (path: string[], branch: ILaunchable) => {
+    const onTierSelected = (path: string[], branch: IViewable) => {
       this._tierSelected.emit({ path: path, tier: branch });
     };
 

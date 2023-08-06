@@ -1,14 +1,11 @@
 /* eslint-disable prettier/prettier */
 import { SplitPanel, BoxLayout, Widget } from '@lumino/widgets';
 
-import { cassini } from '../core';
+import { cassini, ILaunchable } from '../core';
 import { TierModel, TierBrowserModel as TierTreeModel } from '../models';
 import { TierBrowser as TierTree } from './treeview';
 import { TierViewer } from './tierviewer';
 
-
-export interface ILaunchable extends TierModel.IOptions {}
-export interface IViewable extends TierModel.IOptions {}
 
 /**
  * BrowserPanel contains a TierBrowser, and TierViewer.
