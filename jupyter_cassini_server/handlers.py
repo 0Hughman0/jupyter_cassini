@@ -11,7 +11,7 @@ from cassini import TierBase
 from cassini.defaults import DataSet
 
 
-def serialize_child(tier):
+def serialize_child(tier: TierBase):
     project_folder = env.project.project_folder
     """
     Note, doesn't populate children field... maybe will later...
@@ -39,7 +39,7 @@ def serialize_child(tier):
     return branch
 
 
-def serialize_branch(tier):
+def serialize_branch(tier: TierBase):
     tree = serialize_child(tier)
     tree['children'] = {}
 
@@ -62,7 +62,13 @@ def serialize_branch(tier):
 
     tree['childMetas'] = list(child_metas)
 
-    tree['childTemplates'] = [template.name for template in tier.child_cls.get_templates()]
+    if tier.child_cls:
+        tree['childTemplates'] = [template.name for template in tier.child_cls.get_templates()]
+
+        tree['childIdRegex'] = tier.child_cls.id_regex
+    else:
+        tree['childTemplates'] = []
+        tree['childIdRegex'] = None
 
     return tree
 

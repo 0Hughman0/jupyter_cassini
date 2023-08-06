@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Signal, ISignal } from '@lumino/signaling';
 import { CommandRegistry } from '@lumino/commands';
-import { Menu, Widget, PanelLayout } from '@lumino/widgets';
+import { Menu } from '@lumino/widgets';
 
 import { ReactWidget, Dialog } from '@jupyterlab/apputils';
 import {
@@ -34,14 +34,8 @@ import { ITreeData, ITreeChildData } from '../core';
 import { TierBrowserModel } from '../models';
 import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
-import {
-  InputDialogBase,
-  InputTextDialog,
-  InputItemsDialog,
-  InputTextAreaDialog,
-  InputNumberDialog
-} from './dialogwidgets';
 import { ILaunchable, IViewable } from './browser';
+import { NewChildWidget } from './newchilddialog';
 
 
 interface IBrowserProps {
@@ -587,86 +581,6 @@ function ChildrenTable(props: IChildrenTableProps) {
       </table>
     </div>
   );
-}
-
-/**
- * A widget that creates a dialog for creating a new tier child.
- */
-export class NewChildWidget extends Widget {
-  parentName: string;
-
-  identifierInput: InputTextDialog;
-  descriptionInput: InputTextAreaDialog;
-  templateSelector: InputItemsDialog;
-
-  metaInputs: (InputTextDialog | InputNumberDialog)[];
-
-  subInputs: { [name: string]: InputDialogBase<any> };
-
-  constructor(tier: ITreeData) {
-    super();
-    this.parentName = tier.name;
-
-    const layout = (this.layout = new PanelLayout());
-    const identifierInput = (this.identifierInput = new InputTextDialog({
-      title: 'Identitifier',
-      label: 'Identifier'
-    }));
-    const descriptionInput = (this.descriptionInput = new InputTextAreaDialog({
-      title: 'Da Description',
-      label: 'Description'
-    }));
-    const templateSelector = (this.templateSelector = new InputItemsDialog({
-      title: 'template',
-      label: 'Template',
-      items: tier.childTemplates || []
-    }));
-
-    this.subInputs = {
-      id: identifierInput,
-      description: descriptionInput,
-      template: templateSelector
-    };
-
-    const metaInputs: (InputTextDialog | InputNumberDialog)[] =
-      (this.metaInputs = []);
-
-    layout.addWidget(identifierInput);
-    layout.addWidget(descriptionInput);
-    layout.addWidget(templateSelector);
-
-    if (!tier.childMetas) {
-      return;
-    }
-
-    for (const additionalMeta of tier.childMetas) {
-      let input;
-
-      if (typeof additionalMeta == 'string') {
-        input = new InputTextDialog({ title: '', label: additionalMeta });
-      } else {
-        input = new InputNumberDialog({ title: '', label: additionalMeta });
-      }
-
-      metaInputs.push(input);
-      this.subInputs[additionalMeta] = input;
-
-      layout.addWidget(input);
-    }
-  }
-
-  /**
-   * Serilaises the contents of the dialogs widgets into an object and returns them for handling.
-   * @returns 
-   */
-  getValue() {
-    const values: { [name: string]: any } = {};
-    for (const name in this.subInputs) {
-      values[name] = this.subInputs[name].getValue();
-    }
-    values['parent'] = this.parentName;
-    return values;
-  }
 }
 
 class textAreaAbleDialog extends Dialog<any> {

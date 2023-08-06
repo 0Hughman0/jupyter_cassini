@@ -18,6 +18,8 @@ export interface ITreeResponse extends ITreeChildResponse {
   folder: string;
   childMetas: string[];
   childTemplates: string[];
+  childIdRegex: string | null;
+
   children: { [id: string]: ITreeChildResponse };
 }
 

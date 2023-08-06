@@ -67,6 +67,10 @@
   font-weight: bold;
 }
 
+.cas-invalid-id {
+  background-color: var(--jp-rendermime-error-background) !important;
+}
+
 .cas-ChildrenTable-table {
   width: 100%;
 }
