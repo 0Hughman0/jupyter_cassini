@@ -10,15 +10,6 @@ from cassini import env
 from cassini import TierBase
 from cassini.defaults import DataSet
 
-## Bad hacks
-
-TierBase.info = property(lambda self: self.description.split('\n')[0])
-DataSet.get_templates = classmethod(lambda cls: [])
-
-OG_setup_files = DataSet.setup_files
-DataSet.setup_files = lambda self, templates: OG_setup_files(self)
-
-##
 
 def serialize_child(tier):
     project_folder = env.project.project_folder
