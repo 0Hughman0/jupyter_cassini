@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { ObservableList, ObservableMap } from '@jupyterlab/observables';
+import { ObservableList } from '@jupyterlab/observables';
 import {
   DocumentRegistry,
   Context,
@@ -45,8 +45,6 @@ export class TierModel {
 
   readonly hltsPath: string | undefined
   
-  readonly children: ObservableMap<{name: string}>;
-
   metaFile?: Context<DocumentRegistry.ICodeModel>;
   hltsFile?: Context<DocumentRegistry.ICodeModel>;
 
@@ -59,9 +57,11 @@ export class TierModel {
     
     this.hltsPath = options.hltsPath
     
-    this.children = new ObservableMap({values: options.children || {}})
-    this.children.changed.connect(() => this._changed.emit(), this)
-
+    cassini.treeManager.changed.connect((sender, {ids, data}) => {
+      if (ids.toString() == this.identifiers.toString()) {
+        this._changed.emit()
+    }})
+    
     this._required = [];
 
     if (options.metaPath) {
@@ -115,6 +115,10 @@ export class TierModel {
 
     return Promise.all(this._required).then(
       () => this);
+  }
+
+  get children(): Promise<{ [id: string]: ITreeChildData } | null> {
+    return cassini.treeManager.get(this.identifiers).then((data) => data?.children || null)
   }
 
   /**
@@ -281,6 +285,11 @@ export class TierBrowserModel {
     this.currentPath.changed.connect(() => {
       this._childrenUpdated.emit(this.current);
     }, this);
+
+    cassini.treeManager.changed.connect((sender, {ids, data}) => {
+      if (ids.toString() == this.sCurrentPath.toString()) {
+        this._childrenUpdated.emit(this.current)
+    }})
 
     this._additionalColumnsStore = {
       additionalColumns: new Set(),

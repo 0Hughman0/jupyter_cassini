@@ -1,4 +1,5 @@
 import { CommandRegistry } from '@lumino/commands'
+import { Signal, ISignal } from '@lumino/signaling'
 
 import { MainAreaWidget } from '@jupyterlab/apputils'
 import { JupyterFrontEnd } from '@jupyterlab/application';
@@ -53,6 +54,12 @@ export class TreeManager {
   constructor() {
     this.cache = {};
     this.nameCache = {};
+  }
+
+  private _changed = new Signal<TreeManager, {ids: string[], data: ITreeData}>(this)
+
+  get changed(): ISignal<TreeManager, {ids: string[], data: ITreeData}> {
+    return this._changed
   }
 
   /**
@@ -159,6 +166,8 @@ export class TreeManager {
     Object.assign(branch, treeData);
 
     this.nameCache[treeData.name] = treeData;
+
+    this._changed.emit({ids: ids, data: treeData})
 
     return branch
   }
@@ -410,8 +419,6 @@ export class Cassini {
 
   newChild(parentTier: ITreeData, newChildInfo: INewChildInfo): Promise<ITreeData | null> {
     return CassiniServer.newChild(newChildInfo).then((treeResponse) => {
-      const parentModel = this.tierModelManager.get(parentTier.name)(parentTier)
-      parentModel.children.set(newChildInfo.id, {name: treeResponse.name}) // add new child
       return this.treeManager.fetchTierData(parentTier.identifiers); // refresh the tree.
     })
   }

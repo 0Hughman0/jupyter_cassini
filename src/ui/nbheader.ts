@@ -8,11 +8,10 @@ import { PathExt } from '@jupyterlab/coreutils';
 import { Toolbar, ToolbarButton } from '@jupyterlab/ui-components';
 import { treeViewIcon } from '@jupyterlab/ui-components';
 
-import { ITreeData, cassini } from '../core';
+import { ITreeChildData, ITreeData, cassini } from '../core';
 import { MarkdownEditor } from './tierviewer';
 import { TierModel } from '../models';
 import { ChildrenSummaryWidget, ChildrenSummaryRow } from './nbheadercomponents';
-import { IObservableMap } from '@jupyterlab/observables';
 
 
 /**
@@ -174,27 +173,35 @@ export class TierNotebookHeader extends Panel {
     childrenLabel.textContent = "Children"
     childrenBox.addWidget(new Widget ({node: childrenLabel}))
 
-    const data = TierNotebookHeader._childrenToData(this.model.children)
+    const getChildData = TierNotebookHeader._childrenToData(this.model.children)
     
-    const childrenSummary = this.childrenSummary = new ChildrenSummaryWidget(data, 
-      (id) => {
-        cassini.treeManager.get([...this.model.identifiers, id]).then((data) => data && cassini.launchTier(data))
-      },
-      (id) => {
-        cassini.launchTierBrowser([...this.model.identifiers, id])
-      }
-    )
+    getChildData.then(data => {
+      const childrenSummary = this.childrenSummary = new ChildrenSummaryWidget(data, 
+        (id) => {
+          cassini.treeManager.get([...this.model.identifiers, id]).then((data) => data && cassini.launchTier(data))
+        },
+        (id) => {
+          cassini.launchTierBrowser([...this.model.identifiers, id])
+        }
+      )
 
-    childrenBox.addWidget(childrenSummary)
+      childrenBox.addWidget(childrenSummary)
 
-    content.addWidget(childrenBox)
-
+      content.addWidget(childrenBox)
+    })
+    
     this.model.changed.connect(() => this.onContentChanged())
     this.model.ready.then(() => this.onContentChanged())
   }
 
-  static _childrenToData(children: IObservableMap<{name: string}>): ChildrenSummaryRow[] {
-    return children.keys().map((id) => new Object({name: children.get(id)?.name, id: id}) as ChildrenSummaryRow )
+  static _childrenToData(children: Promise<{[id: string]: ITreeChildData } | null>): Promise<ChildrenSummaryRow[]> {    
+    return children.then(children => {
+      if (children) {
+        return Object.entries(children).map(data => {return {name: data[1].name, id: data[0]}})
+      } else {
+        return []
+      }
+    })
   }
 
   showInBrowser() {
@@ -207,8 +214,8 @@ export class TierNotebookHeader extends Panel {
   onContentChanged() {
     this.descriptionEditor.source = this.model.description
     this.conclusionEditor.source = this.model.conclusion
-    const data = TierNotebookHeader._childrenToData(this.model.children)
-    this.childrenSummary.data = data
+    const getChildData = TierNotebookHeader._childrenToData(this.model.children)
+    getChildData.then(data => {this.childrenSummary.data = data})
   }
 }
 
