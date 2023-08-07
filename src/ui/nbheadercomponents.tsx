@@ -11,6 +11,7 @@ import {
 import { ReactWidget } from '@jupyterlab/apputils';
 import { launchIcon, treeViewIcon, ToolbarButtonComponent } from '@jupyterlab/ui-components'
 
+// import { openNewChildDialog } from './newchilddialog';
 
 export type ChildrenSummaryRow = {
   name: string,
@@ -42,6 +43,7 @@ export function ChildrenSummary(props: IMetaTableProps) {
       [props.children]
     );
   
+    // openNewChildDialog()
     const columnHelper = createColumnHelper<ChildrenSummaryRow>();
   
     const createColumns = () => {
@@ -75,7 +77,6 @@ export function ChildrenSummary(props: IMetaTableProps) {
     })
 
     return (
-      <div>
         <table className='cas-ChildrenTable-table'>
         <thead>
           <tr>
@@ -98,7 +99,6 @@ export function ChildrenSummary(props: IMetaTableProps) {
           ))}
         </tbody>
         </table>
-      </div>
     );
   }
 
@@ -113,6 +113,7 @@ export class ChildrenSummaryWidget extends ReactWidget {
 
   constructor(data: ChildrenSummaryRow[], onChildLaunch: (id: string) => void, onChildView: (id: string) => void) {
     super()
+    this.addClass('cas-ChildrenSummaryWidget')
     this._data = data
     this.onChildLaunch = onChildLaunch
     this.onChildView = onChildView

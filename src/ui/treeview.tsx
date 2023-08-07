@@ -6,7 +6,7 @@ import { Signal, ISignal } from '@lumino/signaling';
 import { CommandRegistry } from '@lumino/commands';
 import { Menu } from '@lumino/widgets';
 
-import { ReactWidget, Dialog } from '@jupyterlab/apputils';
+import { ReactWidget } from '@jupyterlab/apputils';
 import {
   InputGroup,
   caretRightIcon,
@@ -30,11 +30,11 @@ import {
   SortingState
 } from '@tanstack/react-table';
 
-import { ITreeData, ITreeChildData, ILaunchable, IViewable, cassini } from '../core';
+import { ITreeData, ITreeChildData, ILaunchable, IViewable } from '../core';
 import { TierBrowserModel } from '../models';
 import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
-import { NewChildWidget } from './newchilddialog';
+import { openNewChildDialog } from './newchilddialog';
 
 
 interface IBrowserProps {
@@ -151,10 +151,7 @@ export class BrowserComponent extends React.Component<
     const additionalColumns = this.state.additionalColumns;
 
     return (
-      <div
-        className="lm-Widget p-Widget jp-DirListing jp-FileBrowser-listing"
-        data-jp-suppress-context-menu
-      >
+      <div data-jp-suppress-context-menu>
         <ChildrenTable
           children={this.state.children}
           model={this.props.model}
@@ -375,6 +372,7 @@ function ChildrenTable(props: IChildrenTableProps) {
         {
           id: 'name',
           header: 'Name',
+          size: 45,
           cell: props => {
             let id: string | null;
             try {
@@ -400,6 +398,7 @@ function ChildrenTable(props: IChildrenTableProps) {
         {
           id: 'started',
           header: 'Started',
+          size: 50,
           cell: props => {
             const started = props.getValue();
             return (
@@ -599,19 +598,6 @@ function ChildrenTable(props: IChildrenTableProps) {
   );
 }
 
-class textAreaAbleDialog extends Dialog<any> {
-  protected _evtKeydown(event: KeyboardEvent): void {
-    switch (event.keyCode) {
-      case 13: {
-        if (document.activeElement instanceof HTMLTextAreaElement) {
-          return;
-        }
-      }
-    }
-    super._evtKeydown(event);
-  }
-}
-
 export interface ITierSelectedSignal {
   path: string[];
   tier: IViewable;
@@ -630,7 +616,7 @@ export class TierBrowser extends ReactWidget {
   constructor(model: TierBrowserModel) {
     super();
     this.model = model;
-    this.addClass('jp-FileBrowser');    
+    this.addClass('cas-TierBrowser');
   }
 
   model: TierBrowserModel;
@@ -647,28 +633,7 @@ export class TierBrowser extends ReactWidget {
     return this._tierLaunched;
   }
 
-  /**
-   * Opens a big dialog asking the user to provide values for a new tier.
-   * 
-   * Uses the `Dialog` class from jlab.
-   * 
-   * 
-   * @param tier 
-   */
-  openNewChildDialog(tier: ITreeData): void {
-    const body = new NewChildWidget(tier);
-    const dialog = new textAreaAbleDialog({
-      title: 'Create New Child',
-      body: body
-    });
-    dialog.launch().then(outcome => {
-      if (outcome.value) {
-        cassini.newChild(tier, outcome.value).then(
-          () => this.model.refresh()
-        )
-      }
-    });
-  }
+  
 
   render(): JSX.Element {
     const onTierSelected = (path: string[], branch: IViewable) => {
@@ -679,10 +644,10 @@ export class TierBrowser extends ReactWidget {
       this._tierLaunched.emit(branch);
     };
 
-    const onCreateChild = (tier: ITreeData) => this.openNewChildDialog(tier);
+    const onCreateChild = (tier: ITreeData) => openNewChildDialog(tier).then(() => this.model.refresh());
 
     return (
-      <div className="lm-Widget p-Widget jp-FileBrowser lm-StackedPanel-child p-StackedPanel-child">
+      <div style={{height: '100%', overflow: 'auto'}}>
         <CasSearch model={this.model}></CasSearch>
         <CassiniCrumbs
           model={this.model}

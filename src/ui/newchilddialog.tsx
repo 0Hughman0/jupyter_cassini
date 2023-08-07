@@ -1,7 +1,7 @@
 import { Widget, PanelLayout } from '@lumino/widgets';
-import { InputDialog } from '@jupyterlab/apputils'
+import { InputDialog, Dialog } from '@jupyterlab/apputils'
 
-import { ITreeData } from '../core';
+import { ITreeData, cassini } from '../core';
 import {
   InputDialogBase,
   InputTextDialog,
@@ -117,4 +117,41 @@ export class NewChildWidget extends Widget {
     values['parent'] = this.parentName;
     return values;
   }
+}
+
+
+class textAreaAbleDialog extends Dialog<any> {
+  protected _evtKeydown(event: KeyboardEvent): void {
+    switch (event.keyCode) {
+      case 13: {
+        if (document.activeElement instanceof HTMLTextAreaElement) {
+          return;
+        }
+      }
+    }
+    super._evtKeydown(event);
+  }
+}
+
+
+/**
+ * Opens a big dialog asking the user to provide values for a new tier.
+ * 
+ * Uses the `Dialog` class from jlab.
+ * 
+ * @param tier 
+ */
+export function openNewChildDialog(tier: ITreeData): Promise<ITreeData | null> {
+  const body = new NewChildWidget(tier);
+  const dialog = new textAreaAbleDialog({
+    title: 'Create New Child',
+    body: body
+  });
+  return dialog.launch().then(outcome => {
+    if (outcome.value) {
+      return cassini.newChild(tier, outcome.value)
+    } else {
+      return Promise.resolve(null)
+    }
+  });
 }

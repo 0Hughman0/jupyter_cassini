@@ -132,10 +132,12 @@ class NewChildHandler(APIHandler):
 
         child.setup_files(template)
 
-        child.description = description
+        if child.meta_file:
 
-        for k, v in data.items():
-            child.meta[k] = v
+            child.description = description
+
+            for k, v in data.items():
+                child.meta[k] = v
 
         self.finish(serialize_branch(child))
     

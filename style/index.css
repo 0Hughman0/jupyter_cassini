@@ -63,13 +63,16 @@
   position: inherit;
 }
 
+.cas-TierBrowser {
+  height: 100%;
+}
 
 .cas-tier-name {
   font-weight: bold;
 }
 
 .cas-invalid-id {
-  background-color: var(--jp-rendermime-error-background) !important;
+  background-color: var(--jp-error-color3) !important;
 }
 
 .cas-ChildrenTable-table {
@@ -81,6 +84,10 @@
   position: relative;
 }
 
+.cas-ChildrenSummaryWidget {
+  height: 100%;
+  overflow: auto;
+}
 
 .cas-table-resizer {
   position: absolute;
@@ -89,6 +96,7 @@
   height: 100%;
   cursor: col-resize;
   width: 4px;
+  background-color: white;
 }
 
 .cas-ChildrenTable-table tr:hover {
