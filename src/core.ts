@@ -58,6 +58,9 @@ export class TreeManager {
 
   private _changed = new Signal<TreeManager, {ids: string[], data: ITreeData}>(this)
 
+  /**
+   * Signal emitted whenever new data is inserted into the cache at a position ids.
+   */
   get changed(): ISignal<TreeManager, {ids: string[], data: ITreeData}> {
     return this._changed
   }
@@ -126,7 +129,7 @@ export class TreeManager {
    */
   async lookup(name: string): Promise<ITreeData | null> {
   
-    if (name in Object.keys(this.nameCache)) {
+    if (Object.keys(this.nameCache).includes(name)) {
       return Promise.resolve(this.nameCache[name]);
     }
 

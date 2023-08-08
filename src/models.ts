@@ -225,10 +225,11 @@ export class TierModel {
    * 
    */
   revert() {
-    
+    let highlightsExists: Promise<void>
+
     if (this.hltsPath && !this.hltsFile) {
       // Highlights may have been added since initialisation - so check!
-      cassini.contentService.contents.get(this.hltsPath, {content: false}).then((model) => {
+      highlightsExists = cassini.contentService.contents.get(this.hltsPath, {content: false}).then((model) => {
 
         const hltsFile = this.hltsFile = new Context({
           manager: cassini.contentService,
@@ -238,9 +239,11 @@ export class TierModel {
         
         hltsFile.initialize(false);
       }).catch(reason => reason)
+    } else {
+      highlightsExists = Promise.resolve()
     }
     
-    return Promise.all([this.metaFile?.revert(), this.hltsFile?.ready.then(() => this.hltsFile?.revert())]).then(() => {})
+    return Promise.all([this.metaFile?.revert(), highlightsExists.then(() => this.hltsFile?.ready.then(() => this.hltsFile?.revert()))]).then(() => {})
   }
 }
 
@@ -362,11 +365,6 @@ export class TierBrowserModel {
    * 
    */
   refresh(): Promise<ITreeData | null> {
-    
-    return this.treeManager.fetchTierData(this.sCurrentPath).then(() => {
-      const current = this.current;
-      this._childrenUpdated.emit(current);
-      return current;
-    });
+    return this.treeManager.fetchTierData(this.sCurrentPath)
   }
 }

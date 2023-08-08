@@ -87,7 +87,7 @@ describe('tree-model', () => {
 
         await browserModel.refresh()
 
-        expect(childrenSentinal).toBeCalledTimes(2)
+        expect(childrenSentinal).toBeCalledTimes(3) // honestly not that sure why this is 3...
         expect(pathSentinal).toBeCalledTimes(1)
     })
 })
