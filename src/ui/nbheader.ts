@@ -281,7 +281,7 @@ export class RMHeader extends Panel implements IRenderMime.IRenderer {
   }
 
   ready(): Promise<void> {
-    return this.fetchModel.then(model => model?.ready.then(() => {}));
+    return this.fetchModel.then(model => model?.ready.then());
   }
 
   get path(): string {

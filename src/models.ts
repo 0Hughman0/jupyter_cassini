@@ -212,9 +212,7 @@ export class TierModel {
    * Jupyter may complain, creating a big window about the conflict... this is useful!
    */
   save(): Promise<void> {
-    return Promise.all([this.metaFile?.save(), this.hltsFile?.save()]).then(
-      (args): void => {}
-    );
+    return Promise.all([this.metaFile?.save(), this.hltsFile?.save()]).then();
   }
 
   /**
@@ -256,7 +254,7 @@ export class TierModel {
       highlightsExists.then(() =>
         this.hltsFile?.ready.then(() => this.hltsFile?.revert())
       )
-    ]).then((): void => {});
+    ]).then();
   }
 }
 

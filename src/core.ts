@@ -95,10 +95,7 @@ export class TreeManager {
    * If not found then ITreeData will be null.
    *
    */
-  get(
-    casPath: string[],
-    forceRefresh = false
-  ): Promise<ITreeData | null> {
+  get(casPath: string[], forceRefresh = false): Promise<ITreeData | null> {
     if (forceRefresh) {
       return this.fetchTierData(casPath);
     }

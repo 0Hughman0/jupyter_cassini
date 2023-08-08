@@ -148,7 +148,7 @@ export class RenderMimeMetaEditor
    * Is the widget model ready?
    */
   ready(): Promise<void> {
-    return this.fetchModel.then(model => model?.ready.then((): void => {}));
+    return this.fetchModel.then(model => model?.ready.then());
   }
 
   get path(): string {
