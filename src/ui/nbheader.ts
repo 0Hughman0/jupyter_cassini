@@ -1,8 +1,8 @@
 import { BoxPanel, Panel, Widget, SplitPanel } from '@lumino/widgets';
 
-import { INotebookModel, NotebookPanel } from "@jupyterlab/notebook";
-import { DocumentRegistry } from "@jupyterlab/docregistry";
-import { IRenderMime } from '@jupyterlab/rendermime-interfaces'
+import { INotebookModel, NotebookPanel } from '@jupyterlab/notebook';
+import { DocumentRegistry } from '@jupyterlab/docregistry';
+import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
 import { RenderMimeRegistry } from '@jupyterlab/rendermime';
 import { PathExt } from '@jupyterlab/coreutils';
 import { Toolbar, ToolbarButton } from '@jupyterlab/ui-components';
@@ -11,16 +11,18 @@ import { treeViewIcon } from '@jupyterlab/ui-components';
 import { ITreeChildData, ITreeData, cassini } from '../core';
 import { MarkdownEditor } from './tierviewer';
 import { TierModel } from '../models';
-import { ChildrenSummaryWidget, ChildrenSummaryRow } from './nbheadercomponents';
-
+import {
+  ChildrenSummaryWidget,
+  ChildrenSummaryRow
+} from './nbheadercomponents';
 
 /**
  * Additional toolbar to insert at the top of notebooks that correspond to tiers.
- * 
+ *
  * Currently just provides a button for showing the tier in the browser.
- * 
- * Also indicates the 'dirty' status of the TierModel with a lil' asterix. 
- * 
+ *
+ * Also indicates the 'dirty' status of the TierModel with a lil' asterix.
+ *
  * Saving is bolted onto the notebook save... which I think is smart but maybe isn't(?)
  */
 export class TierNotebookHeaderTB extends BoxPanel {
@@ -31,60 +33,63 @@ export class TierNotebookHeaderTB extends BoxPanel {
   constructor(tierInfo: ITreeData) {
     super();
 
-    this.addClass('cas-TierNotebookHeader')
-    
-    const toolbar = this.toolbar = new Toolbar();
+    this.addClass('cas-TierNotebookHeader');
 
-    this.model = cassini.tierModelManager.get(tierInfo.name)(tierInfo)
+    const toolbar = (this.toolbar = new Toolbar());
 
-    const nameLabel = this.nameLabel= new Widget()
-    nameLabel.node.textContent = this.model.name
+    this.model = cassini.tierModelManager.get(tierInfo.name)(tierInfo);
+
+    const nameLabel = (this.nameLabel = new Widget());
+    nameLabel.node.textContent = this.model.name;
 
     toolbar.addItem('name', nameLabel);
-    
-    const started = new Widget()
-    started.node.textContent = this.model.started?.toLocaleDateString() && ''
+
+    const started = new Widget();
+    started.node.textContent = this.model.started?.toLocaleDateString() && '';
 
     toolbar.addItem('started', started);
 
     const showInBrowserButton = new ToolbarButton({
       icon: treeViewIcon,
       onClick: () => {
-        this.showInBrowser()
+        this.showInBrowser();
       },
       tooltip: `Show ${this.model.name} in browser`
-    })
+    });
 
     toolbar.addItem('show in browser', showInBrowserButton);
 
     this.addWidget(toolbar);
-    BoxPanel.setStretch(toolbar, 0)
-    
-    this.model.changed.connect(() => this.onContentChanged())
+    BoxPanel.setStretch(toolbar, 0);
+
+    this.model.changed.connect(() => this.onContentChanged());
   }
 
   /**
-   * 
+   *
    * @param panel Notebook panel to attach the widget to
    * @param context The context for that panel. Name from the path is used to fetch the tier model (same as editor and header mimes)
-   * @returns 
+   * @returns
    */
-  static attachToNotebook(panel: NotebookPanel, context: DocumentRegistry.IContext<INotebookModel>): Promise<TierNotebookHeaderTB | undefined> {
+  static attachToNotebook(
+    panel: NotebookPanel,
+    context: DocumentRegistry.IContext<INotebookModel>
+  ): Promise<TierNotebookHeaderTB | undefined> {
     const tierName = PathExt.basename(context.path, '.ipynb');
 
     return cassini.treeManager.lookup(tierName).then(tierInfo => {
       if (tierInfo) {
         const widget = new TierNotebookHeaderTB(tierInfo);
-        
-        panel.contentHeader.addWidget(widget)
-        
+
+        panel.contentHeader.addWidget(widget);
+
         context.saveState.connect((sender, state) => {
-          if (state == "started") {
+          if (state === 'started') {
             widget.model.save();
           }
-        })
+        });
 
-        return widget
+        return widget;
       }
     });
   }
@@ -93,7 +98,7 @@ export class TierNotebookHeaderTB extends BoxPanel {
    * Show the tier this notebook corresponds to in the browser
    */
   showInBrowser() {
-    cassini.launchTierBrowser(this.model.identifiers)
+    cassini.launchTierBrowser(this.model.identifiers);
   }
 
   /**
@@ -101,19 +106,18 @@ export class TierNotebookHeaderTB extends BoxPanel {
    */
   onContentChanged() {
     if (this.model.dirty) {
-      this.nameLabel.node.textContent = this.model.name + '*'
+      this.nameLabel.node.textContent = this.model.name + '*';
     } else {
-      this.nameLabel.node.textContent = this.model.name
+      this.nameLabel.node.textContent = this.model.name;
     }
   }
 }
 
-
 /**
  * Widget to go at the top of notebooks, allowing for editing and nice rendering of conclusion and description.
- * 
- * Also has table of children, this is useful for opening datasets. 
- * 
+ *
+ * Also has table of children, this is useful for opening datasets.
+ *
  * TODO add a new child button to the childrenTable.
  */
 export class TierNotebookHeader extends Panel {
@@ -121,110 +125,133 @@ export class TierNotebookHeader extends Panel {
   model: TierModel;
   content: SplitPanel;
 
-  descriptionEditor: MarkdownEditor
-  conclusionEditor: MarkdownEditor
+  descriptionEditor: MarkdownEditor;
+  conclusionEditor: MarkdownEditor;
   childrenSummary: ChildrenSummaryWidget;
 
   constructor(tierInfo: ITreeData) {
     super();
 
-    this.addClass('cas-TierNotebookHeader')
+    this.addClass('cas-TierNotebookHeader');
 
-    this.model = cassini.tierModelManager.get(tierInfo.name)(tierInfo)
+    this.model = cassini.tierModelManager.get(tierInfo.name)(tierInfo);
 
-    const title = document.createElement('h1')
-    title.textContent = this.model.name
-    
-    this.addWidget(new Widget({node: title}))
+    const title = document.createElement('h1');
+    title.textContent = this.model.name;
 
-    const content = this.content = new SplitPanel()
-    content.addClass('cas-TierNotebookHeader-content')
+    this.addWidget(new Widget({ node: title }));
 
-    const descriptionBox = new Panel()
-    descriptionBox.addClass('cas-TierNotebookHeader-content-child')
-    
-    const descriptionLabel = document.createElement('h3')
-    descriptionLabel.textContent = "Description"
-    descriptionBox.addWidget(new Widget( {node: descriptionLabel }))
-    
-    const descriptionEditor = this.descriptionEditor = new MarkdownEditor(this.model.description, true, (description) => {this.model.description = description})
-    descriptionBox.addWidget(descriptionEditor)
+    const content = (this.content = new SplitPanel());
+    content.addClass('cas-TierNotebookHeader-content');
 
-    content.addWidget(descriptionBox)
+    const descriptionBox = new Panel();
+    descriptionBox.addClass('cas-TierNotebookHeader-content-child');
 
-    const conclusionBox = new Panel()
-    conclusionBox.addClass('cas-TierNotebookHeader-content-child')
-    
-    const conclusionLabel = document.createElement('h3')
-    conclusionLabel.textContent = "Conclusion"
-    conclusionBox.addWidget(new Widget( {node: conclusionLabel} ))
+    const descriptionLabel = document.createElement('h3');
+    descriptionLabel.textContent = 'Description';
+    descriptionBox.addWidget(new Widget({ node: descriptionLabel }));
 
-    const conclusionEditor = this.conclusionEditor = new MarkdownEditor(this.model.conclusion, true, (conclusion) => {this.model.conclusion = conclusion})
-    conclusionBox.addWidget(conclusionEditor)
+    const descriptionEditor = (this.descriptionEditor = new MarkdownEditor(
+      this.model.description,
+      true,
+      description => {
+        this.model.description = description;
+      }
+    ));
+    descriptionBox.addWidget(descriptionEditor);
 
-    content.addWidget(conclusionBox)
+    content.addWidget(descriptionBox);
 
-    this.addWidget(content)
+    const conclusionBox = new Panel();
+    conclusionBox.addClass('cas-TierNotebookHeader-content-child');
 
-    const childrenBox = new Panel()
-    childrenBox.addClass('cas-TierNotebookHeader-content-child')
-    
-    const childrenLabel = document.createElement('h3')
-    childrenLabel.textContent = "Children"
-    childrenBox.addWidget(new Widget ({node: childrenLabel}))
+    const conclusionLabel = document.createElement('h3');
+    conclusionLabel.textContent = 'Conclusion';
+    conclusionBox.addWidget(new Widget({ node: conclusionLabel }));
 
-    const getChildData = TierNotebookHeader._childrenToData(this.model.children)
-    
+    const conclusionEditor = (this.conclusionEditor = new MarkdownEditor(
+      this.model.conclusion,
+      true,
+      conclusion => {
+        this.model.conclusion = conclusion;
+      }
+    ));
+    conclusionBox.addWidget(conclusionEditor);
+
+    content.addWidget(conclusionBox);
+
+    this.addWidget(content);
+
+    const childrenBox = new Panel();
+    childrenBox.addClass('cas-TierNotebookHeader-content-child');
+
+    const childrenLabel = document.createElement('h3');
+    childrenLabel.textContent = 'Children';
+    childrenBox.addWidget(new Widget({ node: childrenLabel }));
+
+    const getChildData = TierNotebookHeader._childrenToData(
+      this.model.children
+    );
+
     getChildData.then(data => {
-      const childrenSummary = this.childrenSummary = new ChildrenSummaryWidget(data, 
-        (id) => {
-          cassini.treeManager.get([...this.model.identifiers, id]).then((data) => data && cassini.launchTier(data))
+      const childrenSummary = (this.childrenSummary = new ChildrenSummaryWidget(
+        data,
+        id => {
+          cassini.treeManager
+            .get([...this.model.identifiers, id])
+            .then(data => data && cassini.launchTier(data));
         },
-        (id) => {
-          cassini.launchTierBrowser([...this.model.identifiers, id])
+        id => {
+          cassini.launchTierBrowser([...this.model.identifiers, id]);
         }
-      )
+      ));
 
-      childrenBox.addWidget(childrenSummary)
+      childrenBox.addWidget(childrenSummary);
 
-      content.addWidget(childrenBox)
-    })
-    
-    this.model.changed.connect(() => this.onContentChanged())
-    this.model.ready.then(() => this.onContentChanged())
+      content.addWidget(childrenBox);
+    });
+
+    this.model.changed.connect(() => this.onContentChanged());
+    this.model.ready.then(() => this.onContentChanged());
   }
 
-  static _childrenToData(children: Promise<{[id: string]: ITreeChildData } | null>): Promise<ChildrenSummaryRow[]> {    
+  static _childrenToData(
+    children: Promise<{ [id: string]: ITreeChildData } | null>
+  ): Promise<ChildrenSummaryRow[]> {
     return children.then(children => {
       if (children) {
-        return Object.entries(children).map(data => {return {name: data[1].name, id: data[0]}})
+        return Object.entries(children).map(data => {
+          return { name: data[1].name, id: data[0] };
+        });
       } else {
-        return []
+        return [];
       }
-    })
+    });
   }
 
   showInBrowser() {
-    cassini.launchTierBrowser(this.model.identifiers)
+    cassini.launchTierBrowser(this.model.identifiers);
   }
 
   /**
    * Update content of the widget when the model changes
    */
   onContentChanged() {
-    this.descriptionEditor.source = this.model.description
-    this.conclusionEditor.source = this.model.conclusion
-    const getChildData = TierNotebookHeader._childrenToData(this.model.children)
-    getChildData.then(data => {this.childrenSummary.data = data})
+    this.descriptionEditor.source = this.model.description;
+    this.conclusionEditor.source = this.model.conclusion;
+    const getChildData = TierNotebookHeader._childrenToData(
+      this.model.children
+    );
+    getChildData.then(data => {
+      this.childrenSummary.data = data;
+    });
   }
 }
 
 /**
  * Wrapper of the TierNotebookHeader widget that works as a mimetype renderer.
  */
-export class RMHeader
-  extends Panel
-  implements IRenderMime.IRenderer {
+export class RMHeader extends Panel implements IRenderMime.IRenderer {
   /**
    * Construct a new output widget.
    */
@@ -245,12 +272,12 @@ export class RMHeader
         return;
       }
 
-      this.addWidget(new TierNotebookHeader(tierInfo))
-      
+      this.addWidget(new TierNotebookHeader(tierInfo));
+
       this.tierModel = cassini.tierModelManager.get(tierInfo.name)(tierInfo);
-      
-      return this.tierModel
-    })
+
+      return this.tierModel;
+    });
   }
 
   ready(): Promise<void> {
@@ -266,7 +293,7 @@ export class RMHeader
   }
 
   renderModel(model: IRenderMime.IMimeModel): Promise<void> {
-    this._mimeType
+    this._mimeType;
     // mimedata seems to have to be an Object, or it won't be save properly
     return Promise.resolve();
   }

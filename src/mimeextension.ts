@@ -14,8 +14,8 @@ namespace RenderMimeMetaEditor {
 }
 
 /**
- * Adds a new rendermime render for application/cassini.metaeditor+json 
- * 
+ * Adds a new rendermime render for application/cassini.metaeditor+json
+ *
  * Which creates a MetaEditorWidget.
  */
 const rmMetaEditorExtension: IRenderMime.IExtension = {
@@ -23,7 +23,6 @@ const rmMetaEditorExtension: IRenderMime.IExtension = {
   rendererFactory: RenderMimeMetaEditor.rendererFactory,
   dataType: 'json'
 };
-
 
 namespace RenderMimeHeader {
   export const MIME_TYPE = 'application/cassini.header+json'; // need the +json or technically invalid!
@@ -36,8 +35,8 @@ namespace RenderMimeHeader {
 }
 
 /**
- * Adds a new rendermime renderer for application/cassini.header+json 
- * 
+ * Adds a new rendermime renderer for application/cassini.header+json
+ *
  * Which creates a TierHeader widget.
  */
 const rmHeaderExtension: IRenderMime.IExtension = {
@@ -45,6 +44,5 @@ const rmHeaderExtension: IRenderMime.IExtension = {
   rendererFactory: RenderMimeHeader.rendererFactory,
   dataType: 'json'
 };
-
 
 export default [rmMetaEditorExtension, rmHeaderExtension];

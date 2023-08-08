@@ -6,7 +6,6 @@ import { expect, test } from '@jupyterlab/galata';
  */
 test.use({ autoGoto: false });
 
-
 test('Extension activates', async ({ page }) => {
   const logs: string[] = [];
 
@@ -25,14 +24,12 @@ test('Extension activates', async ({ page }) => {
   ).toHaveLength(1);
 });
 
-
 test('Launcher Available', async ({ page }) => {
   await page.goto('http://localhost:8888/lab?');
   const launcherButton = await page.getByLabel('Launcher').getByText('Browser'); // fails if two launchers are open!
   expect(launcherButton).toBeVisible();
   await launcherButton.click();
 });
-
 
 async function createNewChild(page) {
   await page.getByRole('button', { name: 'Create new child of Home' }).click();
@@ -50,34 +47,43 @@ test.describe('Cassini-Browser', async () => {
   });
 
   test('browser-loaded', async ({ page }) => {
-    
     const searchBox = await page.getByPlaceholder('Search by name');
-    expect(searchBox).toBeVisible()
+    expect(searchBox).toBeVisible();
 
     const homeButton = await page.getByRole('button', { name: 'Go Home' });
-    expect(homeButton).toBeVisible()
+    expect(homeButton).toBeVisible();
 
-    const currentTierName = await page.locator('span').filter({ hasText: /^Home$/ });
-    expect(currentTierName).toBeVisible()
-    
+    const currentTierName = await page
+      .locator('span')
+      .filter({ hasText: /^Home$/ });
+    expect(currentTierName).toBeVisible();
+
     const childTableHeading = await page.getByRole('heading', { name: 'Home' });
-    expect(childTableHeading).toBeVisible()    
-  })
+    expect(childTableHeading).toBeVisible();
+  });
 
   test('previewer-loaded', async ({ page }) => {
-    await expect(page.getByRole('button', { name: 'Save changes to disk' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Fetch from disk' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Open Home' }).nth(1)).toBeVisible()
-  })
+    await expect(
+      page.getByRole('button', { name: 'Save changes to disk' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Fetch from disk' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Open Home' }).nth(1)
+    ).toBeVisible();
+  });
 
   test('create-child', async ({ page }) => {
     // create new child
-    await createNewChild(page)
-    
+    await createNewChild(page);
+
     // await page.goto('http://localhost:8888/lab');
 
     // check new child in table
-    expect(await page.getByRole('cell', { name: 'WP1', exact: true })).toBeVisible();
+    expect(
+      await page.getByRole('cell', { name: 'WP1', exact: true })
+    ).toBeVisible();
 
     // check loading child in preview
     await page.getByRole('button', { name: 'Preview WP1' }).click();
@@ -86,39 +92,46 @@ test.describe('Cassini-Browser', async () => {
 
     // check notebook openable
     await page.getByRole('button', { name: 'Open WP1' }).nth(1).click();
-    
+
     // check notebook opened
-    await page.getByLabel('WP1.ipynb').getByText('WP1', { exact: true }).nth(1).click();
+    await page
+      .getByLabel('WP1.ipynb')
+      .getByText('WP1', { exact: true })
+      .nth(1)
+      .click();
 
     // check heading back to browser
     await page.getByRole('tab', { name: 'Launcher' }).click();
     await page.getByLabel('Launcher').getByText('Browser').click();
-    expect(await page.getByRole('tabpanel').getByText('WP1')).toBeVisible()
-
-    
-  })
+    expect(await page.getByRole('tabpanel').getByText('WP1')).toBeVisible();
+  });
 
   test('highlights', async ({ page }) => {
     // create new child
-    await createNewChild(page)
+    await createNewChild(page);
 
     // check notebook openable
     await page.getByRole('button', { name: 'Open WP1' }).click();
-    
-    await page.notebook.runCell(0)
 
-    await page.getByLabel('Code Cell Content', { exact: true }).getByRole('textbox').fill('%%hlt Hlt Test Title\n\n\nprint("Hlt Test Content")\n\n\n"""\nHlt Test label\n"""');
-    await page.notebook.runCell(1)
-    await page.notebook.waitForRun(1)
+    await page.notebook.runCell(0);
 
-    console.log("It exists")
-    console.log(await page.contents.fileExists('WorkPackages/.wps/WP1.hlts'))
-    
+    await page
+      .getByLabel('Code Cell Content', { exact: true })
+      .getByRole('textbox')
+      .fill(
+        '%%hlt Hlt Test Title\n\n\nprint("Hlt Test Content")\n\n\n"""\nHlt Test label\n"""'
+      );
+    await page.notebook.runCell(1);
+    await page.notebook.waitForRun(1);
+
+    console.log('It exists');
+    console.log(await page.contents.fileExists('WorkPackages/.wps/WP1.hlts'));
+
     await page.getByRole('button', { name: 'Show WP1 in browser' }).click();
 
     await page.getByRole('button', { name: 'Fetch from disk' }).click();
     await page.getByRole('button', { name: 'Fetch from disk' }).click(); // not sure why needed
 
     await page.getByRole('heading', { name: 'Hlt Test Title' }).click();
-  })
+  });
 });

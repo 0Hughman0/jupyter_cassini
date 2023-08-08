@@ -1,1 +1,24 @@
-{"name": "WP1.1", "folder": "WorkPackages/WP1/WP1.1", "metaPath": "WorkPackages/WP1/.exps/WP1.1.json", "additionalMeta": {}, "info": "Asdfdf dfgf", "started": "2023-07-30T00:00:00", "hltsPath": "WorkPackages/WP1/.exps/WP1.1.hlts", "notebookPath": "WorkPackages/WP1/WP1.1.ipynb", "children": {"a": {"name": "WP1.1a", "folder": "WorkPackages/WP1/WP1.1", "metaPath": "WorkPackages/WP1/WP1.1/.smpls/WP1.1a.json", "additionalMeta": {}, "info": "It's a", "started": "2023-08-01T00:00:00", "hltsPath": "WorkPackages/WP1/WP1.1/.smpls/WP1.1a.hlts", "notebookPath": "WorkPackages/WP1/WP1.1/WP1.1a.ipynb"}}, "childMetas": [], "childTemplates": ["Sample.tmplt.ipynb"]}
+{
+  "name": "WP1.1",
+  "folder": "WorkPackages/WP1/WP1.1",
+  "metaPath": "WorkPackages/WP1/.exps/WP1.1.json",
+  "additionalMeta": {},
+  "info": "Asdfdf dfgf",
+  "started": "2023-07-30T00:00:00",
+  "hltsPath": "WorkPackages/WP1/.exps/WP1.1.hlts",
+  "notebookPath": "WorkPackages/WP1/WP1.1.ipynb",
+  "children": {
+    "a": {
+      "name": "WP1.1a",
+      "folder": "WorkPackages/WP1/WP1.1",
+      "metaPath": "WorkPackages/WP1/WP1.1/.smpls/WP1.1a.json",
+      "additionalMeta": {},
+      "info": "It's a",
+      "started": "2023-08-01T00:00:00",
+      "hltsPath": "WorkPackages/WP1/WP1.1/.smpls/WP1.1a.hlts",
+      "notebookPath": "WorkPackages/WP1/WP1.1/WP1.1a.ipynb"
+    }
+  },
+  "childMetas": [],
+  "childTemplates": ["Sample.tmplt.ipynb"]
+}

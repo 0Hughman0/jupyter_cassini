@@ -1,94 +1,115 @@
 import { TierBrowserModel, TierModel } from '../models';
-import { createTierFiles, mockServer, TEST_HLT_CONTENT, TEST_META_CONTENT } from './tools'
+import {
+  createTierFiles,
+  mockServer,
+  TEST_HLT_CONTENT,
+  TEST_META_CONTENT
+} from './tools';
 
-import 'jest'
+import 'jest';
 
 describe('tier-model', () => {
-    let metaFile: any;
-    let hltsFile: any;
+  let metaFile: any;
+  let hltsFile: any;
 
-    beforeEach(async () => {
-        ({ metaFile, hltsFile } = await createTierFiles(TEST_META_CONTENT, TEST_HLT_CONTENT))
-    })
-    
-    test('model-ready-no-hlts', async () => {
-        const tier = new TierModel({name: 'WP1', identifiers: ['1'], metaPath: metaFile.path})
-        expect(tier.metaFile?.isReady).toBe(false)
+  beforeEach(async () => {
+    ({ metaFile, hltsFile } = await createTierFiles(
+      TEST_META_CONTENT,
+      TEST_HLT_CONTENT
+    ));
+  });
 
-        expect(tier.description).toBe('')
+  test('model-ready-no-hlts', async () => {
+    const tier = new TierModel({
+      name: 'WP1',
+      identifiers: ['1'],
+      metaPath: metaFile.path
+    });
+    expect(tier.metaFile?.isReady).toBe(false);
 
-        await tier.ready
+    expect(tier.description).toBe('');
 
-        expect(tier.metaFile?.isReady).toBe(true)
+    await tier.ready;
 
-        expect(tier.description).toBe(TEST_META_CONTENT.description)
-    })
+    expect(tier.metaFile?.isReady).toBe(true);
 
-    test('model-ready-hlts', async () => {
-        const tier = new TierModel({name: 'WP1', identifiers: ['1'], metaPath: metaFile.path, hltsPath: hltsFile.path})
-        expect(tier.metaFile?.isReady).toBe(false)
-        // expect(tier.hltsFile?.isReady).toBe(false) // doesn't work because hlts file is set in a callback... hmmm
+    expect(tier.description).toBe(TEST_META_CONTENT.description);
+  });
 
-        expect(tier.description).toBe('')
-        expect(tier.hltsOutputs).toEqual([])
+  test('model-ready-hlts', async () => {
+    const tier = new TierModel({
+      name: 'WP1',
+      identifiers: ['1'],
+      metaPath: metaFile.path,
+      hltsPath: hltsFile.path
+    });
+    expect(tier.metaFile?.isReady).toBe(false);
+    // expect(tier.hltsFile?.isReady).toBe(false) // doesn't work because hlts file is set in a callback... hmmm
 
-        await tier.ready
+    expect(tier.description).toBe('');
+    expect(tier.hltsOutputs).toEqual([]);
 
-        expect(tier.metaFile?.isReady).toBe(true)
-        expect(tier.hltsFile?.isReady).toBe(true)
-        
-        expect(tier.description).toBe(TEST_META_CONTENT.description)
-        expect(tier.hltsOutputs).not.toEqual([])
-    })
+    await tier.ready;
 
-    test('changed', async () => {
-        const tier = await new TierModel({name: 'WP1', identifiers: ['1'], metaPath: metaFile.path, hltsPath: hltsFile.path}).ready
-        const sentinal = jest.fn()
-        
-        tier.changed.connect(sentinal)
+    expect(tier.metaFile?.isReady).toBe(true);
+    expect(tier.hltsFile?.isReady).toBe(true);
 
-        tier.description = "new value"
+    expect(tier.description).toBe(TEST_META_CONTENT.description);
+    expect(tier.hltsOutputs).not.toEqual([]);
+  });
 
-        expect(sentinal).toBeCalledTimes(1)
+  test('changed', async () => {
+    const tier = await new TierModel({
+      name: 'WP1',
+      identifiers: ['1'],
+      metaPath: metaFile.path,
+      hltsPath: hltsFile.path
+    }).ready;
+    const sentinal = jest.fn();
 
-        tier.hltsFile?.model.fromJSON({})
+    tier.changed.connect(sentinal);
 
-        expect(sentinal).toBeCalledTimes(2) 
+    tier.description = 'new value';
 
-        await tier.revert()
+    expect(sentinal).toBeCalledTimes(1);
 
-        expect(sentinal).toBeCalledTimes(4) // called twice one, for each model
+    tier.hltsFile?.model.fromJSON({});
 
-        await tier.save()
+    expect(sentinal).toBeCalledTimes(2);
 
-        expect(sentinal).toBeCalledTimes(6) // apparently saving causes an update(?)
-    })
-})
+    await tier.revert();
+
+    expect(sentinal).toBeCalledTimes(4); // called twice one, for each model
+
+    await tier.save();
+
+    expect(sentinal).toBeCalledTimes(6); // apparently saving causes an update(?)
+  });
+});
 
 describe('tree-model', () => {
-    beforeEach(() => {
-        mockServer()
-    })
+  beforeEach(() => {
+    mockServer();
+  });
 
-    test('currentPath', async () => {
-        const browserModel = new TierBrowserModel()
-        
-        const childrenSentinal = jest.fn()
-        browserModel.childrenUpdated.connect(childrenSentinal)
+  test('currentPath', async () => {
+    const browserModel = new TierBrowserModel();
 
-        const pathSentinal = jest.fn()
+    const childrenSentinal = jest.fn();
+    browserModel.childrenUpdated.connect(childrenSentinal);
 
-        browserModel.currentPath.changed.connect(pathSentinal)
+    const pathSentinal = jest.fn();
 
-        browserModel.currentPath.push('1')
+    browserModel.currentPath.changed.connect(pathSentinal);
 
-        expect(pathSentinal).toBeCalledTimes(1)
-        expect(childrenSentinal).toBeCalledTimes(1)
+    browserModel.currentPath.push('1');
 
-        await browserModel.refresh()
+    expect(pathSentinal).toBeCalledTimes(1);
+    expect(childrenSentinal).toBeCalledTimes(1);
 
-        expect(childrenSentinal).toBeCalledTimes(3) // honestly not that sure why this is 3...
-        expect(pathSentinal).toBeCalledTimes(1)
-    })
-})
+    await browserModel.refresh();
 
+    expect(childrenSentinal).toBeCalledTimes(3); // honestly not that sure why this is 3...
+    expect(pathSentinal).toBeCalledTimes(1);
+  });
+});

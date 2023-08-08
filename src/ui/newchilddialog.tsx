@@ -1,5 +1,5 @@
 import { Widget, PanelLayout } from '@lumino/widgets';
-import { InputDialog, Dialog } from '@jupyterlab/apputils'
+import { InputDialog, Dialog } from '@jupyterlab/apputils';
 
 import { ITreeData, cassini } from '../core';
 import {
@@ -10,9 +10,8 @@ import {
   InputNumberDialog
 } from './dialogwidgets';
 
-
 export interface IIdDialogOptions extends InputDialog.ITextOptions {
-  idRegex: string
+  idRegex: string;
 }
 
 /**
@@ -22,19 +21,19 @@ export class IdDialog extends InputTextDialog {
   idRegex: RegExp;
 
   constructor(options: IIdDialogOptions) {
-    super(options)
-    this.idRegex = new RegExp(`^${options.idRegex}$`)
+    super(options);
+    this.idRegex = new RegExp(`^${options.idRegex}$`);
 
-    this._input.addEventListener('input', this.validateInput.bind(this))
+    this._input.addEventListener('input', this.validateInput.bind(this));
   }
 
   validateInput(): void {
-    const id = this._input.value
+    const id = this._input.value;
 
     if (id && !this.idRegex.test(id)) {
-      this._input.classList.add('cas-invalid-id')
+      this._input.classList.add('cas-invalid-id');
     } else {
-      this._input.classList.remove('cas-invalid-id')
+      this._input.classList.remove('cas-invalid-id');
     }
   }
 }
@@ -51,7 +50,7 @@ export class NewChildWidget extends Widget {
 
   metaInputs: (InputTextDialog | InputNumberDialog)[];
 
-  subInputs: { [name: string]: InputDialogBase<any>; };
+  subInputs: { [name: string]: InputDialogBase<any> };
 
   constructor(tier: ITreeData) {
     super();
@@ -79,7 +78,8 @@ export class NewChildWidget extends Widget {
       template: templateSelector
     };
 
-    const metaInputs: (InputTextDialog | InputNumberDialog)[] = (this.metaInputs = []);
+    const metaInputs: (InputTextDialog | InputNumberDialog)[] =
+      (this.metaInputs = []);
 
     layout.addWidget(identifierInput);
     layout.addWidget(descriptionInput);
@@ -92,7 +92,7 @@ export class NewChildWidget extends Widget {
     for (const additionalMeta of tier.childMetas) {
       let input;
 
-      if (typeof additionalMeta == 'string') {
+      if (typeof additionalMeta === 'string') {
         input = new InputTextDialog({ title: '', label: additionalMeta });
       } else {
         input = new InputNumberDialog({ title: '', label: additionalMeta });
@@ -110,7 +110,7 @@ export class NewChildWidget extends Widget {
    * @returns
    */
   getValue() {
-    const values: { [name: string]: any; } = {};
+    const values: { [name: string]: any } = {};
     for (const name in this.subInputs) {
       values[name] = this.subInputs[name].getValue();
     }
@@ -118,7 +118,6 @@ export class NewChildWidget extends Widget {
     return values;
   }
 }
-
 
 class textAreaAbleDialog extends Dialog<any> {
   protected _evtKeydown(event: KeyboardEvent): void {
@@ -133,13 +132,12 @@ class textAreaAbleDialog extends Dialog<any> {
   }
 }
 
-
 /**
  * Opens a big dialog asking the user to provide values for a new tier.
- * 
+ *
  * Uses the `Dialog` class from jlab.
- * 
- * @param tier 
+ *
+ * @param tier
  */
 export function openNewChildDialog(tier: ITreeData): Promise<ITreeData | null> {
   const body = new NewChildWidget(tier);
@@ -149,9 +147,9 @@ export function openNewChildDialog(tier: ITreeData): Promise<ITreeData | null> {
   });
   return dialog.launch().then(outcome => {
     if (outcome.value) {
-      return cassini.newChild(tier, outcome.value)
+      return cassini.newChild(tier, outcome.value);
     } else {
-      return Promise.resolve(null)
+      return Promise.resolve(null);
     }
   });
 }

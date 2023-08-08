@@ -36,7 +36,6 @@ import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
 import { openNewChildDialog } from './newchilddialog';
 
-
 interface IBrowserProps {
   model: TierBrowserModel;
   onTierSelected: (casPath: string[], tierData: IViewable) => void;
@@ -52,8 +51,8 @@ interface IBrowserState {
 
 /**
  * Widget for navigating the tier tree. Wraps the ChildrenTable
- * 
- *  
+ *
+ *
  */
 export class BrowserComponent extends React.Component<
   IBrowserProps,
@@ -72,21 +71,21 @@ export class BrowserComponent extends React.Component<
 
     const setState = this.setState.bind(this);
 
-    this.props.model.childrenUpdated.connect((model) => {
+    this.props.model.childrenUpdated.connect(model => {
       this.props.model
         .getChildren()
-        .then(children => setState({ children: children }))
+        .then(children => setState({ children: children }));
       this.props.model.current.then(tierData => {
-          setState({ childMetas: tierData?.childMetas || [] });
-          setState({ additionalColumns: props.model.additionalColumns });
-        })
+        setState({ childMetas: tierData?.childMetas || [] });
+        setState({ additionalColumns: props.model.additionalColumns });
+      });
     });
   }
 
   /**
    * Opens a right click menu to modify the additional columns in the table.
-   * @param event 
-   * @returns 
+   * @param event
+   * @returns
    */
   openContextMenu(event: React.MouseEvent | null): void {
     const allColumns = new Set([
@@ -145,7 +144,7 @@ export class BrowserComponent extends React.Component<
   render(): JSX.Element {
     const onTierSelected = this.props.onTierSelected;
     const onTierLaunched = this.props.onTierLaunched;
-    const onCreateChild = this.props.onCreateChild
+    const onCreateChild = this.props.onCreateChild;
     const openContextMenu = this.openContextMenu.bind(this);
 
     const additionalColumns = this.state.additionalColumns;
@@ -172,11 +171,11 @@ export interface ICasSearchProps {
 
 /**
  * Widget for searching through tiers. Currently can only get a tier by name.
- * 
+ *
  * Would like to be able to do more.
- * 
- * @param props 
- * @returns 
+ *
+ * @param props
+ * @returns
  */
 const CasSearch = (props: ICasSearchProps) => {
   const [query, setQuery] = useState('');
@@ -205,7 +204,6 @@ const CasSearch = (props: ICasSearchProps) => {
     />
   );
 };
-
 
 interface ICrumbsProps {
   model: TierBrowserModel;
@@ -261,22 +259,23 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps, ICrumbsState> {
       );
     }
     return (
-      <div className='cas-CassiniCrumbs-box'>
+      <div className="cas-CassiniCrumbs-box">
         <div className="jp-BreadCrumbs jp-FileBrowser-crumbs cas-CassiniCrumbs-row">
-          <span className='jp-BreadCrumbs-home'>
-            <ToolbarButtonComponent 
-              icon={homeIcon} 
+          <span className="jp-BreadCrumbs-home">
+            <ToolbarButtonComponent
+              icon={homeIcon}
               onClick={() => path.clear()}
-              tooltip='Go Home'/>
+              tooltip="Go Home"
+            />
           </span>
           <span>/</span>
           {elements}
-          <div className='cas-icon-area'>
+          <div className="cas-icon-area">
             <span onClick={() => refresh()}>
-              <ToolbarButtonComponent 
-                icon={refreshIcon} 
+              <ToolbarButtonComponent
+                icon={refreshIcon}
                 onClick={() => refresh()}
-                tooltip='Refresh tree (will fetch changes from server)'
+                tooltip="Refresh tree (will fetch changes from server)"
               />
             </span>
           </div>
@@ -285,33 +284,33 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps, ICrumbsState> {
           <span className="cas-tier-name">{tier?.name}</span>
           <span>/</span>
           <span>
-            <ToolbarButtonComponent 
-            icon={addIcon} 
-            className="jp-BreadCrumbs-home jp-ToolbarButtonComponent-icon" 
-            onClick={() => {
-              tier && onCreateChild(tier);
-            }}
-            tooltip={`Add new child of ${tier?.name}`}
+            <ToolbarButtonComponent
+              icon={addIcon}
+              className="jp-BreadCrumbs-home jp-ToolbarButtonComponent-icon"
+              onClick={() => {
+                tier && onCreateChild(tier);
+              }}
+              tooltip={`Add new child of ${tier?.name}`}
             />
           </span>
-          <div className='cas-icon-area'>
-              <ToolbarButtonComponent 
-                icon={launcherIcon} 
-                className="jp-BreadCrumbs-home jp-ToolbarButtonComponent-icon" 
-                onClick={() => {
-                  tier && onTierLaunched(tier);
-                }}
-                tooltip={`Open ${tier?.name}`}
-                />
+          <div className="cas-icon-area">
+            <ToolbarButtonComponent
+              icon={launcherIcon}
+              className="jp-BreadCrumbs-home jp-ToolbarButtonComponent-icon"
+              onClick={() => {
+                tier && onTierLaunched(tier);
+              }}
+              tooltip={`Open ${tier?.name}`}
+            />
             <span>
-              <ToolbarButtonComponent 
-                icon={caretRightIcon} 
-                className="jp-BreadCrumbs-home jp-ToolbarButtonComponent-icon" 
+              <ToolbarButtonComponent
+                icon={caretRightIcon}
+                className="jp-BreadCrumbs-home jp-ToolbarButtonComponent-icon"
                 onClick={() => {
                   tier && onTierSelected([...path], tier);
                 }}
                 tooltip={`Preview ${tier?.name}`}
-                />
+              />
             </span>
           </div>
         </div>
@@ -335,20 +334,20 @@ export interface IChildrenState {
 }
 
 /**
- * Component that renders a tiers children. 
- * @param props 
- * @returns 
+ * Component that renders a tiers children.
+ * @param props
+ * @returns
  */
 function ChildrenTable(props: IChildrenTableProps) {
-  const model = props.model
+  const model = props.model;
   const onTierLaunched = props.onTierLaunched;
   const onTierSelected = props.onTierSelected;
   const onCreateChild = props.onCreateChild;
-  
-  const path = model.currentPath
 
-  const [currentTier, updateCurrentTier] = useState<ITreeData | null>(null)
-  
+  const path = model.currentPath;
+
+  const [currentTier, updateCurrentTier] = useState<ITreeData | null>(null);
+
   model.currentPath.changed.connect(() =>
     model.current.then(tier => {
       tier && updateCurrentTier(tier);
@@ -448,8 +447,8 @@ function ChildrenTable(props: IChildrenTableProps) {
                   <span>{props.getValue()}</span>
                 </span>
               );
-            },
-          },
+            }
+          }
         )
       );
     }
@@ -459,11 +458,11 @@ function ChildrenTable(props: IChildrenTableProps) {
         id: 'addColumn',
         header: () => (
           <span onClick={event => props.onSelectMetas(event)}>
-            <ToolbarButtonComponent icon={editIcon} tooltip='Edit columns'/>
+            <ToolbarButtonComponent icon={editIcon} tooltip="Edit columns" />
           </span>
         ),
         enableResizing: false,
-        size: 20     
+        size: 20
       }),
       columnHelper.display({
         id: 'actions',
@@ -477,34 +476,39 @@ function ChildrenTable(props: IChildrenTableProps) {
           } catch {
             child = null;
           }
-          
-          const tierChildData = data[props.row.index][1]
-          const id = data[props.row.index][0]
+
+          const tierChildData = data[props.row.index][1];
+          const id = data[props.row.index][0];
           const tierLaunchData = {
-              ...tierChildData,
-              identifiers: [...path, id]
-          }
-          return (<div className='cas-row-icon-area'>
-                    <span>
-                    <ToolbarButtonComponent 
-                      icon={caretRightIcon} 
-                      onClick={() => {
-                        child
-                          ? onTierSelected([...path, id], tierLaunchData)
-                          : null
-                      }}
-                      tooltip={`Preview ${tierLaunchData.name}`}
-                      />
-                  </span>
-                  <span>
-                      <ToolbarButtonComponent 
-                        icon={launcherIcon} 
-                        onClick={() => {data ? onTierLaunched(tierLaunchData) : null}}
-                        tooltip={`Open ${tierLaunchData.name}`}
-                      />
-                    </span>
-                </div>)
-      }}),
+            ...tierChildData,
+            identifiers: [...path, id]
+          };
+          return (
+            <div className="cas-row-icon-area">
+              <span>
+                <ToolbarButtonComponent
+                  icon={caretRightIcon}
+                  onClick={() => {
+                    child
+                      ? onTierSelected([...path, id], tierLaunchData)
+                      : null;
+                  }}
+                  tooltip={`Preview ${tierLaunchData.name}`}
+                />
+              </span>
+              <span>
+                <ToolbarButtonComponent
+                  icon={launcherIcon}
+                  onClick={() => {
+                    data ? onTierLaunched(tierLaunchData) : null;
+                  }}
+                  tooltip={`Open ${tierLaunchData.name}`}
+                />
+              </span>
+            </div>
+          );
+        }
+      })
     ]);
 
     return columns as columnsType;
@@ -527,10 +531,11 @@ function ChildrenTable(props: IChildrenTableProps) {
 
   return (
     <div>
-      <h1>{ currentTier?.name }</h1>
-      <table className="cas-ChildrenTable-table" 
+      <h1>{currentTier?.name}</h1>
+      <table
+        className="cas-ChildrenTable-table"
         // style={{width: table.getCenterTotalSize()}}
-        >
+      >
         <thead onContextMenu={event => props.onSelectMetas(event)}>
           <tr>
             {table.getFlatHeaders().map(header => (
@@ -541,7 +546,11 @@ function ChildrenTable(props: IChildrenTableProps) {
                     ? ''
                     : 'jp-DirListing-headerItem jp-id-name'
                 }
-                style={{width: `${(header.getSize() / table.getCenterTotalSize()) * 100}%`}}
+                style={{
+                  width: `${
+                    (header.getSize() / table.getCenterTotalSize()) * 100
+                  }%`
+                }}
               >
                 <span
                   className={
@@ -560,22 +569,22 @@ function ChildrenTable(props: IChildrenTableProps) {
                     desc: <caretDownIcon.react tag="span" />
                   }[header.column.getIsSorted() as string] ?? null}
                 </span>
-                { 
-                  header.column.getCanResize() ? <div
-                      {...{
-                        onMouseDown: header.getResizeHandler(),
-                        onTouchStart: header.getResizeHandler(),
-                        className: 'cas-table-resizer'
-                      }}
-                    /> : null
-                }
+                {header.column.getCanResize() ? (
+                  <div
+                    {...{
+                      onMouseDown: header.getResizeHandler(),
+                      onTouchStart: header.getResizeHandler(),
+                      className: 'cas-table-resizer'
+                    }}
+                  />
+                ) : null}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {table.getRowModel().rows.map(row => (
-            <tr className='cas-ChildrenTable-row'>
+            <tr className="cas-ChildrenTable-row">
               {row.getVisibleCells().map(cell => (
                 <td key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -585,13 +594,17 @@ function ChildrenTable(props: IChildrenTableProps) {
           ))}
         </tbody>
         <tfoot>
-          <span><tr><td colSpan={3}>
-            <ToolbarButtonComponent 
-              icon={addIcon} 
-              onClick={() => currentTier && onCreateChild(currentTier)}
-              tooltip={`Create new child of ${currentTier?.name}`}
-            />
-          </td></tr></span>
+          <span>
+            <tr>
+              <td colSpan={3}>
+                <ToolbarButtonComponent
+                  icon={addIcon}
+                  onClick={() => currentTier && onCreateChild(currentTier)}
+                  tooltip={`Create new child of ${currentTier?.name}`}
+                />
+              </td>
+            </tr>
+          </span>
         </tfoot>
       </table>
     </div>
@@ -604,12 +617,12 @@ export interface ITierSelectedSignal {
 }
 
 /**
- * Widget for navigating the tier tree. Should probably be called TierNavigator or something. 
- * 
+ * Widget for navigating the tier tree. Should probably be called TierNavigator or something.
+ *
  * Has a search box for going to a tier by name.
- * 
+ *
  * Has the crumbs to indicate where we currently are and allow a bit of naviation back up the tree.
- * 
+ *
  * Has the children table for heading into the tree.
  */
 export class TierBrowser extends ReactWidget {
@@ -633,8 +646,6 @@ export class TierBrowser extends ReactWidget {
     return this._tierLaunched;
   }
 
-  
-
   render(): JSX.Element {
     const onTierSelected = (path: string[], branch: IViewable) => {
       this._tierSelected.emit({ path: path, tier: branch });
@@ -644,10 +655,11 @@ export class TierBrowser extends ReactWidget {
       this._tierLaunched.emit(branch);
     };
 
-    const onCreateChild = (tier: ITreeData) => openNewChildDialog(tier).then(() => this.model.refresh());
+    const onCreateChild = (tier: ITreeData) =>
+      openNewChildDialog(tier).then(() => this.model.refresh());
 
     return (
-      <div style={{height: '100%', overflow: 'auto'}}>
+      <div style={{ height: '100%', overflow: 'auto' }}>
         <CasSearch model={this.model}></CasSearch>
         <CassiniCrumbs
           model={this.model}

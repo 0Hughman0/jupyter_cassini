@@ -157,11 +157,12 @@ See [RELEASE](RELEASE.md)
 2. Create a specific edit meta widget ✅
 3. Convert cassini meta to using pydantic.
 4. Move monkeypatching from server application moved into cassini
-4. Get create child to pass on meta values for rendering. 
-5. Document better.
-6. Refactoring
-  * Implement null model, then update paradigm. e.g. MetaEditor is a mess.
-  * IOptions rather than options...?
+5. Get create child to pass on meta values for rendering.
+6. Document better.
+7. Refactoring
+
+- Implement null model, then update paradigm. e.g. MetaEditor is a mess.
+- IOptions rather than options...?
 
 Then share with the world!
 
@@ -179,10 +180,7 @@ Then share with the world!
 
 - Copy JSON validation from JSONEditor https://github.com/jupyterlab/jupyterlab/blob/25e52500908e3237006f5f9dc7588ae68b1927e9/packages/codeeditor/src/jsoneditor.ts#L228
 - Worry about what should the save button do? If there are pending changes in other widgets e.g. the TierViewer and save forces a metaFile.save(), side-effects could occur. Really, one might expect the meta save to only save the current data. Not sure what to do there. I can use dirty! https://jupyterlab.readthedocs.io/en/latest/api/interfaces/docregistry.DocumentRegistry.ICodeModel.html#dirty only offer a save button if the model is not dirty...
-    SOLUTION?
-    - create an _editors attribute... or something. This is a map of attribute names -> widget instances... this should probably be observable
-    - When we start editing a value in a widget, we set the value to this instance.
-    - We set up listeners for the update, if you are not the editor, you go readonly.
-
-
-
+  SOLUTION?
+  - create an \_editors attribute... or something. This is a map of attribute names -> widget instances... this should probably be observable
+  - When we start editing a value in a widget, we set the value to this instance.
+  - We set up listeners for the update, if you are not the editor, you go readonly.
