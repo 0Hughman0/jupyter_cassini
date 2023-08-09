@@ -14,7 +14,6 @@ They want the model to be initialisable outside the widget and to also be possib
 
 They also recommend having a modelChanged signal that widgets can emit when they host a new model!
 
-
 ## Executing code on the kernel
 
 So a NotebookPanel widget has a sessionContext https://jupyterlab.readthedocs.io/en/latest/api/classes/notebook.NotebookPanel-1.html
@@ -41,7 +40,7 @@ AccordianPanel only works if your widgets have a title attribute... which is rea
 
 StackedPanel stacks them in the z direction!
 
-Panel plus some css seems to be ok. 
+Panel plus some css seems to be ok.
 
 If you combine addWidget with node.appendChild, things generally seem to go badly...
 
@@ -52,6 +51,7 @@ https://github.com/jupyterlab/lumino/blob/c90d19e7a4706c37c31961052206aa2a0d5144
 This otherwise fails to call onAttach and beforeAttach, which could do bad things with Widget lifecycle.
 
 # Shared State Idea
+
     - create an _editors attribute... or something. This is a map of attribute names -> widget instances... this should probably be observable
     - When we start editing a value in a widget, we set the value to this instance.
     - We set up listeners for the update, if you are not the editor, you go readonly.
@@ -71,7 +71,6 @@ Something strange happens if the check value of a jest test is an observable...
 ## Core
 
 - In notebooks, the only way to know identity is to lookup the tier name derived from the file. It would be good to provide a cache of these so I don't need to ping the server every time to work out what model to load. It's not clear if this cache should live in the TierModelManager or the TreeManager.
-
 
 ## Cassini Python side
 
@@ -113,7 +112,7 @@ jupyter_cassini needs to have some information about the project:
 
 ## Meta Editor
 
-## Understanding of OG Document -> Model -> Listeners 
+## Understanding of OG Document -> Model -> Listeners
 
 Widget -> (Context) -> Model -> ModelDB
 

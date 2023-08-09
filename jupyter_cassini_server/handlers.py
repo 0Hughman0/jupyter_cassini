@@ -1,5 +1,6 @@
 import json
 import os.path
+import functools
 
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
@@ -10,17 +11,20 @@ from cassini import env
 from cassini import TierBase
 from cassini.defaults import DataSet
 
-## Bad hacks
 
-TierBase.info = property(lambda self: self.description.split('\n')[0])
-DataSet.get_templates = classmethod(lambda cls: [])
+def needs_project(meth):
+    @functools.wraps(meth)
+    def wraps(self, *args, **kwargs):
+        if not env.project:
+            self.finish("Current project not set, jupyterlab needs to be launched by Cassini")
+            return
 
-OG_setup_files = DataSet.setup_files
-DataSet.setup_files = lambda self, templates: OG_setup_files(self)
+        return meth(self, *args, **kwargs)
 
-##
+    return wraps
 
-def serialize_child(tier):
+
+def serialize_child(tier: TierBase):
     project_folder = env.project.project_folder
     """
     Note, doesn't populate children field... maybe will later...
@@ -48,7 +52,7 @@ def serialize_child(tier):
     return branch
 
 
-def serialize_branch(tier):
+def serialize_branch(tier: TierBase):
     tree = serialize_child(tier)
     tree['children'] = {}
 
@@ -71,7 +75,13 @@ def serialize_branch(tier):
 
     tree['childMetas'] = list(child_metas)
 
-    tree['childTemplates'] = [template.name for template in tier.child_cls.get_templates()]
+    if tier.child_cls:
+        tree['childTemplates'] = [template.name for template in tier.child_cls.get_templates()]
+
+        tree['childIdRegex'] = tier.child_cls.id_regex
+    else:
+        tree['childTemplates'] = []
+        tree['childIdRegex'] = None
 
     return tree
 
@@ -81,6 +91,7 @@ class LookupHandler(APIHandler):
     # patch, put, delete, options) to ensure only authorized user can request the 
     # Jupyter server
     @tornado.web.authenticated
+    @needs_project
     def get(self):
         cas_id = self.get_argument('id', '')
         try:
@@ -102,6 +113,7 @@ class OpenHandler(APIHandler):
     # patch, put, delete, options) to ensure only authorized user can request the 
     # Jupyter server
     @tornado.web.authenticated
+    @needs_project
     def get(self):
         cas_id = self.get_argument('id', '')
         try:
@@ -115,6 +127,7 @@ class OpenHandler(APIHandler):
 class NewChildHandler(APIHandler):
 
     @tornado.web.authenticated
+    @needs_project
     def post(self):
         data = self.get_json_body()
 
@@ -135,10 +148,12 @@ class NewChildHandler(APIHandler):
 
         child.setup_files(template)
 
-        child.description = description
+        if child.meta_file:
 
-        for k, v in data.items():
-            child.meta[k] = v
+            child.description = description
+
+            for k, v in data.items():
+                child.meta[k] = v
 
         self.finish(serialize_branch(child))
     
@@ -146,9 +161,8 @@ class NewChildHandler(APIHandler):
 class TreeHandler(APIHandler):
 
     @tornado.web.authenticated
+    @needs_project
     def get(self):
-        project_folder = env.project.project_folder
-
         cas_ids = self.get_argument('identifiers', None)
         cas_ids = [] if not cas_ids else cas_ids.split(',')
 

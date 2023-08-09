@@ -18,6 +18,8 @@ export interface ITreeResponse extends ITreeChildResponse {
   folder: string;
   childMetas: string[];
   childTemplates: string[];
+  childIdRegex: string | null;
+
   children: { [id: string]: ITreeChildResponse };
 }
 
@@ -88,10 +90,9 @@ async function requestAPI<T>(
  * Wrapper for the requestAPI.
  */
 export namespace CassiniServer {
-  
   /**
    * Lookup ITierInfo by name.
-   * 
+   *
    * @param query the name of the tier
    * @returns Promise that resolves with the info of the tier you lookup.
    */
@@ -102,9 +103,9 @@ export namespace CassiniServer {
   /**
    * Gets the 'tree' reprentation of a tier. This includes enough info to display a TierViewer, but also information about the tier's children
    * such that the TierBrowser TierTree or whatever can be rendered.
-   * 
+   *
    * @param identifiers the identifiers or casPath or path or ids of the tier you want to view tree data for
-   * @returns 
+   * @returns
    */
   export function tree(identifiers: string[]): Promise<ITreeResponse> {
     return requestAPI('tree', {}, { identifiers: identifiers });
@@ -112,7 +113,7 @@ export namespace CassiniServer {
 
   /**
    * Ask the cassini server to call setup_files on the parent's child.
-   * 
+   *
    * @param info Parameters to pass to the new_child.setup_files() server-side method
    * @returns the tree response for the new child.
    */
@@ -123,7 +124,7 @@ export namespace CassiniServer {
     });
   }
 
-  export function openTier(id: string): Promise<Boolean> {
+  export function openTier(id: string): Promise<boolean> {
     return requestAPI('open', {}, { id: id });
   }
 }
