@@ -10,7 +10,7 @@ module.exports = {
     url: 'http://localhost:8888/lab',
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
-    stdout: "pipe",
-    stderr: "pipe"
+    stdout: 'pipe',
+    stderr: 'pipe'
   }
 };
