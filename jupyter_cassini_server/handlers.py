@@ -1,5 +1,6 @@
 import json
 import os.path
+import functools
 
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
@@ -9,6 +10,17 @@ import tornado
 from cassini import env
 from cassini import TierBase
 from cassini.defaults import DataSet
+
+
+def needs_project(meth):
+    @functools.wraps(meth)
+    def wraps(*args, **kwargs):
+        if not env.project:
+            return "Current project not set, jupyterlab needs to be launched by Cassini"
+
+        return meth(*args, **kwargs)
+
+    return wraps
 
 
 def serialize_child(tier: TierBase):
@@ -78,6 +90,7 @@ class LookupHandler(APIHandler):
     # patch, put, delete, options) to ensure only authorized user can request the 
     # Jupyter server
     @tornado.web.authenticated
+    @needs_project
     def get(self):
         cas_id = self.get_argument('id', '')
         try:
@@ -99,6 +112,7 @@ class OpenHandler(APIHandler):
     # patch, put, delete, options) to ensure only authorized user can request the 
     # Jupyter server
     @tornado.web.authenticated
+    @needs_project
     def get(self):
         cas_id = self.get_argument('id', '')
         try:
@@ -112,6 +126,7 @@ class OpenHandler(APIHandler):
 class NewChildHandler(APIHandler):
 
     @tornado.web.authenticated
+    @needs_project
     def post(self):
         data = self.get_json_body()
 
@@ -145,9 +160,8 @@ class NewChildHandler(APIHandler):
 class TreeHandler(APIHandler):
 
     @tornado.web.authenticated
+    @needs_project
     def get(self):
-        project_folder = env.project.project_folder
-
         cas_ids = self.get_argument('identifiers', None)
         cas_ids = [] if not cas_ids else cas_ids.split(',')
 
