@@ -14,11 +14,12 @@ from cassini.defaults import DataSet
 
 def needs_project(meth):
     @functools.wraps(meth)
-    def wraps(*args, **kwargs):
+    def wraps(self, *args, **kwargs):
         if not env.project:
-            return "Current project not set, jupyterlab needs to be launched by Cassini"
+            self.finish("Current project not set, jupyterlab needs to be launched by Cassini")
+            return
 
-        return meth(*args, **kwargs)
+        return meth(self, *args, **kwargs)
 
     return wraps
 
