@@ -1,6 +1,6 @@
 {
   "name": "jupyter_cassini",
-  "version": "0.2.0-a1",
+  "version": "0.2.0-a2",
   "description": "Jupyterlab extension for interacting with Cassini projects",
   "keywords": [
     "jupyter",
