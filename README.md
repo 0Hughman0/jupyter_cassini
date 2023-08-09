@@ -1,6 +1,5 @@
 # jupyter_cassini_server
 
-[![Github Actions Status](https://github.com/github_username/jupyter_cassini_server.git/workflows/Build/badge.svg)](https://github.com/github_username/jupyter_cassini_server.git/actions/workflows/build.yml)
 Jupyterlab extension for interacting with Cassini projects
 
 This project creates a GUI for [Cassini](https://github.com/0Hughman0/Cassini) that runs inside jupyterlab. This allows the gui to be more performant and gives more flexiblity in terms of what it can do.
