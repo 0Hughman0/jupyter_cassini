@@ -132,9 +132,7 @@ test.describe('Cassini-Browser', async () => {
     await page.getByRole('textbox').nth(3).fill('First Line\n\nline 2');
 
     // save changes button
-    await page
-      .locator('div:nth-child(7) > .cas-icon-area > div:nth-child(2) > svg')
-      .click();
+    await page.getByRole('button', { name: 'Apply changes' }).nth(1).click();
 
     await page.getByRole('button', { name: 'Save changes to disk' }).click();
 
