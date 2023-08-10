@@ -35,10 +35,13 @@ def serialize_child(tier: TierBase):
 
     if hasattr(tier, 'meta'):
         branch['metaPath'] = tier.meta_file.relative_to(project_folder).as_posix()
-        branch['additionalMeta'] = {k: tier.meta[k] for k in tier.meta.keys() if k not in ['description', 'started', 'conclusion'] }
+        branch['additionalMeta'] = {k: tier.meta[k] for k in tier.meta.keys() if k not in ['description', 'started', 'conclusion']}
 
-    if hasattr(tier, 'info'):
-        branch['info'] = tier.info
+    if hasattr(tier, 'description') and tier.description:
+        branch['info'] = tier.description.split('\n')[0]
+
+    if hasattr(tier, 'conclusion') and tier.conclusion:
+        branch['outcome'] = tier.conclusion.split('\n')[0]
 
     if hasattr(tier, 'started'):
         branch['started'] = tier.started.isoformat()

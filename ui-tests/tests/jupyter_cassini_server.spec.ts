@@ -106,6 +106,46 @@ test.describe('Cassini-Browser', async () => {
     expect(await page.getByRole('tabpanel').getByText('WP1')).toBeVisible();
   });
 
+  test('tree-view-content', async ({ page }) => {
+    expect(
+      await page.getByRole('cell', { name: 'Name' }).first()
+    ).toBeVisible(); // using first here is kinda dumb.
+    expect(await page.getByRole('cell', { name: 'Started' })).toBeVisible();
+
+    expect(
+      await page.getByRole('cell', { name: 'Info', exact: true })
+    ).toBeVisible();
+    expect(await page.getByRole('cell', { name: 'Outcome' })).toBeVisible();
+    expect(
+      await page.getByRole('cell', { name: 'Edit columns' })
+    ).toBeVisible();
+
+    await createNewChild(page);
+
+    const info = await page.getByRole('cell', { name: 'Description.' });
+
+    expect(info.allTextContents).not.toContain('Line 2');
+
+    await page.getByRole('button', { name: 'Preview WP1' }).click();
+
+    // conclusion box...
+    await page.getByRole('textbox').nth(3).fill('First Line\n\nline 2');
+
+    // save changes button
+    await page
+      .locator('div:nth-child(7) > .cas-icon-area > div:nth-child(2) > svg')
+      .click();
+
+    await page.getByRole('button', { name: 'Save changes to disk' }).click();
+
+    await page
+      .getByRole('button', {
+        name: 'Refresh tree (will fetch changes from server)'
+      })
+      .click();
+    expect(await page.getByRole('cell', { name: 'First Line' })).toBeVisible();
+  });
+
   test('highlights', async ({ page }) => {
     // create new child
     await createNewChild(page);
