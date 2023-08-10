@@ -6,6 +6,7 @@ import { ServerConnection } from '@jupyterlab/services';
 export interface ITreeChildResponse {
   name: string;
   info?: string;
+  outcome?: string;
   started?: string;
   hltsPath?: string;
   metaPath?: string;

@@ -426,6 +426,23 @@ function ChildrenTable(props: IChildrenTableProps) {
             );
           }
         }
+      ),
+      columnHelper.accessor(
+        (row: [string, ITreeChildData], index: number) => {
+          return row[1].outcome || '';
+        },
+        {
+          id: 'outcome',
+          header: 'Outcome',
+          cell: props => {
+            const info = props.getValue();
+            return (
+              <span>
+                <span>{info}</span>
+              </span>
+            );
+          }
+        }
       )
     ];
 
