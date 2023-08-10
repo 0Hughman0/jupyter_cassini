@@ -43,8 +43,8 @@ export class MarkdownEditor extends Panel {
   editor: CodeEditorWrapper;
   _rendered: boolean;
   output: Widget;
-  editButton: HTMLElement;
-  checkButton: HTMLElement;
+  editButton: ToolbarButton;
+  checkButton: ToolbarButton;
 
   onContentChanged: (content: string) => void;
 
@@ -71,11 +71,21 @@ export class MarkdownEditor extends Panel {
 
     this.node.appendChild(iconArea);
 
-    this.editButton = editIcon.element({});
-    this.checkButton = checkIcon.element();
+    this.editButton = new ToolbarButton({
+      icon: editIcon,
+      onClick: () => {
+        this.setRendered(false);
+      },
+      tooltip: 'Edit'
+    });
 
-    iconArea.appendChild(this.editButton);
-    iconArea.appendChild(this.checkButton);
+    this.checkButton = new ToolbarButton({
+      icon: checkIcon,
+      onClick: () => {
+        this.setRendered(true);
+      },
+      tooltip: 'Apply changes'
+    });
 
     const output = (this.output = new Widget({
       node: document.createElement('div')
@@ -95,19 +105,17 @@ export class MarkdownEditor extends Panel {
 
     this.addWidget(this.editor);
 
-    this.checkButton.onclick = event => {
-      this.setRendered(true);
-    };
-    this.editButton.onclick = event => {
-      this.setRendered(false);
-    };
-
     output.node.ondblclick = event => {
       this.setRendered(false);
     };
     this.editor.node.addEventListener('focusout', ev => {
       this.setRendered(true);
     });
+
+    this.onAfterAttach = () => {
+      Widget.attach(this.editButton, iconArea);
+      Widget.attach(this.checkButton, iconArea);
+    };
   }
 
   /**
@@ -154,16 +162,16 @@ export class MarkdownEditor extends Panel {
       });
 
       this.editor.setHidden(true);
-      this.output.setHidden(false);
+      this.checkButton.setHidden(true);
 
-      this.checkButton.style.display = 'none';
-      this.editButton.style.display = 'inline';
+      this.output.setHidden(false);
+      this.editButton.setHidden(false);
     } else {
       this.editor.setHidden(false);
-      this.output.setHidden(true);
+      this.checkButton.setHidden(false);
 
-      this.editButton.style.display = 'none';
-      this.checkButton.style.display = 'inline';
+      this.output.setHidden(true);
+      this.editButton.setHidden(true);
     }
   }
 }
