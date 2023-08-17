@@ -41,10 +41,11 @@ async function createNewChild(page) {
 }
 
 test.describe('Cassini-Browser', async () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, waitForApplication }) => {
     // keep in mind that the server is only started once.
     // this means the test isolation isn't great in terms of the state of cassini backend.
     await page.goto('http://localhost:8888/lab?');
+    await waitForApplication(page, page);
     await page.getByLabel('Launcher').getByText('Browser').click();
   });
 
