@@ -42,6 +42,8 @@ async function createNewChild(page) {
 
 test.describe('Cassini-Browser', async () => {
   test.beforeEach(async ({ page }) => {
+    // keep in mind that the server is only started once.
+    // this means the test isolation isn't great in terms of the state of cassini backend.
     await page.goto('http://localhost:8888/lab?');
     await page.getByLabel('Launcher').getByText('Browser').click();
   });
@@ -94,16 +96,14 @@ test.describe('Cassini-Browser', async () => {
     await page.getByRole('button', { name: 'Open WP1' }).nth(1).click();
 
     // check notebook opened
-    await page
-      .getByLabel('WP1.ipynb')
-      .getByText('WP1', { exact: true })
-      .nth(1)
-      .click();
+    await page.getByLabel('WP1.ipynb').getByText('WP1').nth(1).click();
 
     // check heading back to browser
     await page.getByRole('tab', { name: 'Launcher' }).click();
     await page.getByLabel('Launcher').getByText('Browser').click();
-    expect(await page.getByRole('tabpanel').getByText('WP1')).toBeVisible();
+    expect(
+      await page.getByRole('cell', { name: 'WP1', exact: true })
+    ).toBeVisible();
   });
 
   test('tree-view-content', async ({ page }) => {
