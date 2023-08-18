@@ -4,7 +4,10 @@ import { expect, test } from '@jupyterlab/galata';
  * Don't load JupyterLab webpage before running the tests.
  * This is required to ensure we capture all log messages.
  */
-test.use({ autoGoto: false });
+test.use({
+  autoGoto: false,
+  tmpPath: process.env.JUPYTERLAB_GALATA_ROOT_DIR // handled by the cassini server
+});
 
 test('Extension activates', async ({ page }) => {
   const logs: string[] = [];
@@ -42,24 +45,29 @@ async function createNewChild(page) {
 
 test.describe('Cassini-Browser', async () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:8888/lab?');
+    // keep in mind that the server is only started once.
+    // this means the test isolation isn't great in terms of the state of cassini backend.
+    await page.goto('http://localhost:8888/lab?', {
+      waitUntil: 'domcontentloaded'
+    });
     await page.getByLabel('Launcher').getByText('Browser').click();
   });
 
   test('browser-loaded', async ({ page }) => {
     const searchBox = await page.getByPlaceholder('Search by name');
-    expect(searchBox).toBeVisible();
+    // remember these must be awaited for - if not, the test can get to its end before these have been fullfilled.
+    await expect(searchBox).toBeVisible();
 
     const homeButton = await page.getByRole('button', { name: 'Go Home' });
-    expect(homeButton).toBeVisible();
+    await expect(homeButton).toBeVisible();
 
     const currentTierName = await page
       .locator('span')
       .filter({ hasText: /^Home$/ });
-    expect(currentTierName).toBeVisible();
+    await expect(currentTierName).toBeVisible();
 
     const childTableHeading = await page.getByRole('heading', { name: 'Home' });
-    expect(childTableHeading).toBeVisible();
+    await expect(childTableHeading).toBeVisible();
   });
 
   test('previewer-loaded', async ({ page }) => {
@@ -78,10 +86,8 @@ test.describe('Cassini-Browser', async () => {
     // create new child
     await createNewChild(page);
 
-    // await page.goto('http://localhost:8888/lab');
-
     // check new child in table
-    expect(
+    await expect(
       await page.getByRole('cell', { name: 'WP1', exact: true })
     ).toBeVisible();
 
@@ -94,29 +100,32 @@ test.describe('Cassini-Browser', async () => {
     await page.getByRole('button', { name: 'Open WP1' }).nth(1).click();
 
     // check notebook opened
-    await page
-      .getByLabel('WP1.ipynb')
-      .getByText('WP1', { exact: true })
-      .nth(1)
-      .click();
+    await page.getByLabel('WP1.ipynb').getByText('WP1').nth(1).click();
 
     // check heading back to browser
     await page.getByRole('tab', { name: 'Launcher' }).click();
     await page.getByLabel('Launcher').getByText('Browser').click();
-    expect(await page.getByRole('tabpanel').getByText('WP1')).toBeVisible();
+    expect(
+      await page.getByRole('cell', { name: 'WP1', exact: true })
+    ).toBeVisible();
   });
 
   test('tree-view-content', async ({ page }) => {
     expect(
       await page.getByRole('cell', { name: 'Name' }).first()
     ).toBeVisible(); // using first here is kinda dumb.
-    expect(await page.getByRole('cell', { name: 'Started' })).toBeVisible();
+    await expect(
+      await page.getByRole('cell', { name: 'Started' })
+    ).toBeVisible();
 
-    expect(
+    await expect(
       await page.getByRole('cell', { name: 'Info', exact: true })
     ).toBeVisible();
-    expect(await page.getByRole('cell', { name: 'Outcome' })).toBeVisible();
-    expect(
+    await expect(
+      await page.getByRole('cell', { name: 'Outcome' })
+    ).toBeVisible();
+
+    await expect(
       await page.getByRole('cell', { name: 'Edit columns' })
     ).toBeVisible();
 
@@ -141,7 +150,9 @@ test.describe('Cassini-Browser', async () => {
         name: 'Refresh tree (will fetch changes from server)'
       })
       .click();
-    expect(await page.getByRole('cell', { name: 'First Line' })).toBeVisible();
+    await expect(
+      await page.getByRole('cell', { name: 'First Line' })
+    ).toBeVisible();
   });
 
   test('highlights', async ({ page }) => {
@@ -161,9 +172,6 @@ test.describe('Cassini-Browser', async () => {
       );
     await page.notebook.runCell(1);
     await page.notebook.waitForRun(1);
-
-    console.log('It exists');
-    console.log(await page.contents.fileExists('WorkPackages/.wps/WP1.hlts'));
 
     await page.getByRole('button', { name: 'Show WP1 in browser' }).click();
 
