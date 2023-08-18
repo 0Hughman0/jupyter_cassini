@@ -1,10 +1,13 @@
 /**
  * Configuration for Playwright using default from @jupyterlab/galata
  */
+import { defineConfig } from '@playwright/test';
+
 const baseConfig = require('@jupyterlab/galata/lib/playwright-config');
 
-module.exports = {
+export default defineConfig({
   ...baseConfig,
+  expect: { timeout: 15000 },
   webServer: {
     command: 'jlpm start',
     url: 'http://localhost:8888/lab',
@@ -13,4 +16,4 @@ module.exports = {
     stdout: 'pipe',
     stderr: 'pipe'
   }
-};
+});
