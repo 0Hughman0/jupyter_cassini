@@ -30,7 +30,7 @@ test('Extension activates', async ({ page }) => {
 test('Launcher Available', async ({ page }) => {
   await page.goto('http://localhost:8888/lab?');
   const launcherButton = await page.getByLabel('Launcher').getByText('Browser'); // fails if two launchers are open!
-  expect(launcherButton).toBeVisible();
+  await expect(launcherButton).toBeVisible();
   await launcherButton.click();
 });
 
@@ -105,13 +105,13 @@ test.describe('Cassini-Browser', async () => {
     // check heading back to browser
     await page.getByRole('tab', { name: 'Launcher' }).click();
     await page.getByLabel('Launcher').getByText('Browser').click();
-    expect(
+    await expect(
       await page.getByRole('cell', { name: 'WP1', exact: true })
     ).toBeVisible();
   });
 
   test('tree-view-content', async ({ page }) => {
-    expect(
+    await expect(
       await page.getByRole('cell', { name: 'Name' }).first()
     ).toBeVisible(); // using first here is kinda dumb.
     await expect(
@@ -133,7 +133,7 @@ test.describe('Cassini-Browser', async () => {
 
     const info = await page.getByRole('cell', { name: 'Description.' });
 
-    expect(info.allTextContents).not.toContain('Line 2');
+    await expect(info.allTextContents).not.toContain('Line 2');
 
     await page.getByRole('button', { name: 'Preview WP1' }).click();
 
