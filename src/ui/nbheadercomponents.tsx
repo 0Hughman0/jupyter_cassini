@@ -12,24 +12,23 @@ import { ReactWidget } from '@jupyterlab/apputils';
 import {
   launchIcon,
   treeViewIcon,
+  addIcon,
   ToolbarButtonComponent
 } from '@jupyterlab/ui-components';
 
-// import { openNewChildDialog } from './newchilddialog';
+import { ITreeChildData } from '../core';
 
-export type ChildrenSummaryRow = {
-  name: string;
-  id: string;
-};
+export type childTableData = [id: string, child: ITreeChildData][];
 
 /**
  * @property onChildLaunch - callback for when the launch button is pressed for a child
  * @property onChildView - callback for when the child view button is pressed.
  */
 export interface IMetaTableProps {
-  children: ChildrenSummaryRow[];
-  onChildLaunch: (id: string) => void;
-  onChildView: (id: string) => void;
+  children: childTableData;
+  onChildLaunch: (child: ITreeChildData) => void;
+  onChildView: (child: ITreeChildData, id: string) => void;
+  onCreateChild: () => void;
 }
 
 /**
@@ -45,31 +44,42 @@ export function ChildrenSummary(props: IMetaTableProps) {
   const data = useMemo(() => props.children, [props.children]);
 
   // openNewChildDialog()
-  const columnHelper = createColumnHelper<ChildrenSummaryRow>();
+  const columnHelper = createColumnHelper<childTableData[0]>();
 
   const createColumns = () => {
     const columns = [
-      columnHelper.accessor('name', {
-        cell: props => (
-          <span className="cas-tier-name">{props.getValue()}</span>
-        ),
+      columnHelper.display({
+        id: 'name',
+        cell: props => {
+          const [_, child] = data[props.row.index];
+          return <span className="cas-tier-name">{child.name}</span>;
+        },
         header: 'Name'
+      }),
+      columnHelper.display({
+        id: 'info',
+        cell: props => {
+          const [_, child] = data[props.row.index];
+
+          return <span>{child.info}</span>;
+        },
+        header: 'Info'
       }),
       columnHelper.display({
         id: 'actions',
         cell: props => {
-          const row = data[props.row.index];
+          const [id, child] = data[props.row.index];
           return (
             <div className="cas-row-icon-area">
               <ToolbarButtonComponent
                 icon={launchIcon}
-                onClick={() => onChildLaunch(row.id)}
-                tooltip={`Open ${row.name}`}
+                onClick={() => onChildLaunch(child)}
+                tooltip={`Open ${child.name}`}
               />
               <ToolbarButtonComponent
                 icon={treeViewIcon}
-                onClick={() => onChildView(row.id)}
-                tooltip={`Show ${row.name} in browser`}
+                onClick={() => onChildView(child, id)}
+                tooltip={`Show ${child.name} in browser`}
               />
             </div>
           );
@@ -109,6 +119,19 @@ export function ChildrenSummary(props: IMetaTableProps) {
           </tr>
         ))}
       </tbody>
+      <tfoot>
+        <span>
+          <tr>
+            <td colSpan={3}>
+              <ToolbarButtonComponent
+                icon={addIcon}
+                onClick={() => props.onCreateChild()}
+                tooltip="Create new child"
+              />
+            </td>
+          </tr>
+        </span>
+      </tfoot>
     </table>
   );
 }
@@ -117,26 +140,29 @@ export function ChildrenSummary(props: IMetaTableProps) {
  * ReactWidget wrapper of ChildrenSummary component.
  */
 export class ChildrenSummaryWidget extends ReactWidget {
-  _data: ChildrenSummaryRow[];
-  onChildLaunch: (id: string) => void;
-  onChildView: (id: string) => void;
+  _data: childTableData;
+  onChildLaunch: (child: ITreeChildData) => void;
+  onChildView: (child: ITreeChildData, id: string) => void;
+  onCreateChild: () => void;
 
   constructor(
-    data: ChildrenSummaryRow[],
-    onChildLaunch: (id: string) => void,
-    onChildView: (id: string) => void
+    data: childTableData,
+    onChildLaunch: (child: ITreeChildData) => void,
+    onChildView: (child: ITreeChildData, id: string) => void,
+    onCreateChild: () => void
   ) {
     super();
     this.addClass('cas-ChildrenSummaryWidget');
     this._data = data;
     this.onChildLaunch = onChildLaunch;
     this.onChildView = onChildView;
+    this.onCreateChild = onCreateChild;
   }
 
-  get data(): ChildrenSummaryRow[] {
+  get data(): childTableData {
     return this._data;
   }
-  set data(val: ChildrenSummaryRow[]) {
+  set data(val: childTableData) {
     this._data = val;
     this.update();
   }
@@ -148,6 +174,7 @@ export class ChildrenSummaryWidget extends ReactWidget {
           children={this.data}
           onChildLaunch={this.onChildLaunch}
           onChildView={this.onChildView}
+          onCreateChild={this.onCreateChild}
         />
       </div>
     );
