@@ -18,7 +18,7 @@ import {
 
 import { ITreeChildData } from '../core';
 
-export type childTableData = [id: string, child: ITreeChildData][]
+export type childTableData = [id: string, child: ITreeChildData][];
 
 /**
  * @property onChildLaunch - callback for when the launch button is pressed for a child
@@ -49,19 +49,19 @@ export function ChildrenSummary(props: IMetaTableProps) {
   const createColumns = () => {
     const columns = [
       columnHelper.display({
-        id: 'name', 
+        id: 'name',
         cell: props => {
           const [_, child] = data[props.row.index];
-          return <span className="cas-tier-name">{child.name}</span>
+          return <span className="cas-tier-name">{child.name}</span>;
         },
         header: 'Name'
       }),
       columnHelper.display({
-        id: 'info', 
+        id: 'info',
         cell: props => {
           const [_, child] = data[props.row.index];
-          
-          return <span>{child.info}</span>
+
+          return <span>{child.info}</span>;
         },
         header: 'Info'
       }),
@@ -120,18 +120,18 @@ export function ChildrenSummary(props: IMetaTableProps) {
         ))}
       </tbody>
       <tfoot>
-          <span>
-            <tr>
-              <td colSpan={3}>
-                <ToolbarButtonComponent
-                  icon={addIcon}
-                  onClick={() => props.onCreateChild()}
-                  tooltip="Create new child"
-                />
-              </td>
-            </tr>
-          </span>
-        </tfoot>
+        <span>
+          <tr>
+            <td colSpan={3}>
+              <ToolbarButtonComponent
+                icon={addIcon}
+                onClick={() => props.onCreateChild()}
+                tooltip="Create new child"
+              />
+            </td>
+          </tr>
+        </span>
+      </tfoot>
     </table>
   );
 }

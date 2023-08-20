@@ -12,7 +12,7 @@ import { ITreeData, cassini } from '../core';
 import { MarkdownEditor } from './tierviewer';
 import { TierModel } from '../models';
 import { ChildrenSummaryWidget } from './nbheadercomponents';
-import { openNewChildDialog } from './newchilddialog'
+import { openNewChildDialog } from './newchilddialog';
 
 /**
  * Additional toolbar to insert at the top of notebooks that correspond to tiers.
@@ -187,17 +187,18 @@ export class TierNotebookHeader extends Panel {
     childrenLabel.textContent = 'Children';
     childrenBox.addWidget(new Widget({ node: childrenLabel }));
 
-    this.model.children.then((children) => { 
+    this.model.children.then(children => {
       const childrenSummary = (this.childrenSummary = new ChildrenSummaryWidget(
-        children ? Object.entries(children): [],
+        children ? Object.entries(children) : [],
         data => data && cassini.launchTier(data),
-        (data, id) => cassini.launchTierBrowser([...this.model.identifiers, id]),
+        (data, id) =>
+          cassini.launchTierBrowser([...this.model.identifiers, id]),
         () => this.model.treeData.then(data => data && openNewChildDialog(data))
-      ))
+      ));
       childrenBox.addWidget(childrenSummary);
 
       content.addWidget(childrenBox);
-    })
+    });
 
     this.model.changed.connect(() => this.onContentChanged());
     this.model.ready.then(() => this.onContentChanged());
@@ -214,8 +215,8 @@ export class TierNotebookHeader extends Panel {
     this.descriptionEditor.source = this.model.description;
     this.conclusionEditor.source = this.model.conclusion;
     this.model.children.then(children => {
-      this.childrenSummary.data = children ? Object.entries(children): [];
-    })
+      this.childrenSummary.data = children ? Object.entries(children) : [];
+    });
   }
 }
 

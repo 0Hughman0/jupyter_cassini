@@ -194,12 +194,18 @@ test.describe('Cassini-Browser', async () => {
     });
 
     test('header-content', async ({ page }) => {
-      await page.filebrowser.open('WorkPackages/WP1.ipynb')
+      await page.filebrowser.open('WorkPackages/WP1.ipynb');
 
       await expect(page.getByRole('heading', { name: 'WP1' })).toBeVisible();
-      await expect(page.getByRole('heading', { name: 'Description' })).toBeVisible();
-      await expect(page.getByRole('heading', { name: 'Conclusion' })).toBeVisible();
-      await expect(page.getByRole('heading', { name: 'Children' })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: 'Description' })
+      ).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: 'Conclusion' })
+      ).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: 'Children' })
+      ).toBeVisible();
       await expect(page.getByText('Description.Line 2.')).toBeVisible();
 
       await page.getByRole('button', { name: 'Create new child' }).click();
@@ -207,16 +213,22 @@ test.describe('Cassini-Browser', async () => {
       await page.getByLabel('Identifier').fill('1');
       await page.locator('textarea').click();
       await page.locator('textarea').fill('WP1.1 description');
-      
+
       await page.getByRole('button', { name: 'Ok', exact: true }).click();
-      
-      await expect(page.getByRole('button', { name: 'Show WP1.1 in browser' })).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Open WP1.1' })).toBeVisible();
 
-      await page.filebrowser.contents.fileExists('WorkPackages/WP1/WP1.1.ipynb')
-      await page.filebrowser.contents.fileExists('WorkPackages/WP1/.exps/WP1.1.json')
+      await expect(
+        page.getByRole('button', { name: 'Show WP1.1 in browser' })
+      ).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: 'Open WP1.1' })
+      ).toBeVisible();
 
-
-    })
-  })
+      await page.filebrowser.contents.fileExists(
+        'WorkPackages/WP1/WP1.1.ipynb'
+      );
+      await page.filebrowser.contents.fileExists(
+        'WorkPackages/WP1/.exps/WP1.1.json'
+      );
+    });
+  });
 });

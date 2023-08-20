@@ -98,15 +98,21 @@ describe('TierModel', () => {
       await tier.ready;
 
       //cassini.treeManager.cache = {}
-      
-      await cassini.treeManager.cacheTreeData(['1'], TreeManager._treeResponseToData(WP1_RESPONSE, ['1']))
 
-      await expect(tier.treeData).resolves.toEqual(TreeManager._treeResponseToData(WP1_RESPONSE, ['1']))
-      await expect(tier.children).resolves.toEqual(TreeManager._treeResponseToData(WP1_RESPONSE, ['1']).children)
+      await cassini.treeManager.cacheTreeData(
+        ['1'],
+        TreeManager._treeResponseToData(WP1_RESPONSE, ['1'])
+      );
+
+      await expect(tier.treeData).resolves.toEqual(
+        TreeManager._treeResponseToData(WP1_RESPONSE, ['1'])
+      );
+      await expect(tier.children).resolves.toEqual(
+        TreeManager._treeResponseToData(WP1_RESPONSE, ['1']).children
+      );
 
       //cassini.treeManager.cache = {}
-    }
-    )
+    });
   });
 
   describe('missing meta', () => {

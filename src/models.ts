@@ -123,7 +123,7 @@ export class TierModel {
   }
 
   get treeData(): Promise<ITreeData | null> {
-    return cassini.treeManager.get(this.identifiers)
+    return cassini.treeManager.get(this.identifiers);
   }
 
   get children(): Promise<{ [id: string]: ITreeChildData } | null> {
