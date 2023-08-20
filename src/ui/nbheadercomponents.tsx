@@ -51,11 +51,19 @@ export function ChildrenSummary(props: IMetaTableProps) {
       columnHelper.display({
         id: 'name', 
         cell: props => {
-          const [id, child] = data[props.row.index];
-          id
+          const [_, child] = data[props.row.index];
           return <span className="cas-tier-name">{child.name}</span>
         },
         header: 'Name'
+      }),
+      columnHelper.display({
+        id: 'info', 
+        cell: props => {
+          const [_, child] = data[props.row.index];
+          
+          return <span>{child.info}</span>
+        },
+        header: 'Info'
       }),
       columnHelper.display({
         id: 'actions',
