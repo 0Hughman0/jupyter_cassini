@@ -2,12 +2,13 @@ import { Contents } from '@jupyterlab/services';
 import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
 
 import { TierModel, TierBrowserModel } from '../models';
-import { TreeManager } from '../core';
+import { TreeManager, cassini } from '../core';
 
 import { CassiniServer } from '../services';
 
 import {
   HOME_RESPONSE,
+  WP1_RESPONSE,
   createTierFiles,
   TEST_META_CONTENT,
   TEST_HLT_CONTENT
@@ -86,6 +87,31 @@ describe('TierModel', () => {
       });
       await tier.ready;
       expect(tier.additionalMeta).toEqual({ temperature: 273 });
+    });
+
+    test('treeData', async () => {
+      const tier = new TierModel({
+        name: 'WP1',
+        identifiers: ['1'],
+        metaPath: metaFile.path
+      });
+      await tier.ready;
+
+      //cassini.treeManager.cache = {}
+
+      await cassini.treeManager.cacheTreeData(
+        ['1'],
+        TreeManager._treeResponseToData(WP1_RESPONSE, ['1'])
+      );
+
+      await expect(tier.treeData).resolves.toEqual(
+        TreeManager._treeResponseToData(WP1_RESPONSE, ['1'])
+      );
+      await expect(tier.children).resolves.toEqual(
+        TreeManager._treeResponseToData(WP1_RESPONSE, ['1']).children
+      );
+
+      //cassini.treeManager.cache = {}
     });
   });
 
@@ -252,6 +278,7 @@ describe('TierBrowserModel', () => {
     ) as jest.Mocked<typeof CassiniServer.tree>;
 
     model = new TierBrowserModel();
+    cassini.treeManager.cache = {};
   });
 
   test('initial', async () => {

@@ -8,13 +8,11 @@ import { PathExt } from '@jupyterlab/coreutils';
 import { Toolbar, ToolbarButton } from '@jupyterlab/ui-components';
 import { treeViewIcon } from '@jupyterlab/ui-components';
 
-import { ITreeChildData, ITreeData, cassini } from '../core';
+import { ITreeData, cassini } from '../core';
 import { MarkdownEditor } from './tierviewer';
 import { TierModel } from '../models';
-import {
-  ChildrenSummaryWidget,
-  ChildrenSummaryRow
-} from './nbheadercomponents';
+import { ChildrenSummaryWidget } from './nbheadercomponents';
+import { openNewChildDialog } from './newchilddialog';
 
 /**
  * Additional toolbar to insert at the top of notebooks that correspond to tiers.
@@ -189,23 +187,14 @@ export class TierNotebookHeader extends Panel {
     childrenLabel.textContent = 'Children';
     childrenBox.addWidget(new Widget({ node: childrenLabel }));
 
-    const getChildData = TierNotebookHeader._childrenToData(
-      this.model.children
-    );
-
-    getChildData.then(data => {
+    this.model.children.then(children => {
       const childrenSummary = (this.childrenSummary = new ChildrenSummaryWidget(
-        data,
-        id => {
-          cassini.treeManager
-            .get([...this.model.identifiers, id])
-            .then(data => data && cassini.launchTier(data));
-        },
-        id => {
-          cassini.launchTierBrowser([...this.model.identifiers, id]);
-        }
+        children ? Object.entries(children) : [],
+        data => data && cassini.launchTier(data),
+        (data, id) =>
+          cassini.launchTierBrowser([...this.model.identifiers, id]),
+        () => this.model.treeData.then(data => data && openNewChildDialog(data))
       ));
-
       childrenBox.addWidget(childrenSummary);
 
       content.addWidget(childrenBox);
@@ -213,20 +202,6 @@ export class TierNotebookHeader extends Panel {
 
     this.model.changed.connect(() => this.onContentChanged());
     this.model.ready.then(() => this.onContentChanged());
-  }
-
-  static _childrenToData(
-    children: Promise<{ [id: string]: ITreeChildData } | null>
-  ): Promise<ChildrenSummaryRow[]> {
-    return children.then(children => {
-      if (children) {
-        return Object.entries(children).map(data => {
-          return { name: data[1].name, id: data[0] };
-        });
-      } else {
-        return [];
-      }
-    });
   }
 
   showInBrowser() {
@@ -239,11 +214,8 @@ export class TierNotebookHeader extends Panel {
   onContentChanged() {
     this.descriptionEditor.source = this.model.description;
     this.conclusionEditor.source = this.model.conclusion;
-    const getChildData = TierNotebookHeader._childrenToData(
-      this.model.children
-    );
-    getChildData.then(data => {
-      this.childrenSummary.data = data;
+    this.model.children.then(children => {
+      this.childrenSummary.data = children ? Object.entries(children) : [];
     });
   }
 }
