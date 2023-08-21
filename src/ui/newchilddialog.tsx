@@ -12,6 +12,7 @@ import {
 
 export interface IIdDialogOptions extends InputDialog.ITextOptions {
   idRegex: string;
+  nameTemplate: string;
 }
 
 /**
@@ -19,12 +20,19 @@ export interface IIdDialogOptions extends InputDialog.ITextOptions {
  */
 export class IdDialog extends InputTextDialog {
   idRegex: RegExp;
+  nameTemplate: string;
+  previewBox: HTMLSpanElement;
 
   constructor(options: IIdDialogOptions) {
     super(options);
     this.idRegex = new RegExp(`^${options.idRegex}$`);
+    this.nameTemplate = options.nameTemplate;
 
     this._input.addEventListener('input', this.validateInput.bind(this));
+
+    this.previewBox = document.createElement('span');
+    this.node.appendChild(this.previewBox);
+    this.previewBox.textContent = `Preview: ${this.nameTemplate}`
   }
 
   validateInput(): void {
@@ -35,6 +43,8 @@ export class IdDialog extends InputTextDialog {
     } else {
       this._input.classList.remove('cas-invalid-id');
     }
+
+    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace('{}', id)}`
   }
 }
 
@@ -52,15 +62,18 @@ export class NewChildWidget extends Widget {
 
   subInputs: { [name: string]: InputDialogBase<any> };
 
-  constructor(tier: ITreeData) {
+  constructor(tier: Required<ITreeData>) {
     super();
     this.parentName = tier.name;
 
     const layout = (this.layout = new PanelLayout());
+    const namePrefix = tier.identifiers.length ? tier.name: ''
+    const nameTemplate = namePrefix + tier.childClsInfo.namePartTemplate
     const identifierInput = (this.identifierInput = new IdDialog({
       title: 'Identitifier',
       label: 'Identifier',
-      idRegex: tier.childIdRegex as string
+      idRegex: tier.childClsInfo.idRegex as string,
+      nameTemplate: nameTemplate
     }));
     const descriptionInput = (this.descriptionInput = new InputTextAreaDialog({
       title: 'Da Description',
@@ -69,7 +82,7 @@ export class NewChildWidget extends Widget {
     const templateSelector = (this.templateSelector = new InputItemsDialog({
       title: 'template',
       label: 'Template',
-      items: tier.childTemplates || []
+      items: tier.childClsInfo.templates || []
     }));
 
     this.subInputs = {
@@ -85,11 +98,7 @@ export class NewChildWidget extends Widget {
     layout.addWidget(descriptionInput);
     layout.addWidget(templateSelector);
 
-    if (!tier.childMetas) {
-      return;
-    }
-
-    for (const additionalMeta of tier.childMetas) {
+    for (const additionalMeta of tier.childClsInfo.metaNames) {
       let input;
 
       if (typeof additionalMeta === 'string') {
@@ -140,9 +149,9 @@ class textAreaAbleDialog extends Dialog<any> {
  * @param tier
  */
 export function openNewChildDialog(tier: ITreeData): Promise<ITreeData | null> {
-  const body = new NewChildWidget(tier);
+  const body = new NewChildWidget(tier as Required<ITreeData>);
   const dialog = new textAreaAbleDialog({
-    title: 'Create New Child',
+    title: `Create New ${tier.childClsInfo?.name}`,
     body: body
   });
   return dialog.launch().then(outcome => {

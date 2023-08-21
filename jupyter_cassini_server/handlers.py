@@ -9,7 +9,6 @@ import tornado
 
 from cassini import env
 from cassini import TierBase
-from cassini.defaults import DataSet
 
 
 def needs_project(meth):
@@ -46,7 +45,7 @@ def serialize_child(tier: TierBase):
     if hasattr(tier, 'started'):
         branch['started'] = tier.started.isoformat()
         
-    if hasattr(tier, 'highlights_file') and tier.highlights_file: # don't check if exists, because what if one arrives later!
+    if hasattr(tier, 'highlights_file') and tier.highlights_file:  # don't check if exists, because what if one arrives later!
         branch['hltsPath'] = tier.highlights_file.relative_to(project_folder).as_posix()
     
     if hasattr(tier, 'file') and tier.file and tier.file.exists():
@@ -57,10 +56,20 @@ def serialize_child(tier: TierBase):
 
 def serialize_branch(tier: TierBase):
     tree = serialize_child(tier)
+
     tree['children'] = {}
 
-    child_metas = set()
+    child_cls = tier.child_cls
 
+    if not child_cls:
+        tree['childClsInfo'] = None
+
+        return tree
+
+    child_cls_info = {}
+
+    child_metas = set()
+    
     for child in tier:
         
         if not isinstance(child, TierBase):
@@ -76,16 +85,15 @@ def serialize_branch(tier: TierBase):
     child_metas.discard('description')
     child_metas.discard('conclusion')
 
-    tree['childMetas'] = list(child_metas)
+    child_cls_info['metaNames'] = list(child_metas)
 
-    if tier.child_cls:
-        tree['childTemplates'] = [template.name for template in tier.child_cls.get_templates()]
+    child_cls_info['templates'] = [template.name for template in child_cls.get_templates()]
 
-        tree['childIdRegex'] = tier.child_cls.id_regex
-    else:
-        tree['childTemplates'] = []
-        tree['childIdRegex'] = None
+    child_cls_info['idRegex'] = child_cls.id_regex
+    child_cls_info['name'] = child_cls.__name__
+    child_cls_info['namePartTemplate'] = child_cls.name_part_template
 
+    tree['childClsInfo'] = child_cls_info
     return tree
 
 
