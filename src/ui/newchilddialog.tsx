@@ -32,7 +32,10 @@ export class IdDialog extends InputTextDialog {
 
     this.previewBox = document.createElement('span');
     this.node.appendChild(this.previewBox);
-    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace('{}', '?')}`
+    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
+      '{}',
+      '?'
+    )}`;
   }
 
   validateInput(): void {
@@ -44,7 +47,10 @@ export class IdDialog extends InputTextDialog {
       this._input.classList.remove('cas-invalid-id');
     }
 
-    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace('{}', id)}`
+    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
+      '{}',
+      id
+    )}`;
   }
 }
 
@@ -67,8 +73,8 @@ export class NewChildWidget extends Widget {
     this.parentName = tier.name;
 
     const layout = (this.layout = new PanelLayout());
-    const namePrefix = tier.identifiers.length ? tier.name: ''
-    const nameTemplate = namePrefix + tier.childClsInfo.namePartTemplate
+    const namePrefix = tier.identifiers.length ? tier.name : '';
+    const nameTemplate = namePrefix + tier.childClsInfo.namePartTemplate;
     const identifierInput = (this.identifierInput = new IdDialog({
       title: 'Identitifier',
       label: 'Identifier',

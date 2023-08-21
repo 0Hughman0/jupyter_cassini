@@ -25,9 +25,9 @@ export interface ITreeChildResponse {
 export interface ITreeResponse extends ITreeChildResponse {
   name: string;
   folder: string;
-  
+
   childClsInfo?: IChildClsInfo; // undefined when no child class.
-  
+
   children: { [id: string]: ITreeChildResponse };
 }
 

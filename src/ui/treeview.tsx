@@ -76,7 +76,9 @@ export class BrowserComponent extends React.Component<
         .getChildren()
         .then(children => setState({ children: children }));
       this.props.model.current.then(tierData => {
-        setState({ childMetas: tierData && tierData.childClsInfo?.metaNames || [] });
+        setState({
+          childMetas: (tierData && tierData.childClsInfo?.metaNames) || []
+        });
         setState({ additionalColumns: props.model.additionalColumns });
       });
     });
