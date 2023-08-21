@@ -32,7 +32,7 @@ export class IdDialog extends InputTextDialog {
 
     this.previewBox = document.createElement('span');
     this.node.appendChild(this.previewBox);
-    this.previewBox.textContent = `Preview: ${this.nameTemplate}`
+    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace('{}', '?')}`
   }
 
   validateInput(): void {
