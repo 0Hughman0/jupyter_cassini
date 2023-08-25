@@ -28,7 +28,7 @@ export class IdDialog extends InputTextDialog {
     this.idRegex = new RegExp(`^${options.idRegex}$`);
     this.nameTemplate = options.nameTemplate;
 
-    this._input.addEventListener('input', this.validateInput.bind(this));
+    this.input.addEventListener('input', this.validateInput.bind(this));
 
     this.previewBox = document.createElement('span');
     this.node.appendChild(this.previewBox);
@@ -39,7 +39,7 @@ export class IdDialog extends InputTextDialog {
   }
 
   validateInput(): boolean {
-    const id = this._input.value;
+    const id = this.input.value;
 
     this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
       '{}',
@@ -47,11 +47,11 @@ export class IdDialog extends InputTextDialog {
     )}`;
 
     if (id && !this.idRegex.test(id)) {
-      this._input.classList.add('cas-invalid-id');
+      this.input.classList.add('cas-invalid-id');
 
       return false;
     } else {
-      this._input.classList.remove('cas-invalid-id');
+      this.input.classList.remove('cas-invalid-id');
 
       return true;
     }
