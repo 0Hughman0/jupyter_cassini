@@ -190,6 +190,8 @@ export class TierViewer extends BoxPanel {
   model: TierModel;
   toolbar: Toolbar;
 
+  protected hltsRenderPromise: Promise<boolean>;
+
   constructor(tierData: TierModel.IOptions) {
     super();
     this.model = cassini.tierModelManager.get(tierData.name)(tierData);
@@ -254,6 +256,7 @@ export class TierViewer extends BoxPanel {
     this.highlightsBox = new Panel();
     this.highlightsBox.addClass('cas-tier-highlights-box');
 
+    this.hltsRenderPromise = Promise.resolve(true);
     this.renderHighlights();
 
     content.addWidget(this.highlightsBox);
@@ -307,14 +310,12 @@ export class TierViewer extends BoxPanel {
   }
 
   renderHighlights() {
-    // this is inefficient
-
     if (!this.highlightsBox) {
-      return;
+      return true;
     }
 
-    for (const child of this.highlightsBox.children()) {
-      this.highlightsBox.layout?.removeWidget(child);
+    for (const child of Array.from(this.highlightsBox.widgets)) {
+      child.dispose();
     }
 
     const registry = cassini.rendermimeRegistry.clone({
