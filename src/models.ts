@@ -77,7 +77,7 @@ export class TierModel {
       metaFile.ready.then(() => {
         metaFile.model.contentChanged.connect(() => this._changed.emit(), this);
         metaFile.model.stateChanged.connect((sender, change) => {
-          if (change.name == 'dirty') {
+          if (change.name === 'dirty') {
             this._changed.emit(); // the dirtiness of the metaFile is also part of the state of this model.
           }
         });
