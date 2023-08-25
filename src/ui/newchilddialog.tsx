@@ -38,19 +38,23 @@ export class IdDialog extends InputTextDialog {
     )}`;
   }
 
-  validateInput(): void {
+  validateInput(): boolean {
     const id = this._input.value;
-
-    if (id && !this.idRegex.test(id)) {
-      this._input.classList.add('cas-invalid-id');
-    } else {
-      this._input.classList.remove('cas-invalid-id');
-    }
 
     this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
       '{}',
       id
     )}`;
+
+    if (id && !this.idRegex.test(id)) {
+      this._input.classList.add('cas-invalid-id');
+
+      return false;
+    } else {
+      this._input.classList.remove('cas-invalid-id');
+
+      return true;
+    }
   }
 }
 
@@ -60,7 +64,7 @@ export class IdDialog extends InputTextDialog {
 export class NewChildWidget extends Widget {
   parentName: string;
 
-  identifierInput: InputTextDialog;
+  identifierInput: IdDialog;
   descriptionInput: InputTextAreaDialog;
   templateSelector: InputItemsDialog;
 

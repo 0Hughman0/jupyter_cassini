@@ -82,6 +82,22 @@ test.describe('Cassini-Browser', async () => {
     ).toBeVisible();
   });
 
+  test('create-child-dialogue', async ({ page }) => {
+    await page
+      .getByRole('button', { name: 'Create new child of Home' })
+      .click();
+    await page.getByLabel('Identifier').click();
+
+    const previewBox = await page.getByText('Preview: WP?').elementHandle();
+    await expect(await previewBox?.textContent()).toEqual('Preview: WP?');
+    await page.getByLabel('Identifier').fill('1');
+    await expect(await previewBox?.textContent()).toEqual('Preview: WP1');
+
+    await page.locator('textarea').click();
+    await page.locator('textarea').fill('Description.\n\nLine 2.');
+    await page.getByRole('button', { name: 'Ok' }).click();
+  });
+
   test('create-child', async ({ page }) => {
     // create new child
     await createNewChild(page);
@@ -212,7 +228,7 @@ test.describe('Cassini-Browser', async () => {
       await page.getByLabel('Identifier').click();
       await page.getByLabel('Identifier').fill('1');
       await page.locator('textarea').click();
-      await page.locator('textarea').fill('WP1.1 description');
+      await page.locator('textarea').fill('WP1 description');
 
       await page.getByRole('button', { name: 'Ok', exact: true }).click();
 
