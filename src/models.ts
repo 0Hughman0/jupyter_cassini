@@ -75,10 +75,12 @@ export class TierModel {
 
       metaFile.initialize(false);
       metaFile.ready.then(() => {
-        metaFile.model.sharedModel.changed.connect(
-          () => this._changed.emit(),
-          this
-        );
+        metaFile.model.contentChanged.connect(() => this._changed.emit(), this);
+        metaFile.model.stateChanged.connect((sender, change) => {
+          if (change.name === 'dirty') {
+            this._changed.emit(); // the dirtiness of the metaFile is also part of the state of this model.
+          }
+        });
       });
     }
 
@@ -98,7 +100,7 @@ export class TierModel {
           hltsFile.initialize(false);
 
           this.hltsFile.ready.then(() => {
-            this.hltsFile?.model.sharedModel.changed.connect(() => {
+            this.hltsFile?.model.contentChanged.connect(() => {
               this._changed.emit();
             }, this);
           });

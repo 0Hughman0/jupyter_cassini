@@ -69,21 +69,37 @@ describe('tier-model', () => {
 
     tier.changed.connect(sentinal);
 
-    tier.description = 'new value';
+    let calls = sentinal.mock.calls.length;
 
-    expect(sentinal).toBeCalledTimes(1);
+    expect(tier.dirty).toBe(false);
+    tier.description = 'new value';
+    expect(tier.dirty).toBe(true);
+
+    expect(sentinal).toBeCalledTimes(calls + 2); // once for meta contents and once for making dirty
+
+    calls = sentinal.mock.calls.length;
 
     tier.hltsFile?.model.fromJSON({});
+    expect(sentinal).toBeCalledTimes(calls + 1);
 
-    expect(sentinal).toBeCalledTimes(2);
+    calls = sentinal.mock.calls.length;
 
     await tier.revert();
+    expect(tier.dirty).toBe(false);
 
-    expect(sentinal).toBeCalledTimes(4); // called twice one, for each model
+    expect(sentinal).toBeCalledTimes(calls + 3); // 1x hlts update, 1x meta update, 1x meta.dirty update
+
+    tier.description = 'new value 2';
+
+    expect(tier.dirty).toBe(true);
+
+    calls = sentinal.mock.calls.length;
 
     await tier.save();
 
-    expect(sentinal).toBeCalledTimes(6); // apparently saving causes an update(?)
+    expect(tier.dirty).toBe(false);
+
+    expect(sentinal).toBeCalledTimes(calls + 1); // apparently saving causes an update(?)
   });
 });
 
