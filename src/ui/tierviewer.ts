@@ -306,12 +306,12 @@ export class TierViewer extends BoxPanel {
     // the update could be new meta
     this.metaView.render(Object.keys(this.model.additionalMeta));
 
-    this.renderHighlights()
+    this.renderHighlights();
   }
 
   renderHighlights() {
     if (!this.highlightsBox) {
-      return true
+      return true;
     }
 
     for (const child of Array.from(this.highlightsBox.widgets)) {
