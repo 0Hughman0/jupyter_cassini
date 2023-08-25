@@ -3,6 +3,14 @@ import { URLExt } from '@jupyterlab/coreutils';
 
 import { ServerConnection } from '@jupyterlab/services';
 
+export interface IChildClsInfo {
+  name: string;
+  idRegex: string;
+  namePartTemplate: string;
+  templates: string[];
+  metaNames: string[];
+}
+
 export interface ITreeChildResponse {
   name: string;
   info?: string;
@@ -17,9 +25,8 @@ export interface ITreeChildResponse {
 export interface ITreeResponse extends ITreeChildResponse {
   name: string;
   folder: string;
-  childMetas: string[];
-  childTemplates: string[];
-  childIdRegex: string | null;
+
+  childClsInfo?: IChildClsInfo; // undefined when no child class.
 
   children: { [id: string]: ITreeChildResponse };
 }

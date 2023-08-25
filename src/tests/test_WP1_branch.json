@@ -19,6 +19,11 @@
       "notebookPath": "WorkPackages/WP1/WP1.1.ipynb"
     }
   },
-  "childMetas": [],
-  "childTemplates": ["Experiment.tmplt.ipynb"]
+  "childClsInfo": {
+    "name": "Experiment",
+    "metaNames": [],
+    "templates": ["Experiment.tmplt.ipynb"],
+    "idRegex": "(\\d+)",
+    "namePartTemplate": ".{}"
+  }
 }

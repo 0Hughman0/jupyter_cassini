@@ -34,6 +34,11 @@
       "notebookPath": "WorkPackages/WP3.ipynb"
     }
   },
-  "childMetas": ["Crabs", "Fishes"],
-  "childTemplates": ["WorkPackage.tmplt.ipynb"]
+  "childClsInfo": {
+    "name": "Experiment",
+    "metaNames": ["Crabs", "Fishes"],
+    "templates": ["WorkPackage.tmplt.ipynb"],
+    "idRegex": "(\\d+)",
+    "namePartTemplate": "WP{}"
+  }
 }

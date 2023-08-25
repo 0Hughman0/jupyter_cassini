@@ -30,25 +30,25 @@ export abstract class InputDialogBase<T>
     super();
     this.addClass(INPUT_DIALOG_CLASS);
 
-    this._input = document.createElement(this.elem) as HTMLInputElement;
-    this._input.classList.add('jp-mod-styled');
-    this._input.id = 'jp-dialog-input-id';
+    this.input = document.createElement(this.elem) as HTMLInputElement;
+    this.input.classList.add('jp-mod-styled');
+    this.input.id = 'jp-dialog-input-id';
 
     if (label !== undefined) {
       const labelElement = document.createElement('label');
       labelElement.textContent = label;
-      labelElement.htmlFor = this._input.id;
+      labelElement.htmlFor = this.input.id;
 
       // Initialize the node
       this.node.appendChild(labelElement);
     }
 
-    this.node.appendChild(this._input);
+    this.node.appendChild(this.input);
   }
 
   abstract getValue(): any;
-  /** Input HTML node */
-  protected _input: HTMLInputElement | HTMLTextAreaElement;
+  /** Input HTML node, access is not part of public API */
+  input: HTMLInputElement | HTMLTextAreaElement;
 }
 
 /**
@@ -60,22 +60,22 @@ export class InputBooleanDialog extends InputDialogBase<boolean> {
    *
    * @param options Constructor options
    */
-  protected _input: HTMLInputElement;
+  input: HTMLInputElement;
 
   constructor(options: InputDialog.IBooleanOptions) {
     super(options.label);
 
     this.addClass(INPUT_BOOLEAN_DIALOG_CLASS);
 
-    this._input.type = 'checkbox';
-    this._input.checked = options.value ? true : false;
+    this.input.type = 'checkbox';
+    this.input.checked = options.value ? true : false;
   }
 
   /**
    * Get the text specified by the user
    */
   getValue(): boolean {
-    return this._input.checked;
+    return this.input.checked;
   }
 }
 
@@ -89,21 +89,21 @@ export class InputNumberDialog extends InputDialogBase<number> {
    * @param options Constructor options
    */
 
-  protected _input: HTMLInputElement;
+  input: HTMLInputElement;
 
   constructor(options: InputDialog.INumberOptions) {
     super(options.label);
 
-    this._input.type = 'number';
-    this._input.value = options.value ? options.value.toString() : '0';
+    this.input.type = 'number';
+    this.input.value = options.value ? options.value.toString() : '0';
   }
 
   /**
    * Get the number specified by the user.
    */
   getValue(): number {
-    if (this._input.value) {
-      return Number(this._input.value);
+    if (this.input.value) {
+      return Number(this.input.value);
     } else {
       return Number.NaN;
     }
@@ -114,7 +114,7 @@ export class InputNumberDialog extends InputDialogBase<number> {
  * Widget body for input text dialog
  */
 export class InputTextDialog extends InputDialogBase<string> {
-  protected _input: HTMLInputElement;
+  input: HTMLInputElement;
 
   /**
    * InputTextDialog constructor
@@ -124,14 +124,14 @@ export class InputTextDialog extends InputDialogBase<string> {
   constructor(options: InputDialog.ITextOptions) {
     super(options.label);
 
-    this._input.type = 'text';
-    this._input.value = options.text ? options.text : '';
+    this.input.type = 'text';
+    this.input.value = options.text ? options.text : '';
     if (options.placeholder) {
-      this._input.placeholder = options.placeholder;
+      this.input.placeholder = options.placeholder;
     }
     this._initialSelectionRange = Math.min(
-      this._input.value.length,
-      Math.max(0, this._input.value.length)
+      this.input.value.length,
+      Math.max(0, this.input.value.length)
     );
   }
 
@@ -140,8 +140,8 @@ export class InputTextDialog extends InputDialogBase<string> {
    */
   protected onAfterAttach(msg: Message): void {
     super.onAfterAttach(msg);
-    if (this._initialSelectionRange > 0 && this._input.value) {
-      this._input.setSelectionRange(0, this._initialSelectionRange);
+    if (this._initialSelectionRange > 0 && this.input.value) {
+      this.input.setSelectionRange(0, this._initialSelectionRange);
     }
   }
 
@@ -149,7 +149,7 @@ export class InputTextDialog extends InputDialogBase<string> {
    * Get the text specified by the user
    */
   getValue(): string {
-    return this._input.value;
+    return this.input.value;
   }
 
   private _initialSelectionRange: number;
@@ -159,7 +159,7 @@ export class InputTextDialog extends InputDialogBase<string> {
  * Widget body for input password dialog
  */
 export class InputPasswordDialog extends InputDialogBase<string> {
-  protected _input: HTMLInputElement;
+  input: HTMLInputElement;
   /**
    * InputPasswordDialog constructor
    *
@@ -168,10 +168,10 @@ export class InputPasswordDialog extends InputDialogBase<string> {
   constructor(options: InputDialog.ITextOptions) {
     super(options.label);
 
-    this._input.type = 'password';
-    this._input.value = options.text ? options.text : '';
+    this.input.type = 'password';
+    this.input.value = options.text ? options.text : '';
     if (options.placeholder) {
-      this._input.placeholder = options.placeholder;
+      this.input.placeholder = options.placeholder;
     }
   }
 
@@ -180,8 +180,8 @@ export class InputPasswordDialog extends InputDialogBase<string> {
    */
   protected onAfterAttach(msg: Message): void {
     super.onAfterAttach(msg);
-    if (this._input.value) {
-      this._input.select();
+    if (this.input.value) {
+      this.input.select();
     }
   }
 
@@ -189,7 +189,7 @@ export class InputPasswordDialog extends InputDialogBase<string> {
    * Get the text specified by the user
    */
   getValue(): string {
-    return this._input.value;
+    return this.input.value;
   }
 }
 
@@ -197,7 +197,8 @@ export class InputPasswordDialog extends InputDialogBase<string> {
  * Widget body for input list dialog
  */
 export class InputItemsDialog extends InputDialogBase<string> {
-  protected _input: HTMLInputElement;
+  input: HTMLInputElement;
+  list: HTMLSelectElement;
   /**
    * InputItemsDialog constructor
    *
@@ -215,7 +216,7 @@ export class InputItemsDialog extends InputDialogBase<string> {
       current = '';
     }
 
-    this._list = document.createElement('select');
+    this.list = document.createElement('select');
     options.items.forEach((item, index) => {
       const option = document.createElement('option');
       if (index === defaultIndex) {
@@ -224,26 +225,26 @@ export class InputItemsDialog extends InputDialogBase<string> {
       }
       option.value = item;
       option.textContent = item;
-      this._list.appendChild(option);
+      this.list.appendChild(option);
     });
 
     if (options.editable) {
       /* Use of list and datalist */
       const data = document.createElement('datalist');
       data.id = 'input-dialog-items';
-      data.appendChild(this._list);
+      data.appendChild(this.list);
 
-      this._input.type = 'list';
-      this._input.value = current;
-      this._input.setAttribute('list', data.id);
+      this.input.type = 'list';
+      this.input.value = current;
+      this.input.setAttribute('list', data.id);
       if (options.placeholder) {
-        this._input.placeholder = options.placeholder;
+        this.input.placeholder = options.placeholder;
       }
       this.node.appendChild(data);
     } else {
       /* Use select directly */
-      this._input.remove();
-      this.node.appendChild(Styling.wrapSelect(this._list));
+      this.input.remove();
+      this.node.appendChild(Styling.wrapSelect(this.list));
     }
   }
 
@@ -252,18 +253,17 @@ export class InputItemsDialog extends InputDialogBase<string> {
    */
   getValue(): string {
     if (this._editable) {
-      return this._input.value;
+      return this.input.value;
     } else {
-      return this._list.value;
+      return this.list.value;
     }
   }
 
-  private _list: HTMLSelectElement;
   private _editable: boolean;
 }
 
 export class InputTextAreaDialog extends InputDialogBase<string> {
-  protected _input: HTMLTextAreaElement;
+  input: HTMLTextAreaElement;
 
   get elem(): string {
     return 'textarea';
@@ -274,6 +274,6 @@ export class InputTextAreaDialog extends InputDialogBase<string> {
   }
 
   getValue(): string {
-    return this._input.value;
+    return this.input.value;
   }
 }
