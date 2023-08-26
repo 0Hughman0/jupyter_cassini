@@ -1,5 +1,3 @@
-import json
-import os.path
 import functools
 
 from jupyter_server.base.handlers import APIHandler
@@ -71,10 +69,6 @@ def serialize_branch(tier: TierBase):
     child_metas = set()
     
     for child in tier:
-        
-        if not isinstance(child, TierBase):
-            continue
-
         tree['children'][child.id] = serialize_child(child)
 
         if hasattr(child, 'meta'):
@@ -146,6 +140,8 @@ class NewChildHandler(APIHandler):
         template_name = data.pop('template')
         identifier = data.pop('id')
 
+        meta = data
+
         try:
             parent = env.project[parent_name]
         except (ValueError, AttributeError):
@@ -153,18 +149,9 @@ class NewChildHandler(APIHandler):
 
         child = parent[identifier]
 
-        description = data.pop('description')
-
         template = {path.name: path for path in parent.child_cls.get_templates()}.get(template_name)
 
-        child.setup_files(template)
-
-        if child.meta_file:
-
-            child.description = description
-
-            for k, v in data.items():
-                child.meta[k] = v
+        child.setup_files(template, meta=meta)
 
         self.finish(serialize_branch(child))
     
