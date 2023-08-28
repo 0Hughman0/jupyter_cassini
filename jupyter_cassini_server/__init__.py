@@ -23,6 +23,9 @@ def find_project(serverapp):
         CASSINI_PROJECT=path/to/module:project_obj
 
     By default, `project_obj` is assumed to be called `project`. This will be imported from `module`. 
+
+    Note that for cassini to run with a regular jupyterlab instance, `ContentsManager.allow_hidden = True` must be set, either
+     via a config, or passed as a command line argument e.g. `--ContentsManager.allow_hidden=True`
     """
     if env.project:
         serverapp.log.info(f"Found pre-set project, {env.project}")
