@@ -1,11 +1,17 @@
 import shutil
 import os
 from unittest.mock import MagicMock
+import itertools
+import importlib
+import sys
 
 import pytest
 from cassini import env, Project
 
 from .. import find_project
+
+
+CWD = os.getcwd()
 
 
 @pytest.fixture
@@ -14,10 +20,21 @@ def refresh_project():
         Project._instance = None
         env.project = None
 
+    if 'project' in sys.modules:
+        del sys.modules['project']
+    if 'my_project' in sys.modules:
+        del sys.modules['my_project']
+    
+    importlib.invalidate_caches()
+
+
+    if os.environ.get('CASSINI_PROJECT'):
+        del os.environ['CASSINI_PROJECT']
+
     return wrapped
 
 
-def test_find_project(tmp_path, refresh_project):
+def test_find_not_set(tmp_path, refresh_project):
     project = shutil.copy('jupyter_cassini_server/tests/project_cases/basic.py', tmp_path / 'project.py')
 
     refresh_project()
@@ -29,43 +46,64 @@ def test_find_project(tmp_path, refresh_project):
     with pytest.raises(KeyError):
         find_project(MagicMock())
 
-    os.environ['CASSINI_PROJECT'] = str(project.parent)
+
+@pytest.fixture(params=list(
+        itertools.product(
+        ['basic.py', 'not_project.py'], 
+        ['project.py', 'my_project.py'],
+        ['{module}', '{module_file}', '{directory}'],
+        ['', ':{project_obj}'],
+        [False, True]
+)))
+def cas_project(request, tmp_path, refresh_project):
+    project_in, project_out, module_format, obj_format, relative_path = \
+        request.param
     
-    just_directory = find_project(MagicMock())
-
-    assert just_directory.project_folder == tmp_path
-
-    os.environ['CASSINI_PROJECT'] = str(project)
-
-    refresh_project()
-
-    with_file = find_project(MagicMock())
-
-    assert with_file.project_folder == tmp_path
-
-    assert just_directory == with_file
-
-    not_called_project = shutil.copy('jupyter_cassini_server/tests/project_cases/basic.py', tmp_path / 'a_project_file.py')
-
-    refresh_project()
-
-    os.environ['CASSINI_PROJECT'] = str(not_called_project)
-
-    different_module = find_project(MagicMock())
-
-    assert different_module.hierarchy == \
-           just_directory.hierarchy == \
-           with_file.hierarchy
+    os.chdir(CWD)
     
-    not_called_project_and_diff_obj = shutil.copy('jupyter_cassini_server/tests/project_cases/not_project.py', tmp_path / 'a_project_file_diff_obj.py')
+    if obj_format == ':{project_obj}' and module_format == '{directory}':
+        return pytest.skip("Valid CASSINI_PATH cannot be constructed from directory and object specifier")
 
+    if module_format == '{directory}' and project_out != 'project.py':
+        return pytest.skip("Valid CASSINI_PATH cannot be constructed from directory if project not called project.py")
+
+
+    project_file = shutil.copy(f'jupyter_cassini_server/tests/project_cases/{project_in}', tmp_path / project_out)
+
+    project_obj = 'project' if project_in == 'basic.py' else 'my_project'
+
+    if project_obj == 'my_project' and obj_format == '':
+        return pytest.skip("Finding project won't work if non `project` name used and obj not specified")
+
+    module = project_out.replace('.py', '')
+
+    if relative_path or module_format == '{module}':
+        os.chdir(tmp_path)
+
+    if relative_path:
+        module_file = project_file.relative_to(os.getcwd())
+    else:
+        module_file = project_file
+    
+    directory = str(module_file.parent)
+
+    path_part = module_format.format(module=module, module_file=module_file, directory=directory)
+    obj_part = obj_format.format(project_obj=project_obj)
+    
+    yield path_part + obj_part, request.param, tmp_path
+
+
+def test_find_project(cas_project, refresh_project):
     refresh_project()
 
-    os.environ['CASSINI_PROJECT'] = f'{str(not_called_project_and_diff_obj)}:my_project'
+    assert 'CASSINI_PROJECT' not in os.environ
+    assert not env.project
 
-    different_module_and_obj = find_project(MagicMock())
+    os.environ['CASSINI_PROJECT'] = cas_project[0]
 
-    assert different_module_and_obj.hierarchy == \
-           different_module.hierarchy == \
-           just_directory.hierarchy == \
-           with_file.hierarchy
+    print('\n', cas_project[0], '\n')
+                    
+    project = find_project(MagicMock())
+
+    assert project.test_project
+    assert project.project_folder == cas_project[2]

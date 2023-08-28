@@ -10,14 +10,36 @@ from ._version import __version__
 from .handlers import setup_handlers
 
 
-def find_project(serverapp):   
+def find_project(serverapp):
+    """
+    Gets ahold of the Project instance for this Jupyterlab server instance.
+
+    If server was launched via `cassini.Project.launch()`, this will already be set.
+
+    Otherwise, try using CASSINI_PROJECT environment variable to find the project.
+
+    This should be of the form:
+
+        CASSINI_PROJECT=path/to/module:project_obj
+
+    By default, `project_obj` is assumed to be called `project`. This will be imported from `module`. 
+    """
     if env.project:
         serverapp.log.info(f"Found pre-set project, {env.project}")
         return env.project
     
-    path = Path(os.environ['CASSINI_PROJECT']).resolve()
+    CASSINI_PROJECT = os.environ['CASSINI_PROJECT']
+    
+    path = Path(CASSINI_PROJECT).absolute()
 
-    if path.is_file():
+    module = None
+    obj = None
+
+    if ':' in path.name:
+        module, obj = path.name.split(':')
+        module = module.replace('.py', '')
+        directory = path.parent.as_posix()
+    elif path.is_file() or path.with_suffix('.py').is_file():
         directory = path.parent.as_posix()
         module = path.stem
         obj = 'project'
@@ -26,17 +48,16 @@ def find_project(serverapp):
         module = 'project'
         obj = 'project'    
     else:
-        try:
-            directory = path.parent.as_posix()
-            module, obj = path.name.split(':')
-            module = module.replace('.py', '')
-        except ValueError:
-            raise RuntimeError("Cannot parse CASSINI_PROJECT environment variable")
+        raise RuntimeError(f"Cannot parse CASSINI_PROJECT environment variable {CASSINI_PROJECT}")
 
-    sys.path.append(directory)
-    env.project = getattr(importlib.import_module(module), obj)
+    sys.path.insert(0, directory)
+
+    try:
+        env.project = getattr(importlib.import_module(module), obj)
+    finally:
+        sys.path.remove(directory)
     
-    serverapp.log(f"Found project {env.project} using CASSINI_PROJECT={os.environ['CASSINI_PROJECT']}")
+    serverapp.log(f"Found project {env.project} using CASSINI_PROJECT={CASSINI_PROJECT}")
 
     return env.project
 
