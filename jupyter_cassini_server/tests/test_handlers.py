@@ -49,14 +49,15 @@ def test_find_not_set(tmp_path, refresh_project):
 
 @pytest.fixture(params=list(
         itertools.product(
-        ['basic.py', 'not_project.py'], 
+        ['basic.py', 'not_project.py'],
+        ['', 'subdir'],
         ['project.py', 'my_project.py'],
         ['{module}', '{module_file}', '{directory}'],
         ['', ':{project_obj}'],
         [False, True]
 )))
 def cas_project(request, tmp_path, refresh_project):
-    project_in, project_out, module_format, obj_format, relative_path = \
+    project_in, subdir, project_out, module_format, obj_format, relative_path = \
         request.param
     
     os.chdir(CWD)
@@ -66,16 +67,20 @@ def cas_project(request, tmp_path, refresh_project):
 
     if module_format == '{directory}' and project_out != 'project.py':
         return pytest.skip("Valid CASSINI_PATH cannot be constructed from directory if project not called project.py")
+    
+    if module_format == '{module}' and subdir:
+        return pytest.skip("Valid CASSINI_PATH cannot be constructed from just module if it's inside a subdir")
 
-
-    project_file = shutil.copy(f'jupyter_cassini_server/tests/project_cases/{project_in}', tmp_path / project_out)
+    project_out = tmp_path / subdir / project_out if subdir else tmp_path / project_out
+    project_out.parent.mkdir(exist_ok=True)
+    project_file = shutil.copy(f'jupyter_cassini_server/tests/project_cases/{project_in}', project_out)
 
     project_obj = 'project' if project_in == 'basic.py' else 'my_project'
 
     if project_obj == 'my_project' and obj_format == '':
         return pytest.skip("Finding project won't work if non `project` name used and obj not specified")
 
-    module = project_out.replace('.py', '')
+    module = project_out.name.replace('.py', '')
 
     if relative_path or module_format == '{module}':
         os.chdir(tmp_path)
@@ -90,7 +95,7 @@ def cas_project(request, tmp_path, refresh_project):
     path_part = module_format.format(module=module, module_file=module_file, directory=directory)
     obj_part = obj_format.format(project_obj=project_obj)
     
-    yield path_part + obj_part, request.param, tmp_path
+    yield path_part + obj_part, request.param, project_out.parent
 
 
 def test_find_project(cas_project, refresh_project):
