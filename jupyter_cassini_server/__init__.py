@@ -60,7 +60,7 @@ def find_project(serverapp):
     finally:
         sys.path.remove(directory)
     
-    serverapp.log(f"Found project {env.project} using CASSINI_PROJECT={CASSINI_PROJECT}")
+    serverapp.log.info(f"Found project {env.project} using CASSINI_PROJECT={CASSINI_PROJECT}")
 
     return env.project
 
