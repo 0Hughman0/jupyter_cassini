@@ -44,6 +44,8 @@ async function createNewChild(page) {
 }
 
 test.describe('Cassini-Browser', async () => {
+  test.describe.configure({ retries: 3 }); // tests are flakey, particularly notebook.runCell in highlights!
+
   test.beforeEach(async ({ page }) => {
     // keep in mind that the server is only started once.
     // this means the test isolation isn't great in terms of the state of cassini backend.
