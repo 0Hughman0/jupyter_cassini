@@ -17,7 +17,7 @@ if project_folder is None:
     print("Set to JUPYTERLAB_GALATA_ROOT_DIR End")
 
     print("Moving in template project file")
-    shutil.copy(__file__, os.path.join(project_folder, 'project.py'))  # put the project.py into the temp folder.
+    shutil.copy(__file__, os.path.join(project_folder, 'cas_project.py'))  # put the project.py into the temp folder.
     print("Done")
 
 project = Project(DEFAULT_TIERS, project_folder)
