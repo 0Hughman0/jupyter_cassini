@@ -1,0 +1,102 @@
+openapi: 3.0.3
+info:
+  title: Jupyter Cassini API Spec
+  version: 0.3.0
+components:
+  schemas:
+    TierInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        identifiers:
+          type: array
+          items: 
+            type: string
+        started: 
+          type: string
+          format: date-time
+        children:
+          type: array
+          items:
+            type: string
+    
+    ChildClsInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        idRegex:
+          type: string
+        namePartTemplate:
+          type: string
+        templates:
+          type: array
+          items: 
+            type: string
+        metaNames:
+          type: array
+          items: 
+            type: string
+    
+    TreeChildResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        info:
+          type: string
+        outcome:
+          type: string
+        started:
+          type: string
+          format: date-time
+        hltsPath:
+          type: string
+        metaPath:
+          type: string
+        notebookPath:
+          type: string
+        additionalMeta:
+          type: object
+          additionalProperties: true
+      required:
+        - name
+        - additionalMeta
+      
+    TreeResponse:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/TreeChildResponse"
+      properties:
+        folder:
+          type: string
+        childClsInfo:          
+          $ref: "#/components/schemas/ChildClsInfo"
+        children:
+          type: object
+          properties:
+            name:
+              type: string
+          additionalProperties: 
+            $ref: "#/components/schemas/TreeChildResponse"
+
+paths: 
+  /lookup:
+      get:
+        summary: Lookup a tier
+        description: Look up a tier by name and respond with info about it.
+        parameters:
+        - name: query
+          in: query
+          schema:
+            type: string
+        responses:
+          "200":
+            description: "Tier Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/TierInfo" 
+          "404":
+            description: "Not Found"
