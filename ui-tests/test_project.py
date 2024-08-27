@@ -1,5 +1,4 @@
 from cassini import Project, DEFAULT_TIERS
-from cassini.jlgui import extend_project
 
 import shutil
 from tempfile import mkdtemp
@@ -21,8 +20,6 @@ if project_folder is None:
     print("Done")
 
 project = Project(DEFAULT_TIERS, project_folder)
-extend_project(project)
-
 
 if __name__ == '__main__':
     project.launch()
