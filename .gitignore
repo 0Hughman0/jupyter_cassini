@@ -134,5 +134,5 @@ dmypy.json
 # demo
 demo/*
 !demo/launch.bat
-!demo/project.py
+!demo/cas_project.py
 

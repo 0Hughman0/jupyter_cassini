@@ -1,5 +1,4 @@
 from cassini import Project, DEFAULT_TIERS
-from cassini.jlgui import extend_project
 
 import shutil
 from tempfile import mkdtemp
@@ -17,12 +16,10 @@ if project_folder is None:
     print("Set to JUPYTERLAB_GALATA_ROOT_DIR End")
 
     print("Moving in template project file")
-    shutil.copy(__file__, os.path.join(project_folder, 'project.py'))  # put the project.py into the temp folder.
+    shutil.copy(__file__, os.path.join(project_folder, 'cas_project.py'))  # put the project.py into the temp folder.
     print("Done")
 
 project = Project(DEFAULT_TIERS, project_folder)
-extend_project(project)
-
 
 if __name__ == '__main__':
     project.launch()

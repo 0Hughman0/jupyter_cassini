@@ -1,8 +1,8 @@
 from cassini import Project, DEFAULT_TIERS
-from cassini.jlgui import extend_project
+from cassini.ext import cassini_lib
 
 project = Project(DEFAULT_TIERS, __file__)
-extend_project(project)
+project = cassini_lib.extend_project(project)
 
 if __name__ == '__main__':
     project.launch()

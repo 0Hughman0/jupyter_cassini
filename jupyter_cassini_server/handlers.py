@@ -10,7 +10,7 @@ from jupyter_server.utils import url_path_join
 import tornado
 
 from cassini import env
-from cassini import TierBase
+from cassini.core import TierABC, NotebookTierBase
 
 
 def needs_project(meth):
@@ -25,7 +25,7 @@ def needs_project(meth):
     return wraps
 
 
-def serialize_child(tier: TierBase):
+def serialize_child(tier: TierABC):
     project_folder = env.project.project_folder
     """
     Note, doesn't populate children field... maybe will later...
@@ -34,29 +34,24 @@ def serialize_child(tier: TierBase):
 
     branch['folder'] = tier.folder.relative_to(project_folder).as_posix()
 
-    if hasattr(tier, 'meta'):
+    if isinstance(tier, NotebookTierBase):
         branch['metaPath'] = tier.meta_file.relative_to(project_folder).as_posix()
         branch['additionalMeta'] = {k: tier.meta[k] for k in tier.meta.keys() if k not in ['description', 'started', 'conclusion']}
-
-    if hasattr(tier, 'description') and tier.description:
-        branch['info'] = tier.description.split('\n')[0]
-
-    if hasattr(tier, 'conclusion') and tier.conclusion:
-        branch['outcome'] = tier.conclusion.split('\n')[0]
-
-    if hasattr(tier, 'started'):
         branch['started'] = tier.started.isoformat()
+
+        if tier.description:
+            branch['info'] = tier.description.split('\n')[0]
+
+        if tier.conclusion:
+            branch['outcome'] = tier.conclusion.split('\n')[0]
         
-    if hasattr(tier, 'highlights_file') and tier.highlights_file:  # don't check if exists, because what if one arrives later!
         branch['hltsPath'] = tier.highlights_file.relative_to(project_folder).as_posix()
-    
-    if hasattr(tier, 'file') and tier.file and tier.file.exists():
         branch['notebookPath'] = tier.file.relative_to(project_folder).as_posix()
     
     return branch
 
 
-def serialize_branch(tier: TierBase):
+def serialize_branch(tier: TierABC):
     tree = serialize_child(tier)
 
     tree['children'] = {}
@@ -69,27 +64,28 @@ def serialize_branch(tier: TierBase):
         return tree
 
     child_cls_info = {}
+    
+    child_cls_info['idRegex'] = child_cls.id_regex
+    child_cls_info['name'] = child_cls.__name__
+    child_cls_info['namePartTemplate'] = child_cls.name_part_template
 
     child_metas = set()
     
     for child in tier:
         tree['children'][child.id] = serialize_child(child)
 
-        if hasattr(child, 'meta'):
+        if isinstance(child, NotebookTierBase):
             child_metas.update(child.meta.keys())
 
-    child_metas.discard('name')
-    child_metas.discard('started')
-    child_metas.discard('description')
-    child_metas.discard('conclusion')
+    if issubclass(child_cls, NotebookTierBase):
+        child_metas.discard('name')
+        child_metas.discard('started')
+        child_metas.discard('description')
+        child_metas.discard('conclusion')
 
-    child_cls_info['metaNames'] = list(child_metas)
+        child_cls_info['metaNames'] = list(child_metas)
 
-    child_cls_info['templates'] = [template.name for template in child_cls.get_templates()]
-
-    child_cls_info['idRegex'] = child_cls.id_regex
-    child_cls_info['name'] = child_cls.__name__
-    child_cls_info['namePartTemplate'] = child_cls.name_part_template
+        child_cls_info['templates'] = [template.name for template in child_cls.get_templates(env.project)]
 
     tree['childClsInfo'] = child_cls_info
     return tree
@@ -153,7 +149,7 @@ class NewChildHandler(APIHandler):
 
         child = parent[identifier]
 
-        template = {path.name: path for path in parent.child_cls.get_templates()}.get(template_name)
+        template = {path.name: path for path in parent.child_cls.get_templates(env.project)}.get(template_name)
 
         child.setup_files(template, meta=meta)
 
