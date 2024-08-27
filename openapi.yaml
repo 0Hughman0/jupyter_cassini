@@ -80,6 +80,17 @@ components:
               type: string
           additionalProperties: 
             $ref: "#/components/schemas/TreeChildResponse"
+    NewChildInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        parent:
+          type: string
+        template:
+          type: string
+        description:
+          type: string
 
 paths: 
   /lookup:
@@ -100,3 +111,60 @@ paths:
                   $ref: "#/components/schemas/TierInfo" 
           "404":
             description: "Not Found"
+  /tree:
+    get:
+      summary: View the tier tree
+      description: Get the children of a particular tier (or home)
+      parameters:
+      - name: identifiers
+        in: query
+        schema:
+          type: array
+      responses:
+        "200":
+          description: Found tree
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TreeResponse"
+        "404":
+          description: "Not Found"
+  /open:
+    get:
+      summary: Open a tier in file explorer
+      description: Use `tier.open_folder()` python side on specified tier.
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Open successful
+          content:
+            application/json:
+              schema:
+                type: boolean
+        "404":
+          description: Not Found
+  /newChild:
+    post:
+      summary: Create a new child
+      description: Create a new child
+      requestBody:
+          $ref: "#/components/schemas/NewChildInfo"
+      responses:
+        "200":
+          description: Child made
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TreeResponse"
+
+
+
+
+              
+
+        
+
