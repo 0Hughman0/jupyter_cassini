@@ -2,51 +2,15 @@
 import { URLExt } from '@jupyterlab/coreutils';
 
 import { ServerConnection } from '@jupyterlab/services';
+import { components } from './models/schema';
 
-export interface IChildClsInfo {
-  name: string;
-  idRegex: string;
-  namePartTemplate: string;
-  templates: string[];
-  metaNames: string[];
-}
 
-export interface ITreeChildResponse {
-  name: string;
-  info?: string;
-  outcome?: string;
-  started?: string;
-  hltsPath?: string;
-  metaPath?: string;
-  notebookPath?: string;
-  additionalMeta: { [key: string]: JSON };
-}
+export type IChildClsInfo = components["schemas"]["ChildClsInfo"]
+export type ITreeChildResponse = components["schemas"]["TreeChildResponse"]
+export type ITreeResponse = components["schemas"]["TreeResponse"]
+export type ITierInfo = components["schemas"]["TierInfo"]
+export type INewChildInfo = components["schemas"]["NewChildInfo"]
 
-export interface ITreeResponse extends ITreeChildResponse {
-  name: string;
-  folder: string;
-
-  childClsInfo?: IChildClsInfo; // undefined when no child class.
-
-  children: { [id: string]: ITreeChildResponse };
-}
-
-export interface ITierInfo {
-  name: string;
-  identifiers: string[];
-  started: string;
-  children: string[];
-}
-
-/**
- * @property { string } id - this is the id that is appended to parent.identifiers to make the new identifiers for that child!
- */
-export interface INewChildInfo {
-  id: string;
-  parent: string;
-  template: string;
-  description: string;
-}
 
 /**
  * Call the API extension

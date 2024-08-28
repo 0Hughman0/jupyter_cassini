@@ -2,7 +2,16 @@ openapi: 3.0.3
 info:
   title: Jupyter Cassini API Spec
   version: 0.3.0
+servers:
+  - url: http://localhost:8888/jupyter_cassini/
+security:
+  - auth: []
 components:
+  securitySchemes:
+    auth:
+      type: apiKey
+      name: token
+      in: query
   schemas:
     TierInfo:
       type: object
@@ -20,7 +29,12 @@ components:
           type: array
           items:
             type: string
-    
+      required:
+        - name
+        - identifiers
+        - started
+        - children
+
     ChildClsInfo:
       type: object
       properties:
@@ -38,7 +52,12 @@ components:
           type: array
           items: 
             type: string
-    
+      required:
+        - name
+        - idRegex
+        - namePartTemplate
+        - templates
+        - metaNames
     TreeChildResponse:
       type: object
       properties:
@@ -80,6 +99,10 @@ components:
               type: string
           additionalProperties: 
             $ref: "#/components/schemas/TreeChildResponse"
+      required:
+        - name
+        - folder
+        - children
     NewChildInfo:
       type: object
       properties:
@@ -91,6 +114,11 @@ components:
           type: string
         description:
           type: string
+      required:
+        - id
+        - parent
+        - template
+        - description
 
 paths: 
   /lookup:
@@ -134,7 +162,7 @@ paths:
       summary: Open a tier in file explorer
       description: Use `tier.open_folder()` python side on specified tier.
       parameters:
-        - name: name
+        - name: id
           in: query
           schema:
             type: string

@@ -114,7 +114,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    name?: string;
+                    id?: string;
                 };
                 header?: never;
                 path?: never;
@@ -196,18 +196,18 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         TierInfo: {
-            name?: string;
-            identifiers?: string[];
+            name: string;
+            identifiers: string[];
             /** Format: date-time */
-            started?: string;
-            children?: string[];
+            started: string;
+            children: string[];
         };
         ChildClsInfo: {
-            name?: string;
-            idRegex?: string;
-            namePartTemplate?: string;
-            templates?: string[];
-            metaNames?: string[];
+            name: string;
+            idRegex: string;
+            namePartTemplate: string;
+            templates: string[];
+            metaNames: string[];
         };
         TreeChildResponse: {
             name: string;
@@ -223,19 +223,19 @@ export interface components {
             };
         };
         TreeResponse: {
-            folder?: string;
+            folder: string;
             childClsInfo?: components["schemas"]["ChildClsInfo"];
-            children?: {
+            children: {
                 name?: string;
             } & {
                 [key: string]: components["schemas"]["TreeChildResponse"];
             };
-        } & components["schemas"]["TreeChildResponse"];
+        } & WithRequired<components["schemas"]["TreeChildResponse"], "name">;
         NewChildInfo: {
-            id?: string;
-            parent?: string;
-            template?: string;
-            description?: string;
+            id: string;
+            parent: string;
+            template: string;
+            description: string;
         };
     };
     responses: never;
@@ -245,4 +245,7 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
+type WithRequired<T, K extends keyof T> = T & {
+    [P in K]-?: T[P];
+};
 export type operations = Record<string, never>;
