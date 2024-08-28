@@ -53,7 +53,8 @@
     "test": "jest",
     "watch": "run-p watch:src watch:labextension",
     "watch:labextension": "jupyter labextension watch .",
-    "watch:src": "tsc -w --sourceMap"
+    "watch:src": "tsc -w --sourceMap",
+    "build-schema": "datamodel-codegen --input=openapi.yaml --output=jupyter_cassini_server/schema/models.py && jlpm openapi-typescript openapi.yaml -o src/models/schema.d.ts"
   },
   "dependencies": {
     "@jupyterlab/application": "^4.0.2",
@@ -108,7 +109,8 @@
     "ts-jest": "^29.0.3",
     "typescript": "~5.0.2",
     "webpack": "^5.88.1",
-    "yjs": "^13.5.40"
+    "yjs": "^13.5.40",
+    "openapi-typescript": "^7.3.0"
   },
   "sideEffects": [
     "style/*.css",

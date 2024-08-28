@@ -152,7 +152,10 @@ paths:
       summary: Create a new child
       description: Create a new child
       requestBody:
-          $ref: "#/components/schemas/NewChildInfo"
+        content:
+          application/json:
+            schema: 
+              $ref: "#/components/schemas/NewChildInfo"
       responses:
         "200":
           description: Child made
