@@ -66,7 +66,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    identifiers?: unknown[];
+                    ids?: unknown[];
                 };
                 header?: never;
                 path?: never;

@@ -79,14 +79,15 @@ export namespace CassiniServer {
    * Gets the 'tree' reprentation of a tier. This includes enough info to display a TierViewer, but also information about the tier's children
    * such that the TierBrowser TierTree or whatever can be rendered.
    *
-   * @param identifiers the identifiers or casPath or path or ids of the tier you want to view tree data for
+   * @param ids the identifiers or casPath or path or ids of the tier you want to view tree data for
    * @returns
    */
-  export function tree(identifiers: string[]): Promise<ITreeResponse> {
+  export function tree(ids: string[]): Promise<ITreeResponse> {
     return client.GET("/tree", {
       params: {
-        query: {identifiers: identifiers}
-      }
+        query: {ids: ids}
+      },
+      querySerializer: {array: {explode: false, style: "form"}} // don't like that this is necessary!
     }).then(val => {
       if (val.data) {
         return val.data

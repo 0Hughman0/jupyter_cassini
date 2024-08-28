@@ -163,7 +163,7 @@ class TreeHandler(APIHandler):
     @tornado.web.authenticated
     @needs_project
     def get(self):
-        cas_ids = self.get_argument('identifiers', None)
+        cas_ids = self.get_argument('ids', None)
         cas_ids = [] if not cas_ids else cas_ids.split(',')
 
         try:

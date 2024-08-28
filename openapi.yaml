@@ -144,10 +144,12 @@ paths:
       summary: View the tier tree
       description: Get the children of a particular tier (or home)
       parameters:
-      - name: identifiers
+      - name: ids
         in: query
         schema:
           type: array
+        style: form
+        explode: false
       responses:
         "200":
           description: Found tree

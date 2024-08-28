@@ -64,7 +64,7 @@ export function mockServer() {
       case '/jupyter_cassini/tree': {
         let responseData: ITreeResponse;
 
-        switch (query.identifiers?.toString()) {
+        switch (query.ids?.toString()) {
           case [].toString(): {
             responseData = HOME_RESPONSE;
             break;
@@ -89,7 +89,7 @@ export function mockServer() {
       case '/jupyter_cassini/lookup': {
         let responseData: ITierInfo;
 
-        switch (query.id) {
+        switch (query.name) {
           case 'Home': {
             responseData = { identifiers: [], ...(HOME_RESPONSE as any) };
             break;
