@@ -7992,6 +7992,7 @@ __metadata:
     jest-retries: ^1.0.1
     mkdirp: ^1.0.3
     npm-run-all: ^4.1.5
+    openapi-fetch: ^0.11.1
     openapi-typescript: ^7.3.0
     prettier: ^2.8.7
     react: ^18.2.0
@@ -8885,6 +8886,22 @@ __metadata:
   dependencies:
     mimic-fn: ^2.1.0
   checksum: 2478859ef817fc5d4e9c2f9e5728512ddd1dbc9fb7829ad263765bb6d3b91ce699d6e2332eef6b7dff183c2f490bd3349f1666427eaba4469fba0ac38dfd0d34
+  languageName: node
+  linkType: hard
+
+"openapi-fetch@npm:^0.11.1":
+  version: 0.11.1
+  resolution: "openapi-fetch@npm:0.11.1"
+  dependencies:
+    openapi-typescript-helpers: ^0.0.12
+  checksum: 7749dcaa516716cd6db88bcbf304c820a2800b96a1927c7fb59abeb1099bde96e887baa7d8d1d1b2074c3a22fe06293f459e2305b29ff24dbee56225770fcf2e
+  languageName: node
+  linkType: hard
+
+"openapi-typescript-helpers@npm:^0.0.12":
+  version: 0.0.12
+  resolution: "openapi-typescript-helpers@npm:0.0.12"
+  checksum: 3d0e328eb18e00f3ac18143deee29c8be7cd8997cd89add9f6ec35c09a52785c26c9b9611030352efb53800bcc1312e6fd587cdf6a109d954deca633327a4885
   languageName: node
   linkType: hard
 

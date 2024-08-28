@@ -126,7 +126,7 @@ paths:
         summary: Lookup a tier
         description: Look up a tier by name and respond with info about it.
         parameters:
-        - name: query
+        - name: name
           in: query
           schema:
             type: string

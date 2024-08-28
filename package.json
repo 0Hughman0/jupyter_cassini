@@ -54,7 +54,7 @@
     "watch": "run-p watch:src watch:labextension",
     "watch:labextension": "jupyter labextension watch .",
     "watch:src": "tsc -w --sourceMap",
-    "build-schema": "datamodel-codegen --input=openapi.yaml --output=jupyter_cassini_server/schema/models.py && jlpm openapi-typescript openapi.yaml -o src/models/schema.d.ts"
+    "build-schema": "datamodel-codegen --input=openapi.yaml --output=jupyter_cassini_server/schema/models.py && jlpm openapi-typescript openapi.yaml -o src/schema/schema.d.ts"
   },
   "dependencies": {
     "@jupyterlab/application": "^4.0.2",
@@ -77,6 +77,7 @@
     "@lumino/coreutils": "^2.1.1",
     "@lumino/widgets": "^2.2.0",
     "@tanstack/react-table": "^8.9.3",
+    "openapi-fetch": "^0.11.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -96,6 +97,7 @@
     "jest-retries": "^1.0.1",
     "mkdirp": "^1.0.3",
     "npm-run-all": "^4.1.5",
+    "openapi-typescript": "^7.3.0",
     "prettier": "^2.8.7",
     "rimraf": "^4.4.1",
     "source-map-loader": "^1.0.2",
@@ -109,8 +111,7 @@
     "ts-jest": "^29.0.3",
     "typescript": "~5.0.2",
     "webpack": "^5.88.1",
-    "yjs": "^13.5.40",
-    "openapi-typescript": "^7.3.0"
+    "yjs": "^13.5.40"
   },
   "sideEffects": [
     "style/*.css",

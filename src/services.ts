@@ -1,9 +1,10 @@
 /* eslint-disable prettier/prettier */
+import createClient from "openapi-fetch";
+
 import { URLExt } from '@jupyterlab/coreutils';
 
 import { ServerConnection } from '@jupyterlab/services';
-import { components } from './models/schema';
-
+import { paths, components } from './schema/schema';
 
 export type IChildClsInfo = components["schemas"]["ChildClsInfo"]
 export type ITreeChildResponse = components["schemas"]["TreeChildResponse"]
@@ -11,6 +12,34 @@ export type ITreeResponse = components["schemas"]["TreeResponse"]
 export type ITierInfo = components["schemas"]["TierInfo"]
 export type INewChildInfo = components["schemas"]["NewChildInfo"]
 
+type fetchType = typeof fetch
+
+const JLfetch: fetchType = (info: RequestInfo | URL, init?: RequestInit) => {
+  let url: string
+
+  if (typeof info === "string") {
+    url = info
+  } else if (info instanceof Request) {
+    url = info.url
+  } else if (info instanceof URL) {
+    url = info.href
+  } else {
+    throw Error("Cannot parse info parameter")
+  }
+
+  if (!init) {
+    init = {}
+  }
+  
+  const settings = ServerConnection.makeSettings();
+  return ServerConnection.makeRequest(url, init, settings);
+}
+
+const setting = ServerConnection.makeSettings()
+export const client = createClient<paths>({ 
+  baseUrl: URLExt.join(setting.baseUrl, 'jupyter_cassini'),
+  fetch: JLfetch
+});
 
 /**
  * Call the API extension
@@ -68,8 +97,23 @@ export namespace CassiniServer {
    * @param query the name of the tier
    * @returns Promise that resolves with the info of the tier you lookup.
    */
+  /*
   export function lookup(query: string): Promise<ITierInfo> {
     return requestAPI('lookup', {}, { id: query });
+  }
+  */
+
+  export function lookup(query: string): Promise<ITierInfo> {
+    return client.GET("/lookup", {
+      params: {
+        query: {name: query}
+      }
+    }).then(val => {
+      if (val.data) {
+        return val.data
+      } else {
+        throw Error()
+      }})
   }
 
   /**

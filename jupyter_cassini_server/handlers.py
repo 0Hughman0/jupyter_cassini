@@ -12,6 +12,8 @@ import tornado
 from cassini import env
 from cassini.core import TierABC, NotebookTierBase
 
+from .schema.models import ChildClsInfo, TreeChildResponse, TreeResponse, TierInfo
+
 
 def needs_project(meth):
     @functools.wraps(meth)
@@ -98,7 +100,7 @@ class LookupHandler(APIHandler):
     @tornado.web.authenticated
     @needs_project
     def get(self):
-        cas_id = self.get_argument('id', '')
+        cas_id = self.get_argument('name', '')
         try:
             tier = env.project[cas_id]
 
@@ -177,7 +179,7 @@ class TreeHandler(APIHandler):
             return self.send_error(404)
 
         self.finish(serialize_branch(tier))
-        
+
 
 def setup_handlers(web_app):
     host_pattern = ".*$"
