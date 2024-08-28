@@ -16,21 +16,25 @@ type fetchType = typeof fetch
 
 const JLfetch: fetchType = (info: RequestInfo | URL, init?: RequestInit) => {
   let url: string
-
+  
   if (typeof info === "string") {
     url = info
   } else if (info instanceof Request) {
     url = info.url
   } else if (info instanceof URL) {
     url = info.href
+    
   } else {
     throw Error("Cannot parse info parameter")
   }
 
-  if (!init) {
+  if (!init && info instanceof Request) {
+    const { method, body } = info
+    init = { method, body }
+  } else if (!init) {
     init = {}
   }
-  
+
   const settings = ServerConnection.makeSettings();
   return ServerConnection.makeRequest(url, init, settings);
 }
@@ -41,51 +45,6 @@ export const client = createClient<paths>({
   fetch: JLfetch
 });
 
-/**
- * Call the API extension
- *
- * @param endPoint API REST end point for the extension
- * @param init Initial values for the request
- * @returns The response body interpreted as JSON
- */
-async function requestAPI<T>(
-  endPoint = '',
-  init: RequestInit = {},
-  args = {}
-): Promise<T> {
-  // Make request to Jupyter API
-  const settings = ServerConnection.makeSettings();
-
-  const requestUrl =
-    URLExt.join(
-      settings.baseUrl,
-      'jupyter_cassini', // API Namespace
-      endPoint
-    ) + URLExt.objectToQueryString(args);
-
-  let response: Response;
-  try {
-    response = await ServerConnection.makeRequest(requestUrl, init, settings);
-  } catch (error) {
-    throw new ServerConnection.NetworkError(error as TypeError);
-  }
-
-  let data: any = await response.text();
-
-  if (data.length > 0) {
-    try {
-      data = JSON.parse(data);
-    } catch (error) {
-      console.log('Not a JSON response body.', response);
-    }
-  }
-
-  if (!response.ok) {
-    throw new ServerConnection.ResponseError(response, data.message || data);
-  }
-
-  return data;
-}
 
 /**
  * Wrapper for the requestAPI.
@@ -124,7 +83,16 @@ export namespace CassiniServer {
    * @returns
    */
   export function tree(identifiers: string[]): Promise<ITreeResponse> {
-    return requestAPI('tree', {}, { identifiers: identifiers });
+    return client.GET("/tree", {
+      params: {
+        query: {identifiers: identifiers}
+      }
+    }).then(val => {
+      if (val.data) {
+        return val.data
+      } else {
+        throw Error()
+      }})
   }
 
   /**
@@ -134,13 +102,26 @@ export namespace CassiniServer {
    * @returns the tree response for the new child.
    */
   export function newChild(info: INewChildInfo): Promise<ITreeResponse> {
-    return requestAPI('newChild', {
-      body: JSON.stringify(info),
-      method: 'POST'
-    });
+    return client.POST("/newChild", {
+      body: info
+    }).then(val => {
+      if (val.data) {
+        return val.data
+      } else {
+        throw Error()
+      }})
   }
 
-  export function openTier(id: string): Promise<boolean> {
-    return requestAPI('open', {}, { id: id });
+  export function openTier(name: string): Promise<boolean> {
+    return client.GET("/open", {
+      params: {
+        query: {name: name}
+      }
+    }).then(val => {
+      if (val.data) {
+        return val.data
+      } else {
+        throw Error()
+      }})
   }
 }

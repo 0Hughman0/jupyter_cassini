@@ -162,7 +162,7 @@ paths:
       summary: Open a tier in file explorer
       description: Use `tier.open_folder()` python side on specified tier.
       parameters:
-        - name: id
+        - name: name
           in: query
           schema:
             type: string

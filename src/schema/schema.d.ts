@@ -114,7 +114,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    id?: string;
+                    name?: string;
                 };
                 header?: never;
                 path?: never;

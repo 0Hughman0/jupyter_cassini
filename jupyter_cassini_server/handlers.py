@@ -122,7 +122,7 @@ class OpenHandler(APIHandler):
     @tornado.web.authenticated
     @needs_project
     def get(self):
-        cas_id = self.get_argument('id', '')
+        cas_id = self.get_argument('name', '')
         try:
             tier = env.project[cas_id]
             tier.open_folder()
