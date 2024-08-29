@@ -18,7 +18,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    name?: string;
+                    name?: components["schemas"]["LookQuery"];
                 };
                 header?: never;
                 path?: never;
@@ -195,6 +195,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        LookQuery: string;
         TierInfo: {
             name: string;
             identifiers: string[];

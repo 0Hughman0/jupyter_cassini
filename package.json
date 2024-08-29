@@ -54,7 +54,7 @@
     "watch": "run-p watch:src watch:labextension",
     "watch:labextension": "jupyter labextension watch .",
     "watch:src": "tsc -w --sourceMap",
-    "build-schema": "datamodel-codegen --input=openapi.yaml --output=jupyter_cassini_server/schema/models.py && jlpm openapi-typescript openapi.yaml -o src/schema/schema.d.ts"
+    "build-schema": "datamodel-codegen --input=openapi.yaml --output=jupyter_cassini_server/schema/models.py --output-model-type=pydantic_v2.BaseModel && jlpm openapi-typescript openapi.yaml -o src/schema/schema.d.ts"
   },
   "dependencies": {
     "@jupyterlab/application": "^4.0.2",

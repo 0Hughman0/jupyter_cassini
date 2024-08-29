@@ -12,6 +12,7 @@ export type ITreeResponse = components["schemas"]["TreeResponse"]
 export type ITierInfo = components["schemas"]["TierInfo"]
 export type INewChildInfo = components["schemas"]["NewChildInfo"]
 
+
 type fetchType = typeof fetch
 
 const JLfetch: fetchType = (info: RequestInfo | URL, init?: RequestInit) => {
@@ -65,7 +66,7 @@ export namespace CassiniServer {
   export function lookup(query: string): Promise<ITierInfo> {
     return client.GET("/lookup", {
       params: {
-        query: {name: query}
+        query: { name: query}
       }
     }).then(val => {
       if (val.data) {

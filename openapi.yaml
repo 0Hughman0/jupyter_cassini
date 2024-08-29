@@ -13,6 +13,9 @@ components:
       name: token
       in: query
   schemas:
+    LookQuery:
+      type: string
+
     TierInfo:
       type: object
       properties:
@@ -128,7 +131,7 @@ paths:
         - name: name
           in: query
           schema:
-            type: string
+            $ref: "#/components/schemas/LookQuery"
         responses:
           "200":
             description: "Tier Found"

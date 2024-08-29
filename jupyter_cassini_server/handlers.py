@@ -4,6 +4,7 @@ import functools
 from pathlib import Path
 import importlib
 from typing import TypeVar, Type, Callable, Any, Mapping, Dict, Generic, Literal, Union, List, cast, ParamSpec, Concatenate
+import datetime
 
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
@@ -158,7 +159,7 @@ class LookupHandler(APIHandler):
             raise ValueError("Not found")
         
         if isinstance(tier, NotebookTierBase):
-            started = tier.started
+            started = tier.started.replace(tzinfo=datetime.timezone.utc)
         else:
             started = None
         
