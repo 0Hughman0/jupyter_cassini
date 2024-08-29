@@ -238,8 +238,10 @@ export interface components {
         NewChildInfo: {
             id: string;
             parent: string;
-            template: string;
+            template?: string;
             description: string;
+        } & {
+            [key: string]: unknown;
         };
     };
     responses: never;

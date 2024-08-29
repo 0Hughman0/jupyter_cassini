@@ -124,10 +124,10 @@ components:
           type: string
         description:
           type: string
+      additionalProperties: true
       required:
         - id
         - parent
-        - template
         - description
 
 paths: 

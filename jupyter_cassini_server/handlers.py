@@ -16,7 +16,18 @@ from cassini import env
 from cassini.core import TierABC, NotebookTierBase
 import yaml
 
-from .schema.models import ChildClsInfo, TreeChildResponse, TreeResponse, TierInfo, LookupGetParametersQuery, OpenGetParametersQuery, Status, Status1
+from .schema.models import (
+    NewChildInfo,
+    ChildClsInfo, 
+    TreeChildResponse, 
+    TreeResponse, 
+    TierInfo, 
+    LookupGetParametersQuery, 
+    OpenGetParametersQuery,
+    Status, 
+    Status1
+)
+
 
 
 Q = TypeVar('Q', bound=BaseModel)
@@ -49,6 +60,16 @@ def with_types(query_model: Type[Q],
                     self.send_error(404)
 
             return wrap_get
+        elif method == 'POST':
+            def wrap_post(self: S) -> None:
+                try:
+                    query = self.get_json_body()
+                    response = response_model.model_validate(func(self, query_model.model_validate(query)))
+                    self.finish(response.model_dump_json())
+                except ValueError:
+                    self.send_error(404)
+
+            return wrap_post
         else:
             raise NotImplementedError
 
@@ -83,7 +104,7 @@ def serialize_child(tier: TierABC):
     if isinstance(tier, NotebookTierBase):
         branch['metaPath'] = tier.meta_file.relative_to(project_folder).as_posix()
         branch['additionalMeta'] = {k: tier.meta[k] for k in tier.meta.keys() if k not in ['description', 'started', 'conclusion']}
-        branch['started'] = tier.started.isoformat()
+        branch['started'] = tier.started.astimezone().isoformat()
 
         if tier.description:
             branch['info'] = tier.description.split('\n')[0]
@@ -190,27 +211,32 @@ class NewChildHandler(APIHandler):
 
     @tornado.web.authenticated
     @needs_project
-    def post(self):
-        data = self.get_json_body()
+    @with_types(NewChildInfo, TreeResponse, 'POST')
+    def post(self, query: NewChildInfo) -> TreeResponse:
+        assert env.project
 
-        parent_name = data.pop('parent')
-        template_name = data.pop('template')
-        identifier = data.pop('id')
+        parent_name = query.parent
+        identifier = query.id
+        template_name = query.template
 
-        meta = data
+        meta = query.model_extra
 
-        try:
-            parent = env.project[parent_name]
-        except (ValueError, AttributeError):
-            return self.finish(0)
+        parent = env.project[parent_name]
 
+        if not parent.child_cls:
+            raise ValueError("Parent has no child class")
+        
         child = parent[identifier]
 
-        template = {path.name: path for path in parent.child_cls.get_templates(env.project)}.get(template_name)
+        if isinstance(child, NotebookTierBase) and template_name:
+            template_options = {path.name: path for path in child.get_templates(env.project)}
+            template = template_options.get(template_name)
+        else:
+            template = None
 
         child.setup_files(template, meta=meta)
 
-        self.finish(serialize_branch(child))
+        return TreeResponse(**serialize_branch(child))
     
 
 class TreeHandler(APIHandler):
