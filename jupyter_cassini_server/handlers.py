@@ -16,7 +16,7 @@ from cassini import env
 from cassini.core import TierABC, NotebookTierBase
 import yaml
 
-from .schema.models import ChildClsInfo, TreeChildResponse, TreeResponse, TierInfo
+from .schema.models import ChildClsInfo, TreeChildResponse, TreeResponse, TierInfo, LookupGetParametersQuery
 
 
 Q = TypeVar('Q', bound=BaseModel)
@@ -40,9 +40,8 @@ def with_types(query_model: Type[Q],
                 
                 raw_arguments = self.request.arguments
 
-                for key, raw_query in raw_arguments.items():
-                    query[key] = ''.join(b.decode() for b in raw_query)
-                
+                for key, raw_val in raw_arguments.items():
+                    query[key] = ''.join(b.decode() for b in raw_val)
                 try:
                     response = response_model.model_validate(func(self, query_model.model_validate(query)))
                     self.finish(response.model_dump_json())
@@ -138,18 +137,14 @@ def serialize_branch(tier: TierABC):
     return tree
 
 
-class QueryParams(BaseModel):
-    name: str
-
-
 class LookupHandler(APIHandler):
     # The following decorator should be present on all verb methods (head, get, post, 
     # patch, put, delete, options) to ensure only authorized user can request the 
     # Jupyter server
     @tornado.web.authenticated
     @needs_project
-    @with_types(QueryParams, TierInfo, 'GET')
-    def get(self, query: QueryParams) -> TierInfo:
+    @with_types(LookupGetParametersQuery, TierInfo, 'GET')
+    def get(self, query: LookupGetParametersQuery) -> TierInfo:
         assert env.project
 
         name = query.name
