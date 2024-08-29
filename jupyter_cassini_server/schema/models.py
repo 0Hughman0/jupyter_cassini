@@ -11,8 +11,8 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
 class Status1(Enum):
-    success = 'success'
-    failure = 'failure'
+    success = "success"
+    failure = "failure"
 
 
 class Status(BaseModel):
@@ -54,7 +54,7 @@ class TreeResponse(TreeChildResponse):
 
 class NewChildInfo(BaseModel):
     model_config = ConfigDict(
-        extra='allow',
+        extra="allow",
     )
     id: str
     parent: str
@@ -67,7 +67,7 @@ class LookupGetParametersQuery(BaseModel):
 
 
 class TreeGetParametersQuery(BaseModel):
-    ids__: Optional[List[str]] = Field(None, alias='ids[]')
+    ids__: Optional[List[str]] = Field(None, alias="ids[]")
 
 
 class OpenGetParametersQuery(BaseModel):
