@@ -8,8 +8,6 @@ import sys
 import pytest
 from cassini import env, Project
 
-from .. import find_project
-
 
 CWD = os.getcwd()
 
