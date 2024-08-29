@@ -87,7 +87,7 @@ export namespace CassiniServer {
   export function tree(ids: string[]): Promise<ITreeResponse> {
     return client.GET("/tree", {
       params: {
-        query: {ids: ids}
+        query: {"ids[]": ids}
       },
       querySerializer: {array: {explode: false, style: "form"}} // don't like that this is necessary!
     }).then(val => {

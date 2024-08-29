@@ -66,7 +66,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    ids?: unknown[];
+                    "ids[]"?: string[];
                 };
                 header?: never;
                 path?: never;
@@ -222,7 +222,7 @@ export interface components {
             hltsPath?: string;
             metaPath?: string;
             notebookPath?: string;
-            additionalMeta: {
+            additionalMeta?: {
                 [key: string]: unknown;
             };
         };
@@ -230,8 +230,6 @@ export interface components {
             folder: string;
             childClsInfo?: components["schemas"]["ChildClsInfo"];
             children: {
-                name?: string;
-            } & {
                 [key: string]: components["schemas"]["TreeChildResponse"];
             };
         } & WithRequired<components["schemas"]["TreeChildResponse"], "name">;
