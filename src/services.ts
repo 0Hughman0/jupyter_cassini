@@ -1,52 +1,49 @@
 /* eslint-disable prettier/prettier */
-import createClient from "openapi-fetch";
+import createClient from 'openapi-fetch';
 
 import { URLExt } from '@jupyterlab/coreutils';
 
 import { ServerConnection } from '@jupyterlab/services';
 import { paths, components } from './schema/schema';
 
-export type IChildClsInfo = components["schemas"]["ChildClsInfo"]
-export type ITreeChildResponse = components["schemas"]["TreeChildResponse"]
-export type ITreeResponse = components["schemas"]["TreeResponse"]
-export type ITierInfo = components["schemas"]["TierInfo"]
-export type INewChildInfo = components["schemas"]["NewChildInfo"]
-export type Status = components["schemas"]["Status"]
+export type IChildClsInfo = components['schemas']['ChildClsInfo'];
+export type ITreeChildResponse = components['schemas']['TreeChildResponse'];
+export type ITreeResponse = components['schemas']['TreeResponse'];
+export type ITierInfo = components['schemas']['TierInfo'];
+export type INewChildInfo = components['schemas']['NewChildInfo'];
+export type Status = components['schemas']['Status'];
 
-
-type fetchType = typeof fetch
+type fetchType = typeof fetch;
 
 const JLfetch: fetchType = (info: RequestInfo | URL, init?: RequestInit) => {
-  let url: string
-  
-  if (typeof info === "string") {
-    url = info
+  let url: string;
+
+  if (typeof info === 'string') {
+    url = info;
   } else if (info instanceof Request) {
-    url = info.url
+    url = info.url;
   } else if (info instanceof URL) {
-    url = info.href
-    
+    url = info.href;
   } else {
-    throw Error("Cannot parse info parameter")
+    throw Error('Cannot parse info parameter');
   }
 
   if (!init && info instanceof Request) {
-    const { method, body } = info
-    init = { method, body }
+    const { method, body } = info;
+    init = { method, body };
   } else if (!init) {
-    init = {}
+    init = {};
   }
 
   const settings = ServerConnection.makeSettings();
   return ServerConnection.makeRequest(url, init, settings);
-}
+};
 
-const setting = ServerConnection.makeSettings()
-export const client = createClient<paths>({ 
+const setting = ServerConnection.makeSettings();
+export const client = createClient<paths>({
   baseUrl: URLExt.join(setting.baseUrl, 'jupyter_cassini'),
   fetch: JLfetch
 });
-
 
 /**
  * Wrapper for the requestAPI.
@@ -65,16 +62,19 @@ export namespace CassiniServer {
   */
 
   export function lookup(query: string): Promise<ITierInfo> {
-    return client.GET("/lookup", {
-      params: {
-        query: { name: query}
-      }
-    }).then(val => {
-      if (val.data) {
-        return val.data
-      } else {
-        throw Error()
-      }})
+    return client
+      .GET('/lookup', {
+        params: {
+          query: { name: query }
+        }
+      })
+      .then(val => {
+        if (val.data) {
+          return val.data;
+        } else {
+          throw Error();
+        }
+      });
   }
 
   /**
@@ -85,17 +85,20 @@ export namespace CassiniServer {
    * @returns
    */
   export function tree(ids: string[]): Promise<ITreeResponse> {
-    return client.GET("/tree", {
-      params: {
-        query: {"ids[]": ids}
-      },
-      querySerializer: {array: {explode: false, style: "form"}} // don't like that this is necessary!
-    }).then(val => {
-      if (val.data) {
-        return val.data
-      } else {
-        throw Error()
-      }})
+    return client
+      .GET('/tree', {
+        params: {
+          query: { 'ids[]': ids }
+        },
+        querySerializer: { array: { explode: false, style: 'form' } } // don't like that this is necessary!
+      })
+      .then(val => {
+        if (val.data) {
+          return val.data;
+        } else {
+          throw Error();
+        }
+      });
   }
 
   /**
@@ -105,26 +108,32 @@ export namespace CassiniServer {
    * @returns the tree response for the new child.
    */
   export function newChild(info: INewChildInfo): Promise<ITreeResponse> {
-    return client.POST("/newChild", {
-      body: info
-    }).then(val => {
-      if (val.data) {
-        return val.data
-      } else {
-        throw Error()
-      }})
+    return client
+      .POST('/newChild', {
+        body: info
+      })
+      .then(val => {
+        if (val.data) {
+          return val.data;
+        } else {
+          throw Error();
+        }
+      });
   }
 
   export function openTier(name: string): Promise<Status> {
-    return client.GET("/open", {
-      params: {
-        query: {name: name}
-      }
-    }).then(val => {
-      if (val.data) {
-        return val.data
-      } else {
-        throw Error()
-      }})
+    return client
+      .GET('/open', {
+        params: {
+          query: { name: name }
+        }
+      })
+      .then(val => {
+        if (val.data) {
+          return val.data;
+        } else {
+          throw Error();
+        }
+      });
   }
 }
