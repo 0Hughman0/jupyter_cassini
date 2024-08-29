@@ -13,6 +13,17 @@ components:
       name: token
       in: query
   schemas:
+    Status:
+      type: object
+      properties:
+        status: 
+          type: string
+          enum:
+            - success
+            - failure
+      required:
+        - status
+
     TierInfo:
       type: object
       properties:
@@ -169,13 +180,14 @@ paths:
           in: query
           schema:
             type: string
+          required: true
       responses:
         "200":
           description: Open successful
           content:
             application/json:
               schema:
-                type: boolean
+                $ref: "#/components/schemas/Status"
         "404":
           description: Not Found
   /newChild:

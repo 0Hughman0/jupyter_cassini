@@ -16,7 +16,7 @@ from cassini import env
 from cassini.core import TierABC, NotebookTierBase
 import yaml
 
-from .schema.models import ChildClsInfo, TreeChildResponse, TreeResponse, TierInfo, LookupGetParametersQuery
+from .schema.models import ChildClsInfo, TreeChildResponse, TreeResponse, TierInfo, LookupGetParametersQuery, OpenGetParametersQuery, Status, Status1
 
 
 Q = TypeVar('Q', bound=BaseModel)
@@ -172,14 +172,18 @@ class OpenHandler(APIHandler):
     # Jupyter server
     @tornado.web.authenticated
     @needs_project
-    def get(self):
-        cas_id = self.get_argument('name', '')
+    @with_types(OpenGetParametersQuery, Status, 'GET')
+    def get(self, query: OpenGetParametersQuery) -> Status:
+        assert env.project
+
+        name = query.name
         try:
-            tier = env.project[cas_id]
+            tier = env.project[name]
             tier.open_folder()
-            self.finish(1)
+            return Status(status=Status1.success)
+        
         except (ValueError, AttributeError):
-            self.finish(0)
+            return Status(status=Status1.failure)
 
 
 class NewChildHandler(APIHandler):

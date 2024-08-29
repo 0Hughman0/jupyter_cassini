@@ -113,8 +113,8 @@ export interface paths {
          */
         get: {
             parameters: {
-                query?: {
-                    name?: string;
+                query: {
+                    name: string;
                 };
                 header?: never;
                 path?: never;
@@ -128,7 +128,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": boolean;
+                        "application/json": components["schemas"]["Status"];
                     };
                 };
                 /** @description Not Found */
@@ -195,6 +195,10 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Status: {
+            /** @enum {string} */
+            status: "success" | "failure";
+        };
         TierInfo: {
             name: string;
             identifiers: string[];

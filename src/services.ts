@@ -11,6 +11,7 @@ export type ITreeChildResponse = components["schemas"]["TreeChildResponse"]
 export type ITreeResponse = components["schemas"]["TreeResponse"]
 export type ITierInfo = components["schemas"]["TierInfo"]
 export type INewChildInfo = components["schemas"]["NewChildInfo"]
+export type Status = components["schemas"]["Status"]
 
 
 type fetchType = typeof fetch
@@ -114,7 +115,7 @@ export namespace CassiniServer {
       }})
   }
 
-  export function openTier(name: string): Promise<boolean> {
+  export function openTier(name: string): Promise<Status> {
     return client.GET("/open", {
       params: {
         query: {name: name}
