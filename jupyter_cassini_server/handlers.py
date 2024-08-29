@@ -3,19 +3,63 @@ import sys
 import functools
 from pathlib import Path
 import importlib
+from typing import TypeVar, Type, Callable, Any, Mapping, Dict, Generic, Literal, Union, List, cast, ParamSpec, Concatenate
 
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
 
 import tornado
+from pydantic import BaseModel
 
 from cassini import env
 from cassini.core import TierABC, NotebookTierBase
+import yaml
 
 from .schema.models import ChildClsInfo, TreeChildResponse, TreeResponse, TierInfo
 
 
-def needs_project(meth):
+Q = TypeVar('Q', bound=BaseModel)
+R = TypeVar('R', bound=BaseModel)
+S = TypeVar('S', bound=APIHandler)
+
+DecoratoredType = Callable[[APIHandler, Q], R]
+MethodType = Callable[[APIHandler], None]
+
+
+def with_types(query_model: Type[Q], 
+               response_model: Type[R], 
+               method: Union[Literal["GET"], Literal["POST"]]) -> \
+                Callable[[Callable[[S, Q], R]], Callable[[S], None]]:
+    
+    def wrapper(func: Callable[[S, Q], R]) -> Callable[[S], None]:
+
+        if method == 'GET':
+            def wrap_get(self: S) -> None:
+                query = {}
+                
+                raw_arguments = self.request.arguments
+
+                for key, raw_query in raw_arguments.items():
+                    query[key] = ''.join(b.decode() for b in raw_query)
+                
+                try:
+                    response = response_model.model_validate(func(self, query_model.model_validate(query)))
+                    self.finish(response.model_dump_json())
+                except ValueError:
+                    self.send_error(404)
+
+            return wrap_get
+        else:
+            raise NotImplementedError
+
+    return wrapper
+
+
+F = TypeVar('F', bound=Callable[..., Any])
+
+
+def needs_project(meth: F) -> F:
+    
     @functools.wraps(meth)
     def wraps(self, *args, **kwargs):
         if not env.project:
@@ -24,7 +68,7 @@ def needs_project(meth):
 
         return meth(self, *args, **kwargs)
 
-    return wraps
+    return cast(F, wraps)
 
 
 def serialize_child(tier: TierABC):
@@ -93,26 +137,37 @@ def serialize_branch(tier: TierABC):
     return tree
 
 
+class QueryParams(BaseModel):
+    name: str
+
+
 class LookupHandler(APIHandler):
     # The following decorator should be present on all verb methods (head, get, post, 
     # patch, put, delete, options) to ensure only authorized user can request the 
     # Jupyter server
     @tornado.web.authenticated
     @needs_project
-    def get(self):
-        cas_id = self.get_argument('name', '')
-        try:
-            tier = env.project[cas_id]
+    @with_types(QueryParams, TierInfo, 'GET')
+    def get(self, query: QueryParams) -> TierInfo:
+        assert env.project
 
-            if not tier.exists():
-                return self.send_error(404)
-            
-            data = serialize_branch(tier)
-            data['identifiers'] = tier.identifiers
+        name = query.name
+        tier = env.project[name]
 
-            self.finish(data)
-        except (ValueError, AttributeError):
-            self.finish("Not found")
+        if not tier.exists():
+            raise ValueError("Not found")
+        
+        if isinstance(tier, NotebookTierBase):
+            started = tier.started
+        else:
+            started = None
+        
+        return TierInfo(
+            name=tier.name,
+            identifiers=list(tier.identifiers),
+            started=started,
+            children=[child.name for child in tier]
+        )
 
 
 class OpenHandler(APIHandler):

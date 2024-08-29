@@ -199,7 +199,7 @@ export interface components {
             name: string;
             identifiers: string[];
             /** Format: date-time */
-            started: string;
+            started?: string;
             children: string[];
         };
         ChildClsInfo: {

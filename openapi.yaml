@@ -32,7 +32,6 @@ components:
       required:
         - name
         - identifiers
-        - started
         - children
 
     ChildClsInfo:
