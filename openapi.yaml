@@ -68,6 +68,27 @@ components:
       required:
         - started
 
+    metaSchema:
+      type: object
+      properties:
+        properties:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              title:
+                type: string
+              type:
+                type: string
+              default: {}
+              format: 
+                type: string
+          required:
+            - title
+            - type
+      required:
+        - properties
+
     ChildClsInfo:
       type: object
       oneOf:
@@ -107,9 +128,12 @@ components:
           type: array
           items: 
             type: string
+        metaSchema:
+            $ref: "#/components/schemas/metaSchema"
       required:
         - templates
         - metaNames
+        - metaSchema
 
     TreeChildResponse:
       type: object

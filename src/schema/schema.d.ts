@@ -222,6 +222,16 @@ export interface components {
              */
             tierType: "notebook";
         });
+        metaSchema: {
+            properties: {
+                [key: string]: {
+                    title?: string;
+                    type?: string;
+                    default?: unknown;
+                    format?: string;
+                };
+            };
+        };
         ChildClsInfo: components["schemas"]["ChildClsFolderInfo"] | components["schemas"]["ChildClsNotebookInfo"];
         CommonChildClsInfo: {
             name?: string;
@@ -238,6 +248,7 @@ export interface components {
         ChildClsNotebookInfo: {
             templates: string[];
             metaNames: string[];
+            metaSchema: components["schemas"]["metaSchema"];
         } & (components["schemas"]["CommonChildClsInfo"] & {
             /**
              * @description discriminator enum property added by openapi-typescript

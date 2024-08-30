@@ -6,7 +6,8 @@ from .schema.models import (
     TreeChildResponse, 
     TreeResponse, 
     ChildClsNotebookInfo, 
-    ChildClsFolderInfo
+    ChildClsFolderInfo,
+    MetaSchema
 )
 
 
@@ -128,7 +129,8 @@ def serialize_branch(tier: TierABC) -> TreeResponse:
             idRegex=child_cls.id_regex,
             namePartTemplate=child_cls.name_part_template,
             templates=child_templates,
-            metaNames=child_metaNames
+            metaNames=child_metaNames,
+            metaSchema=MetaSchema.model_validate(child_cls.__meta_manager__.build_model().model_json_schema())
         )
     else:
         child_templates = []
