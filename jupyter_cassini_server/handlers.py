@@ -19,6 +19,8 @@ from .schema.models import (
     LookupGetParametersQuery,
     OpenGetParametersQuery,
     TreeGetParametersQuery,
+    FolderTierInfo,
+    NotebookTierInfo,
     Status,
     Status1,
 )
@@ -42,15 +44,21 @@ class LookupHandler(APIHandler):
 
         if isinstance(tier, NotebookTierBase):
             started = tier.started.replace(tzinfo=datetime.timezone.utc)
-        else:
-            started = None
 
-        return TierInfo(
-            name=tier.name,
-            identifiers=list(tier.identifiers),
-            started=started,
-            children=[child.name for child in tier],
-        )
+            return TierInfo(NotebookTierInfo(
+                tierType='NotebookTierInfo',
+                name=tier.name,
+                identifiers=list(tier.identifiers),
+                started=started,
+                children=[child.name for child in tier]
+            ))
+        else:
+            return TierInfo(FolderTierInfo(
+                tierType='FolderTierInfo',
+                name=tier.name,
+                identifiers=list(tier.identifiers),
+                children=[child.name for child in tier]
+            ))
 
 
 class OpenHandler(APIHandler):

@@ -23,19 +23,18 @@ components:
             - failure
       required:
         - status
-
-    TierInfo:
+    
+    FolderTierInfo:
       type: object
       properties:
+        tierType:
+          type: string
         name:
           type: string
         identifiers:
           type: array
           items: 
             type: string
-        started: 
-          type: string
-          format: date-time
         children:
           type: array
           items:
@@ -43,9 +42,27 @@ components:
       required:
         - name
         - identifiers
-        - children
+      
+    NotebookTierInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/FolderTierInfo"
+      properties:
+        started: 
+          type: string
+          format: date-time
+      required:
+        - started
 
-    ChildClsInfo:
+    TierInfo:
+      type: object
+      oneOf:
+        - $ref: "#/components/schemas/FolderTierInfo"
+        - $ref: "#/components/schemas/NotebookTierInfo"
+      discriminator:
+        propertyName: tierType
+
+    ChildClsFolderInfo:
       type: object
       properties:
         name:
@@ -54,6 +71,16 @@ components:
           type: string
         namePartTemplate:
           type: string
+      required:
+        - name
+        - idRegex
+        - namePartTemplate
+    
+    ChildClsNotebookInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/ChildClsFolderInfo"
+      properties:  
         templates:
           type: array
           items: 
@@ -63,11 +90,17 @@ components:
           items: 
             type: string
       required:
-        - name
-        - idRegex
-        - namePartTemplate
         - templates
         - metaNames
+
+    ChildClsInfo:
+      type: object
+      oneOf:
+        - $ref: "#/components/schemas/ChildClsFolderInfo"
+        - $ref: "#/components/schemas/ChildClsNotebookInfo"
+      discriminator:
+        propertyName: tierType
+
     TreeChildResponse:
       type: object
       properties:
@@ -104,12 +137,11 @@ components:
           type: object
           additionalProperties:
             $ref: "#/components/schemas/TreeChildResponse"
-            
-
       required:
         - name
         - folder
         - children
+
     NewChildInfo:
       type: object
       properties:
@@ -145,7 +177,7 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: "#/components/schemas/TierInfo" 
+                  $ref: "#/components/schemas/TierInfo"
           "404":
             description: "Not Found"
   /tree:

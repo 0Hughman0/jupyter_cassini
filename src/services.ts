@@ -9,8 +9,11 @@ import { paths, components } from './schema/schema';
 export type IChildClsInfo = components['schemas']['ChildClsInfo'];
 export type ITreeChildResponse = components['schemas']['TreeChildResponse'];
 export type ITreeResponse = components['schemas']['TreeResponse'];
+export type FolderTierInfo = components["schemas"]["FolderTierInfo"]
+export type NotebookTierInfo = components["schemas"]["NotebookTierInfo"]
 export type ITierInfo = components['schemas']['TierInfo'];
 export type INewChildInfo = components['schemas']['NewChildInfo'];
+
 export type Status = components['schemas']['Status'];
 
 type fetchType = typeof fetch;
