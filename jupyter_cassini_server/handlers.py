@@ -46,7 +46,7 @@ class LookupHandler(APIHandler):
             started = tier.started.replace(tzinfo=datetime.timezone.utc)
 
             return TierInfo(NotebookTierInfo(
-                tierType='NotebookTierInfo',
+                tierType='notebook',
                 name=tier.name,
                 identifiers=list(tier.identifiers),
                 started=started,
@@ -54,7 +54,7 @@ class LookupHandler(APIHandler):
             ))
         else:
             return TierInfo(FolderTierInfo(
-                tierType='FolderTierInfo',
+                tierType='folder',
                 name=tier.name,
                 identifiers=list(tier.identifiers),
                 children=[child.name for child in tier]

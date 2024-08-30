@@ -23,12 +23,21 @@ components:
             - failure
       required:
         - status
+
+    TierInfo:
+      type: object
+      oneOf:
+        - $ref: "#/components/schemas/FolderTierInfo"
+        - $ref: "#/components/schemas/NotebookTierInfo"
+      discriminator:
+        propertyName: tierType
+        mapping:
+          folder: "#/components/schemas/FolderTierInfo"
+          notebook: "#/components/schemas/NotebookTierInfo"
     
-    FolderTierInfo:
+    CommontTierInfo:
       type: object
       properties:
-        tierType:
-          type: string
         name:
           type: string
         identifiers:
@@ -42,11 +51,16 @@ components:
       required:
         - name
         - identifiers
+    
+    FolderTierInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CommontTierInfo"
       
     NotebookTierInfo:
       type: object
       allOf:
-        - $ref: "#/components/schemas/FolderTierInfo"
+        - $ref: "#/components/schemas/CommontTierInfo"
       properties:
         started: 
           type: string
@@ -54,15 +68,18 @@ components:
       required:
         - started
 
-    TierInfo:
+    ChildClsInfo:
       type: object
       oneOf:
-        - $ref: "#/components/schemas/FolderTierInfo"
-        - $ref: "#/components/schemas/NotebookTierInfo"
+        - $ref: "#/components/schemas/ChildClsFolderInfo"
+        - $ref: "#/components/schemas/ChildClsNotebookInfo"     
       discriminator:
         propertyName: tierType
-
-    ChildClsFolderInfo:
+        mapping:
+          folder: "#/components/schemas/ChildClsFolderInfo"
+          notebook: "#/components/schemas/ChildClsNotebookInfo"
+    
+    CommonChildClsInfo:
       type: object
       properties:
         name:
@@ -71,16 +88,17 @@ components:
           type: string
         namePartTemplate:
           type: string
-      required:
-        - name
-        - idRegex
-        - namePartTemplate
-    
+
+    ChildClsFolderInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CommonChildClsInfo"
+      
     ChildClsNotebookInfo:
       type: object
       allOf:
-        - $ref: "#/components/schemas/ChildClsFolderInfo"
-      properties:  
+        - $ref: "#/components/schemas/CommonChildClsInfo"
+      properties:
         templates:
           type: array
           items: 
@@ -92,14 +110,6 @@ components:
       required:
         - templates
         - metaNames
-
-    ChildClsInfo:
-      type: object
-      oneOf:
-        - $ref: "#/components/schemas/ChildClsFolderInfo"
-        - $ref: "#/components/schemas/ChildClsNotebookInfo"
-      discriminator:
-        propertyName: tierType
 
     TreeChildResponse:
       type: object
@@ -151,13 +161,10 @@ components:
           type: string
         template:
           type: string
-        description:
-          type: string
       additionalProperties: true
       required:
         - id
         - parent
-        - description
 
 paths: 
   /lookup:

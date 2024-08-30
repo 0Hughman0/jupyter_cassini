@@ -1,9 +1,26 @@
-from typing import Set
-from jupyter_cassini_server.schema.models import ChildClsInfo, TreeChildResponse, TreeResponse
+from pathlib import Path
+import datetime
+from typing import Set, Union
+from .schema.models import (
+    ChildClsInfo, 
+    TreeChildResponse, 
+    TreeResponse, 
+    ChildClsNotebookInfo, 
+    ChildClsFolderInfo
+)
 
 
-from cassini import env
+from cassini import env, Project
 from cassini.core import NotebookTierBase, TierABC
+
+
+def encode_datetime(date: datetime.datetime) -> str:
+    return date.astimezone().isoformat()
+
+
+def encode_path(path: Path, project: Project) -> str:
+    project_folder = project.project_folder
+    return path.relative_to(project_folder).as_posix()
 
 
 def serialize_child(tier: TierABC) -> TreeChildResponse:
@@ -91,6 +108,8 @@ def serialize_branch(tier: TierABC) -> TreeResponse:
         if isinstance(child, NotebookTierBase):
             child_metas.update(child.meta.keys())
 
+    child_cls_info: Union[ChildClsNotebookInfo, ChildClsFolderInfo]
+
     if issubclass(child_cls, NotebookTierBase):
         child_metas.discard("name")
         child_metas.discard("started")
@@ -102,17 +121,25 @@ def serialize_branch(tier: TierABC) -> TreeResponse:
         child_templates = [
             template.name for template in child_cls.get_templates(env.project)
         ]
+
+        child_cls_info = ChildClsNotebookInfo(
+            tierType="notebook",
+            name=child_cls.pretty_type,
+            idRegex=child_cls.id_regex,
+            namePartTemplate=child_cls.name_part_template,
+            templates=child_templates,
+            metaNames=child_metaNames
+        )
     else:
         child_templates = []
         child_metaNames = []
 
-    child_cls_info = ChildClsInfo(
-        name=child_cls.pretty_type,
-        idRegex=child_cls.id_regex,
-        namePartTemplate=child_cls.name_part_template,
-        templates=child_templates,
-        metaNames=child_metaNames,
-    )
+        child_cls_info = ChildClsFolderInfo(
+            tierType='folder',
+            name=child_cls.pretty_type,
+            idRegex=child_cls.id_regex,
+            namePartTemplate=child_cls.name_part_template
+        )
 
     return TreeResponse(
         name=core.name,
@@ -123,6 +150,6 @@ def serialize_branch(tier: TierABC) -> TreeResponse:
         notebookPath=core.notebookPath,
         additionalMeta=core.additionalMeta,
         folder=folder,
-        childClsInfo=child_cls_info,
+        childClsInfo=ChildClsInfo(child_cls_info),
         children=children,
     )

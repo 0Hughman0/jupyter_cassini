@@ -199,34 +199,52 @@ export interface components {
             /** @enum {string} */
             status: "success" | "failure";
         };
-        FolderTierInfo: {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            tierType: "FolderTierInfo";
+        TierInfo: components["schemas"]["FolderTierInfo"] | components["schemas"]["NotebookTierInfo"];
+        CommontTierInfo: {
             name: string;
             identifiers: string[];
             children?: string[];
         };
-        NotebookTierInfo: {
-            /** Format: date-time */
-            started: string;
-        } & (components["schemas"]["FolderTierInfo"] & {
+        FolderTierInfo: components["schemas"]["CommontTierInfo"] & {
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
-            tierType: "NotebookTierInfo";
+            tierType: "folder";
+        };
+        NotebookTierInfo: {
+            /** Format: date-time */
+            started: string;
+        } & (components["schemas"]["CommontTierInfo"] & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            tierType: "notebook";
         });
-        TierInfo: components["schemas"]["FolderTierInfo"] | components["schemas"]["NotebookTierInfo"];
-        ChildClsInfo: {
-            name: string;
-            idRegex: string;
-            namePartTemplate: string;
+        ChildClsInfo: components["schemas"]["ChildClsFolderInfo"] | components["schemas"]["ChildClsNotebookInfo"];
+        CommonChildClsInfo: {
+            name?: string;
+            idRegex?: string;
+            namePartTemplate?: string;
+        };
+        ChildClsFolderInfo: components["schemas"]["CommonChildClsInfo"] & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            tierType: "folder";
+        };
+        ChildClsNotebookInfo: {
             templates: string[];
             metaNames: string[];
-        };
+        } & (components["schemas"]["CommonChildClsInfo"] & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            tierType: "notebook";
+        });
         TreeChildResponse: {
             name: string;
             info?: string;
@@ -251,7 +269,6 @@ export interface components {
             id: string;
             parent: string;
             template?: string;
-            description: string;
         } & {
             [key: string]: unknown;
         };

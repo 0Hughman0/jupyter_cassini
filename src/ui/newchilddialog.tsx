@@ -85,42 +85,49 @@ export class NewChildWidget extends Widget {
       idRegex: tier.childClsInfo.idRegex as string,
       nameTemplate: nameTemplate
     }));
-    const descriptionInput = (this.descriptionInput = new InputTextAreaDialog({
-      title: 'Da Description',
-      label: 'Description'
-    }));
-    const templateSelector = (this.templateSelector = new InputItemsDialog({
-      title: 'template',
-      label: 'Template',
-      items: tier.childClsInfo.templates || []
-    }));
 
     this.subInputs = {
-      id: identifierInput,
-      description: descriptionInput,
-      template: templateSelector
-    };
-
-    const metaInputs: (InputTextDialog | InputNumberDialog)[] =
-      (this.metaInputs = []);
+      id: identifierInput
+    }
 
     layout.addWidget(identifierInput);
-    layout.addWidget(descriptionInput);
-    layout.addWidget(templateSelector);
 
-    for (const additionalMeta of tier.childClsInfo.metaNames) {
-      let input;
+    if (tier.childClsInfo.tierType == "notebook") {
+      const descriptionInput = (this.descriptionInput = new InputTextAreaDialog({
+        title: 'Da Description',
+        label: 'Description'
+      }));
 
-      if (typeof additionalMeta === 'string') {
-        input = new InputTextDialog({ title: '', label: additionalMeta });
-      } else {
-        input = new InputNumberDialog({ title: '', label: additionalMeta });
+      layout.addWidget(descriptionInput);
+
+      const templateSelector = (this.templateSelector = new InputItemsDialog({
+        title: 'template',
+        label: 'Template',
+        items: tier.childClsInfo.templates || []
+      }));
+
+      layout.addWidget(templateSelector);
+
+      this.subInputs.description = descriptionInput
+      this.subInputs.template = templateSelector
+
+      const metaInputs: (InputTextDialog | InputNumberDialog)[] =
+      (this.metaInputs = []);
+
+      for (const additionalMeta of tier.childClsInfo.metaNames) {
+        let input;
+  
+        if (typeof additionalMeta === 'string') {
+          input = new InputTextDialog({ title: '', label: additionalMeta });
+        } else {
+          input = new InputNumberDialog({ title: '', label: additionalMeta });
+        }
+  
+        metaInputs.push(input);
+        this.subInputs[additionalMeta] = input;
+  
+        layout.addWidget(input);
       }
-
-      metaInputs.push(input);
-      this.subInputs[additionalMeta] = input;
-
-      layout.addWidget(input);
     }
   }
 
