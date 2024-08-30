@@ -233,6 +233,8 @@ export interface components {
                     "x-cas-field"?: "private" | "core";
                 };
             };
+        } & {
+            [key: string]: unknown;
         };
         ChildClsInfo: components["schemas"]["ChildClsFolderInfo"] | components["schemas"]["ChildClsNotebookInfo"];
         CommonChildClsInfo: {

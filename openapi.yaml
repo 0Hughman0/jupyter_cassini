@@ -91,6 +91,7 @@ components:
           required:
             - title
             - type
+      additionalProperties: true
       required:
         - properties
 

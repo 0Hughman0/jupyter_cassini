@@ -116,8 +116,8 @@ export class NewChildWidget extends Widget {
 
       for (const [name, info] of Object.entries(tier.childClsInfo.metaSchema.properties)) {
         let input;
-        // should come from somewhere else...
-        if (['description', 'started'].includes(name)) {
+
+        if (['private', 'core'].includes(info['x-cas-field'] ?? '')) {
           continue
         }
   
