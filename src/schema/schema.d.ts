@@ -229,6 +229,8 @@ export interface components {
                     type?: string;
                     default?: unknown;
                     format?: string;
+                    /** @enum {string} */
+                    "x-cas-field"?: "private" | "core";
                 };
             };
         };

@@ -83,6 +83,11 @@ components:
               default: {}
               format: 
                 type: string
+              x-cas-field:
+                type: string
+                enum:
+                  - private
+                  - core
           required:
             - title
             - type
