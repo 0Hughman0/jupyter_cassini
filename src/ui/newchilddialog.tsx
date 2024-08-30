@@ -114,17 +114,21 @@ export class NewChildWidget extends Widget {
       const metaInputs: (InputTextDialog | InputNumberDialog)[] =
       (this.metaInputs = []);
 
-      for (const additionalMeta of tier.childClsInfo.metaNames) {
+      for (const [name, info] of Object.entries(tier.childClsInfo.metaSchema.properties)) {
         let input;
+        // should come from somewhere else...
+        if (['description', 'started'].includes(name)) {
+          continue
+        }
   
-        if (typeof additionalMeta === 'string') {
-          input = new InputTextDialog({ title: '', label: additionalMeta });
+        if (typeof info.type === 'string') {
+          input = new InputTextDialog({ title: '', label: name });
         } else {
-          input = new InputNumberDialog({ title: '', label: additionalMeta });
+          input = new InputNumberDialog({ title: '', label: name });
         }
   
         metaInputs.push(input);
-        this.subInputs[additionalMeta] = input;
+        this.subInputs[name] = input;
   
         layout.addWidget(input);
       }

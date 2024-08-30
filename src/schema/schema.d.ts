@@ -247,7 +247,6 @@ export interface components {
         };
         ChildClsNotebookInfo: {
             templates: string[];
-            metaNames: string[];
             metaSchema: components["schemas"]["metaSchema"];
         } & (components["schemas"]["CommonChildClsInfo"] & {
             /**

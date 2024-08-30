@@ -124,15 +124,10 @@ components:
           type: array
           items: 
             type: string
-        metaNames:
-          type: array
-          items: 
-            type: string
         metaSchema:
             $ref: "#/components/schemas/metaSchema"
       required:
         - templates
-        - metaNames
         - metaSchema
 
     TreeChildResponse:
