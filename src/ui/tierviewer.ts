@@ -1,4 +1,5 @@
 import { BoxPanel, Panel, Widget } from '@lumino/widgets';
+import { Signal, ISignal } from '@lumino/signaling'
 
 import {
   Toolbar,
@@ -46,24 +47,19 @@ export class MarkdownEditor extends Panel {
   editButton: ToolbarButton;
   checkButton: ToolbarButton;
 
-  onContentChanged: (content: string) => void;
-
   /**
    *
    * @param content
    * @param rendered
-   * @param onContentChanged - callback that's called with the content of the widget when the check Button is pressed...
+   * @param contentChanged - signal to emit
    */
   constructor(
     content: string,
-    rendered: boolean,
-    onContentChanged: (content: string) => void
+    rendered: boolean
   ) {
     super();
 
     this.addClass('cas-MarkdownEditor');
-
-    this.onContentChanged = onContentChanged;
 
     const iconArea = document.createElement('div');
     iconArea.className = 'cas-icon-area';
@@ -118,6 +114,12 @@ export class MarkdownEditor extends Panel {
     };
   }
 
+  get contentChanged(): ISignal<this, string> {
+    return this._contentChanged
+  }
+
+  private _contentChanged = new Signal<this, string>(this)
+
   /**
    * The content of the text editor.
    */
@@ -138,7 +140,7 @@ export class MarkdownEditor extends Panel {
     this.onStateChanged();
 
     if (val === true) {
-      this.onContentChanged(this.source);
+      this._contentChanged.emit(this.source);
     }
   }
 
@@ -187,16 +189,21 @@ export class TierViewer extends BoxPanel {
   concCell: MarkdownEditor;
   highlightsBox: Panel | undefined;
   metaView: MetaEditor;
-  model: TierModel;
+  _model: TierModel | null;
   toolbar: Toolbar;
-
+  launchButton: ToolbarButton
+  
   protected hltsRenderPromise: Promise<boolean>;
 
   constructor(tierData: TierModel.IOptions) {
     super();
-    this.model = cassini.tierModelManager.get(tierData.name)(tierData);
-    console.log(this.model);
 
+    this.modelChanged.connect((sender, model) => this.onModelChanged(model), this)
+
+    cassini.tierModelManager.get(tierData.name).then(
+      tierModel => {this.model = tierModel}
+    )
+    
     this.addClass('cas-tier-widget');
 
     const toolbar = (this.toolbar = new Toolbar());
@@ -217,12 +224,9 @@ export class TierViewer extends BoxPanel {
       tooltip: 'Fetch from disk'
     });
 
-    const launchButton = new ToolbarButton({
+    const launchButton = this.launchButton = new ToolbarButton({
       icon: launchIcon,
-      onClick: () => {
-        cassini.launchTier(this.model);
-      },
-      tooltip: `Open ${this.model.name}`
+      tooltip: "Launch Tier"
     });
 
     toolbar.addItem('save', saveButton);
@@ -244,9 +248,8 @@ export class TierViewer extends BoxPanel {
     content.addWidget(createElementWidget('h2', 'Description'));
 
     const descriptionCell = (this.descriptionCell = new MarkdownEditor(
-      this.model.description,
-      true,
-      description => (this.model.description = description)
+      "",
+      true
     ));
 
     content.addWidget(descriptionCell);
@@ -256,17 +259,13 @@ export class TierViewer extends BoxPanel {
     this.highlightsBox = new Panel();
     this.highlightsBox.addClass('cas-tier-highlights-box');
 
-    this.hltsRenderPromise = Promise.resolve(true);
-    this.renderHighlights();
-
     content.addWidget(this.highlightsBox);
 
     content.addWidget(createElementWidget('h2', 'Conclusion'));
 
     const concCell = (this.concCell = new MarkdownEditor(
-      this.model.conclusion,
-      true,
-      conclusion => (this.model.conclusion = conclusion)
+      "",
+      true
     ));
 
     content.addWidget(concCell);
@@ -274,14 +273,48 @@ export class TierViewer extends BoxPanel {
     content.addWidget(createElementWidget('h2', 'Meta'));
 
     const metaView = (this.metaView = new MetaEditor(
-      this.model,
-      Object.keys(this.model.additionalMeta)
+      this.model
     ));
 
     content.addWidget(metaView);
+  }
 
-    this.model.ready.then(() => this.onContentChanged());
-    this.model.changed.connect(model => this.onContentChanged());
+  get modelChanged(): ISignal<TierViewer, TierModel | null> {
+    return this._modelChanged;
+  }
+
+  private _modelChanged = new Signal<TierViewer, TierModel | null>(this)
+
+  get model(): TierModel | null {
+    return this._model
+  }
+
+  set model(model: TierModel | null) {
+    this._model = model
+    this._modelChanged.emit(model)
+  }
+
+  onModelChanged(model: TierModel | null): void {
+    if (!model) {
+      return
+    }
+
+    model.ready.then(() => this.onContentChanged());
+    model.changed.connect(this.onContentChanged, this)
+    
+    this.descriptionCell.contentChanged.connect((sender, description) => {
+      model.description = description
+    }, this)
+
+    this.concCell.contentChanged.connect((sender, conclusion) => {
+      model.conclusion = conclusion
+    }, this)
+
+    this.launchButton.onClick = () => {
+      cassini.launchTier(model);
+    }
+    
+    this.onContentChanged()
   }
 
   /**
@@ -289,6 +322,10 @@ export class TierViewer extends BoxPanel {
    * @returns
    */
   onContentChanged(): void {
+    if (!this.model) {
+      return
+    }
+
     if (!this.model.metaFile) {
       return;
     }
@@ -306,10 +343,10 @@ export class TierViewer extends BoxPanel {
     // the update could be new meta
     this.metaView.render(Object.keys(this.model.additionalMeta));
 
-    this.renderHighlights();
+    this.renderHighlights(this.model);
   }
 
-  renderHighlights() {
+  private renderHighlights(model: TierModel) {
     if (!this.highlightsBox) {
       return true;
     }
@@ -321,11 +358,11 @@ export class TierViewer extends BoxPanel {
     const registry = cassini.rendermimeRegistry.clone({
       resolver: new RenderMimeRegistry.UrlResolver({
         contents: cassini.contentService.contents,
-        path: this.model.notebookPath as string
+        path: model.notebookPath as string
       })
     });
 
-    for (const data of this.model.hltsOutputs) {
+    for (const data of model.hltsOutputs) {
       const mimeBundle = data.data as IMimeBundle;
 
       for (const mimeType of Object.keys(mimeBundle)) {
@@ -338,10 +375,10 @@ export class TierViewer extends BoxPanel {
   }
 
   save(): void {
-    this.model.save(); // this could be bad if people are half-way through editing a value in a different widget somewhere.
+    this.model && this.model.save(); // this could be bad if people are half-way through editing a value in a different widget somewhere.
   }
 
   fetch(): void {
-    this.model.revert();
+    this.model && this.model.revert();
   }
 }

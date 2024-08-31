@@ -215,6 +215,9 @@ export interface components {
         NotebookTierInfo: {
             /** Format: date-time */
             started: string;
+            notebookPath: string;
+            metaPath: string;
+            hltsPath?: string;
             metaSchema: components["schemas"]["metaSchema"];
         } & (components["schemas"]["CommonTierInfo"] & {
             /**

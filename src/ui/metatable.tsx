@@ -199,7 +199,7 @@ export class MetaTableWidget extends ReactWidget {
     this.onMetaUpdate = onMetaUpdate;
     this.onRemoveMeta = onRemoveMeta;
 
-    metaChanged.connect(model => this.onMetaChanged(model.additionalMeta));
+    metaChanged.connect(model => this.onMetaChanged(model.additionalMeta), this);
   }
 
   /**

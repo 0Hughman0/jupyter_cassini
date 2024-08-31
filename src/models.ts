@@ -11,7 +11,7 @@ import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
 
 import { cassini, ITreeChildData, ITreeData, TreeManager } from './core';
-import { MetaSchema } from './schema/types';
+import { MetaSchema, TierInfo } from './schema/types';
 
 const CORE_META: (keyof TierModel)[] = ['description', 'conclusion', 'started'];
 
@@ -51,11 +51,15 @@ export class TierModel {
 
   protected _required: Promise<any>[];
 
-  constructor(options: TierModel.IOptions) {
+  constructor(options: TierInfo) {
     this.name = options.name;
     this.ids = options.ids;
-    this.notebookPath = options.notebookPath;
 
+    if (options.tierType == 'folder') {
+      return
+    }
+    
+    this.notebookPath = options.notebookPath;
     this.hltsPath = options.hltsPath;
     this.metaSchema = options.metaSchema;
 
@@ -63,7 +67,7 @@ export class TierModel {
       if (ids.toString() === this.ids.toString()) {
         this._changed.emit();
       }
-    });
+    }, this);
 
     this._required = [];
 
@@ -83,7 +87,7 @@ export class TierModel {
           if (change.name === 'dirty') {
             this._changed.emit(); // the dirtiness of the metaFile is also part of the state of this model.
           }
-        });
+        }, this);
       });
     }
 
@@ -311,7 +315,7 @@ export class TierBrowserModel {
       if (ids.toString() === this.sCurrentPath.toString()) {
         this._childrenUpdated.emit(this.current);
       }
-    });
+    }, this);
 
     this._additionalColumnsStore = {
       additionalColumns: new Set(),

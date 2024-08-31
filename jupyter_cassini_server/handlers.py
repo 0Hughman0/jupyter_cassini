@@ -10,7 +10,7 @@ from cassini import env
 from cassini.core import NotebookTierBase
 
 from jupyter_cassini_server.safety import needs_project, with_types
-from jupyter_cassini_server.serialisation import serialize_branch
+from jupyter_cassini_server.serialisation import serialize_branch, encode_path
 
 from .schema.models import (
     NewChildInfo,
@@ -36,9 +36,10 @@ class LookupHandler(APIHandler):
     @with_types(LookupGetParametersQuery, TierInfo, "GET")
     def get(self, query: LookupGetParametersQuery) -> TierInfo:
         assert env.project
+        project = env.project
 
         name = query.name
-        tier = env.project[name]
+        tier = project[name]
 
         if not tier.exists():
             raise ValueError(name, "not found")
@@ -50,6 +51,9 @@ class LookupHandler(APIHandler):
                 tierType='notebook',
                 name=tier.name,
                 ids=list(tier.identifiers),
+                notebookPath=encode_path(tier.file, project),
+                metaPath=encode_path(tier.meta_file, project),
+                hltsPath=encode_path(tier.highlights_file, project) if tier.highlights_file else None,
                 started=started,
                 children=[child.name for child in tier],
                 metaSchema=MetaSchema.model_validate(tier.__meta_manager__.build_model().model_json_schema())

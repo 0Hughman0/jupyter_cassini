@@ -41,7 +41,7 @@ export class BrowserPanel extends SplitPanel {
       const browser = (this.browser = new TierTree(treeModel));
 
       browser.tierSelected.connect((sender, tierSelectedSignal) => {
-        this.openTier(tierSelectedSignal.path, tierSelectedSignal.tier);
+        this.previewTier(tierSelectedSignal.path, tierSelectedSignal.tier);
       }, this);
       browser.tierLaunched.connect((sender, tierData) => {
         this.launchTier(tierData);
@@ -68,28 +68,13 @@ export class BrowserPanel extends SplitPanel {
   /**
    * View a tier in the brower's TierViewer, which is kinda like a preview.
    *
-   * @param casPath { string[] } - not currently used.
+   * @param ids { string[] } - not currently used.
    * @param tierData { TierModel.IOptions } - info required to open (preview?) a tier in a tierView
    */
-  openTier(casPath: string[], tierData: TierModel.IOptions): void {
-    this.viewer.setHidden(true);
-    this.viewer.dispose();
-    const newTier = (this.viewer = new TierViewer(tierData));
-
-    if (newTier.model.metaFile) {
-      newTier.model.metaFile.ready.then(value => {
-        this.viewer.update();
-      });
-    }
-
-    if (newTier.model.hltsFile) {
-      newTier.model.hltsFile.ready.then(value => {
-        this.viewer.update();
-      });
-    }
-
-    this.addWidget(newTier);
-    SplitPanel.setStretch(newTier, 1);
+  previewTier(ids: string[], tierData: TierModel.IOptions): void {
+    cassini.tierModelManager.get(tierData.name).then(tierModel => {
+      this.viewer.model = tierModel
+    })
   }
 
   /**

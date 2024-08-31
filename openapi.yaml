@@ -65,10 +65,18 @@ components:
         started: 
           type: string
           format: date-time
+        notebookPath:
+          type: string
+        metaPath:
+          type: string
+        hltsPath:
+          type: string
         metaSchema:
           $ref: "#/components/schemas/metaSchema"
       required:
         - started
+        - notebookPath
+        - metaPath
         - metaSchema
 
     metaSchema:

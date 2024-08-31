@@ -8,7 +8,7 @@ import { PathExt } from '@jupyterlab/coreutils';
 import { Toolbar, ToolbarButton } from '@jupyterlab/ui-components';
 import { treeViewIcon } from '@jupyterlab/ui-components';
 
-import { ITreeData, cassini } from '../core';
+import { cassini } from '../core';
 import { MarkdownEditor } from './tierviewer';
 import { TierModel } from '../models';
 import { ChildrenSummaryWidget } from './nbheadercomponents';
@@ -25,17 +25,19 @@ import { openNewChildDialog } from './newchilddialog';
  */
 export class TierNotebookHeaderTB extends BoxPanel {
   toolbar: Toolbar;
-  model: TierModel;
+  protected model: TierModel;
   nameLabel: Widget;
 
-  constructor(tierInfo: ITreeData) {
+  constructor(tierModel: TierModel) {
     super();
 
     this.addClass('cas-TierNotebookHeader');
 
     const toolbar = (this.toolbar = new Toolbar());
 
-    this.model = cassini.tierModelManager.get(tierInfo.name)(tierInfo);
+    cassini.tierModelManager.get(tierModel.name).then(
+      tierModel => {this.model = tierModel}
+    );
 
     const nameLabel = (this.nameLabel = new Widget());
     nameLabel.node.textContent = this.model.name;
@@ -60,7 +62,7 @@ export class TierNotebookHeaderTB extends BoxPanel {
     this.addWidget(toolbar);
     BoxPanel.setStretch(toolbar, 0);
 
-    this.model.changed.connect(() => this.onContentChanged());
+    this.model.changed.connect(() => this.onContentChanged(), this);
   }
 
   /**
@@ -75,9 +77,9 @@ export class TierNotebookHeaderTB extends BoxPanel {
   ): Promise<TierNotebookHeaderTB | undefined> {
     const tierName = PathExt.basename(context.path, '.ipynb');
 
-    return cassini.treeManager.lookup(tierName).then(tierInfo => {
-      if (tierInfo) {
-        const widget = new TierNotebookHeaderTB(tierInfo);
+    return cassini.tierModelManager.get(tierName).then(TierModel => {
+      if (TierModel) {
+        const widget = new TierNotebookHeaderTB(TierModel);
 
         panel.contentHeader.addWidget(widget);
 
@@ -85,7 +87,7 @@ export class TierNotebookHeaderTB extends BoxPanel {
           if (state === 'started') {
             widget.model.save();
           }
-        });
+        }, this);
 
         return widget;
       }
@@ -127,12 +129,12 @@ export class TierNotebookHeader extends Panel {
   conclusionEditor: MarkdownEditor;
   childrenSummary: ChildrenSummaryWidget;
 
-  constructor(tierInfo: ITreeData) {
+  constructor(tierModel: TierModel) {
     super();
 
     this.addClass('cas-TierNotebookHeader');
 
-    this.model = cassini.tierModelManager.get(tierInfo.name)(tierInfo);
+    this.model = tierModel
 
     const title = document.createElement('h1');
     title.textContent = this.model.name;
@@ -151,11 +153,11 @@ export class TierNotebookHeader extends Panel {
 
     const descriptionEditor = (this.descriptionEditor = new MarkdownEditor(
       this.model.description,
-      true,
-      description => {
-        this.model.description = description;
-      }
+      true
     ));
+    descriptionEditor.contentChanged.connect((sender, description) => {
+      this.model.description = description;
+    }, this)
     descriptionBox.addWidget(descriptionEditor);
 
     content.addWidget(descriptionBox);
@@ -169,11 +171,12 @@ export class TierNotebookHeader extends Panel {
 
     const conclusionEditor = (this.conclusionEditor = new MarkdownEditor(
       this.model.conclusion,
-      true,
-      conclusion => {
-        this.model.conclusion = conclusion;
-      }
+      true
     ));
+    conclusionEditor.contentChanged.connect((sender, conclusion) => {
+        this.model.conclusion = conclusion;
+    }, this)
+
     conclusionBox.addWidget(conclusionEditor);
 
     content.addWidget(conclusionBox);
@@ -200,7 +203,7 @@ export class TierNotebookHeader extends Panel {
       content.addWidget(childrenBox);
     });
 
-    this.model.changed.connect(() => this.onContentChanged());
+    this.model.changed.connect(() => this.onContentChanged(), this);
     this.model.ready.then(() => this.onContentChanged());
   }
 
@@ -228,7 +231,7 @@ export class RMHeader extends Panel implements IRenderMime.IRenderer {
    * Construct a new output widget.
    */
   protected _path: string;
-  protected tierModel: TierModel;
+  protected model: TierModel;
   private fetchModel: Promise<TierModel | undefined>;
 
   constructor(options: IRenderMime.IRendererOptions) {
@@ -239,16 +242,14 @@ export class RMHeader extends Panel implements IRenderMime.IRenderer {
     const resolver = options.resolver as RenderMimeRegistry.UrlResolver; // uhoh this could be unstable!
     this._path = resolver.path;
 
-    this.fetchModel = cassini.treeManager.lookup(this.name).then(tierInfo => {
-      if (!tierInfo) {
+    this.fetchModel = cassini.tierModelManager.get(this.name).then(tierModel => {
+      if (!tierModel) {
         return;
       }
 
-      this.addWidget(new TierNotebookHeader(tierInfo));
+      this.model = this.model
 
-      this.tierModel = cassini.tierModelManager.get(tierInfo.name)(tierInfo);
-
-      return this.tierModel;
+      return this.model;
     });
   }
 

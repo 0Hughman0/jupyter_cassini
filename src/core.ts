@@ -13,7 +13,8 @@ import {
 import { TierModel } from './models';
 import { TreeResponse,
   TreeChildResponse,
-  NewChildInfo } from './schema/types'
+  NewChildInfo, 
+  TierInfo} from './schema/types'
 
 import { BrowserPanel } from './ui/browser';
 
@@ -274,16 +275,15 @@ export class TierModelTreeManager {
   get(
     name: string,
     forceRefresh?: boolean
-  ): (tierInfo: TierModel.IOptions) => TierModel {
+  ): Promise<TierModel> {
     if (Object.keys(this.cache).includes(name) && !forceRefresh) {
-      return tierInfo => this.cache[name];
+      return Promise.resolve(this.cache[name])
     }
 
-    return (tierInfo: TierModel.IOptions) =>
-      this._insertNewTierModel(name, tierInfo);
+    return CassiniServer.lookup(name).then(tierInfo => this._insertNewTierModel(name, tierInfo));
   }
 
-  _insertNewTierModel(name: string, tierInfo: TierModel.IOptions) {
+  _insertNewTierModel(name: string, tierInfo: TierInfo) {
     const model = new TierModel(tierInfo);
 
     this.cache[name] = model;
