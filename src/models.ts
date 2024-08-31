@@ -70,7 +70,7 @@ export class TierModel {
     this.hltsPath = options.hltsPath;
     this.metaSchema = options.metaSchema;
     this.metaValidator = ajv.compile(this.metaSchema)
-
+  
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.ids.toString()) {
         this._changed.emit();
@@ -166,10 +166,12 @@ export class TierModel {
   get additionalMeta(): JSONObject {
     const o = {} as JSONObject;
     const metaJSON = this.meta;
+
+    const properties = this?.metaSchema && this.metaSchema.properties
     
     for (const key in metaJSON) {
-      const properties = this?.metaSchema?.properties
-      if (properties && ['core', 'private'].includes(properties[key]['x-cas-field'] || '')) {
+      
+      if (properties && properties[key] && (['core', 'private'].includes(properties[key]['x-cas-field'] || ''))) {
         continue
       }
       
@@ -182,6 +184,7 @@ export class TierModel {
   get description(): string {
     return (this.meta['description'] as string) || '';
   }
+
   set description(value: string) {
     if (!this.metaFile) {
       throw 'Tier has no meta, cannot store description';
@@ -283,7 +286,7 @@ export class TierModel {
 }
 
 export namespace TierModel {
-  export type TierModelChange = IChange<TierModel | null, TierModel | null>
+  export type ModelChange = IChange<TierModel | null, TierModel | null>
 }
 
 export interface IAdditionalColumnsStore {

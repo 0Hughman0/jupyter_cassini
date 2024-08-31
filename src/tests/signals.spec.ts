@@ -22,7 +22,7 @@ describe('tier-model', () => {
   test('model-ready-no-hlts', async () => {
     const tier = new TierModel({
       name: 'WP1',
-      identifiers: ['1'],
+      ids: ['1'],
       metaPath: metaFile.path
     });
     expect(tier.metaFile?.isReady).toBe(false);
@@ -39,7 +39,7 @@ describe('tier-model', () => {
   test('model-ready-hlts', async () => {
     const tier = new TierModel({
       name: 'WP1',
-      identifiers: ['1'],
+      ids: ['1'],
       metaPath: metaFile.path,
       hltsPath: hltsFile.path
     });
@@ -61,7 +61,7 @@ describe('tier-model', () => {
   test('changed', async () => {
     const tier = await new TierModel({
       name: 'WP1',
-      identifiers: ['1'],
+      ids: ['1'],
       metaPath: metaFile.path,
       hltsPath: hltsFile.path
     }).ready;

@@ -80,7 +80,7 @@ test.describe('Cassini-Browser', async () => {
       page.getByRole('button', { name: 'Fetch from disk' })
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: 'Open Home' }).nth(1)
+      page.getByRole('button', { name: 'Launch Tier' }).nth(1)
     ).toBeVisible();
   });
 

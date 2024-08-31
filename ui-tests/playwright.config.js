@@ -1,11 +1,9 @@
 /**
  * Configuration for Playwright using default from @jupyterlab/galata
  */
-import { defineConfig } from '@playwright/test';
-
 const baseConfig = require('@jupyterlab/galata/lib/playwright-config');
 
-export default defineConfig({
+module.exports = {
   ...baseConfig,
   expect: { timeout: 15000 },
   webServer: {
@@ -16,4 +14,4 @@ export default defineConfig({
     stdout: 'pipe',
     stderr: 'pipe'
   }
-});
+};

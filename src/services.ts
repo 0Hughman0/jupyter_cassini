@@ -8,36 +8,32 @@ import { paths } from './schema/schema';
 import { TierInfo, TreeResponse, NewChildInfo, Status } from './schema/types'
 
 
-type fetchType = typeof fetch;
+const JLfetch = async (info: Request) => {
+  const url = info.url;
+  const { method, body } = info;
+  const init: RequestInit = { method, body };
 
-const JLfetch: fetchType = (info: RequestInfo | URL, init?: RequestInit) => {
-  let url: string;
+  if (body instanceof ReadableStream ) {
+    const chunks = []
+  
+    for await (const chunk of body as any) {
+      chunks.push(chunk)
+    }
 
-  if (typeof info === 'string') {
-    url = info;
-  } else if (info instanceof Request) {
-    url = info.url;
-  } else if (info instanceof URL) {
-    url = info.href;
-  } else {
-    throw Error('Cannot parse info parameter');
+    const decoder = new TextDecoder()
+    init.body = chunks.map((u) => decoder.decode(u)).join('')
   }
-
-  if (!init && info instanceof Request) {
-    const { method, body } = info;
-    init = { method, body };
-  } else if (!init) {
-    init = {};
-  }
-
-  const settings = ServerConnection.makeSettings();
+  
+  const settings = ServerConnection.makeSettings();  
   return ServerConnection.makeRequest(url, init, settings);
 };
 
-const setting = ServerConnection.makeSettings();
+const settings = ServerConnection.makeSettings();
+const {fetch, baseUrl, ...fetchSettings} = settings
+
 export const client = createClient<paths>({
-  baseUrl: URLExt.join(setting.baseUrl, 'jupyter_cassini'),
-  fetch: JLfetch
+  baseUrl: URLExt.join(settings.baseUrl, 'jupyter_cassini'),
+  fetch: JLfetch, ...fetchSettings
 });
 
 /**

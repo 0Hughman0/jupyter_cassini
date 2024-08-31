@@ -278,11 +278,11 @@ export class TierViewer extends BoxPanel {
     content.addWidget(metaView);
   }
 
-  get modelChanged(): ISignal<TierViewer, TierModel.TierModelChange> {
+  get modelChanged(): ISignal<TierViewer, TierModel.ModelChange> {
     return this._modelChanged;
   }
 
-  private _modelChanged = new Signal<TierViewer, TierModel.TierModelChange>(this)
+  private _modelChanged = new Signal<TierViewer, TierModel.ModelChange>(this)
 
   get model(): TierModel | null {
     return this._model
@@ -294,7 +294,7 @@ export class TierViewer extends BoxPanel {
     this._modelChanged.emit({old: oldModel, new: model})
   }
 
-  onModelChanged(change: TierModel.TierModelChange): void {
+  onModelChanged(change: TierModel.ModelChange): void {
     if (change.old) {
       Signal.disconnectBetween(change.old, this)
       Signal.disconnectSender(this.descriptionCell)
