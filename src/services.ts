@@ -13,15 +13,9 @@ const JLfetch = async (info: Request) => {
   const { method, body } = info;
   const init: RequestInit = { method, body };
 
+  // seems in some browsers, body is turned into a stream, which causes chaos.
   if (body instanceof ReadableStream ) {
-    const chunks = []
-  
-    for await (const chunk of body as any) {
-      chunks.push(chunk)
-    }
-
-    const decoder = new TextDecoder()
-    init.body = chunks.map((u) => decoder.decode(u)).join('')
+    init.body = await info.text()
   }
   
   const settings = ServerConnection.makeSettings();  
