@@ -31,13 +31,11 @@ export class TierNotebookHeaderTB extends BoxPanel {
   constructor(tierModel: TierModel) {
     super();
 
+    this.model = tierModel
+
     this.addClass('cas-TierNotebookHeader');
 
     const toolbar = (this.toolbar = new Toolbar());
-
-    cassini.tierModelManager.get(tierModel.name).then(
-      tierModel => {this.model = tierModel}
-    );
 
     const nameLabel = (this.nameLabel = new Widget());
     nameLabel.node.textContent = this.model.name;
@@ -247,7 +245,9 @@ export class RMHeader extends Panel implements IRenderMime.IRenderer {
         return;
       }
 
-      this.model = this.model
+      this.model = tierModel
+      
+      this.addWidget(new TierNotebookHeader(this.model))
 
       return this.model;
     });

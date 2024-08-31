@@ -21,6 +21,7 @@ export class MetaEditor extends Panel {
 
   constructor(tierModel: TierModel | null) {
     super();
+    this.model = tierModel
     this.modelChanged.connect((sender, model) => this.onModelChanged(model), this)
   }
 

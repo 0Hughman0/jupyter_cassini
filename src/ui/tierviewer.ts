@@ -315,6 +315,8 @@ export class TierViewer extends BoxPanel {
     this.launchButton.onClick = () => {
       cassini.launchTier(model);
     }
+
+    this.metaView.model = model
     
     this.onContentChanged()
   }
