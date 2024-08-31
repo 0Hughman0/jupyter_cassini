@@ -40,7 +40,7 @@ def with_types(
                     response = response_model.model_validate(
                         func(self, query_model.model_validate(query))
                     )
-                    self.finish(response.model_dump_json(by_alias=True))
+                    self.finish(response.model_dump_json(by_alias=True, exclude_defaults=True))
                 except ValueError:
                     self.send_error(404)
 

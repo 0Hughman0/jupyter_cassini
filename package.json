@@ -77,6 +77,8 @@
     "@lumino/coreutils": "^2.1.1",
     "@lumino/widgets": "^2.2.0",
     "@tanstack/react-table": "^8.9.3",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "openapi-fetch": "^0.11.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

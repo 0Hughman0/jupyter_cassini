@@ -1,4 +1,7 @@
 /* eslint-disable prettier/prettier */
+import { Ajv, ValidateFunction } from 'ajv';
+import addFormats from "ajv-formats"
+
 import { ObservableList } from '@jupyterlab/observables';
 import {
   DocumentRegistry,
@@ -13,7 +16,10 @@ import { Signal, ISignal } from '@lumino/signaling';
 import { cassini, ITreeChildData, ITreeData, TreeManager } from './core';
 import { MetaSchema, TierInfo, IChange } from './schema/types';
 
-const CORE_META: (keyof TierModel)[] = ['description', 'conclusion', 'started'];
+
+const ajv = new Ajv()
+addFormats(ajv)
+ajv.addKeyword('x-cas-field')
 
 /**
  * Browser-side model of a cassini tier.
@@ -43,6 +49,7 @@ export class TierModel {
   readonly notebookPath: string | undefined;
   readonly started: Date;
   readonly metaSchema: MetaSchema | undefined
+  readonly metaValidator: ValidateFunction<any>
 
   readonly hltsPath: string | undefined;
 
@@ -62,6 +69,7 @@ export class TierModel {
     this.notebookPath = options.notebookPath;
     this.hltsPath = options.hltsPath;
     this.metaSchema = options.metaSchema;
+    this.metaValidator = ajv.compile(this.metaSchema)
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.ids.toString()) {
@@ -158,11 +166,16 @@ export class TierModel {
   get additionalMeta(): JSONObject {
     const o = {} as JSONObject;
     const metaJSON = this.meta;
+    
     for (const key in metaJSON) {
-      if ((CORE_META as string[]).indexOf(key) < 0) {
-        o[key] = metaJSON[key] as JSONValue;
+      const properties = this?.metaSchema?.properties
+      if (properties && ['core', 'private'].includes(properties[key]['x-cas-field'] || '')) {
+        continue
       }
+      
+      o[key] = metaJSON[key] as JSONValue;
     }
+
     return o;
   }
 
