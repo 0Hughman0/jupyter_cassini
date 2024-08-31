@@ -39,7 +39,7 @@ const CORE_META: (keyof TierModel)[] = ['description', 'conclusion', 'started'];
  */
 export class TierModel {
   readonly name: string;
-  readonly identifiers: string[];
+  readonly ids: string[];
   readonly notebookPath: string | undefined;
   readonly started: Date;
   readonly metaSchema: MetaSchema | undefined
@@ -53,14 +53,14 @@ export class TierModel {
 
   constructor(options: TierModel.IOptions) {
     this.name = options.name;
-    this.identifiers = options.identifiers;
+    this.ids = options.ids;
     this.notebookPath = options.notebookPath;
 
     this.hltsPath = options.hltsPath;
     this.metaSchema = options.metaSchema;
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
-      if (ids.toString() === this.identifiers.toString()) {
+      if (ids.toString() === this.ids.toString()) {
         this._changed.emit();
       }
     });
@@ -128,7 +128,7 @@ export class TierModel {
   }
 
   get treeData(): Promise<ITreeData | null> {
-    return cassini.treeManager.get(this.identifiers);
+    return cassini.treeManager.get(this.ids);
   }
 
   get children(): Promise<{ [id: string]: ITreeChildData } | null> {
@@ -268,7 +268,7 @@ export class TierModel {
 export namespace TierModel {
   export interface IOptions {
     name: string;
-    identifiers: string[];
+    ids: string[];
     children?: { [id: string]: { name: string } };
     metaPath?: string;
     metaSchema?: MetaSchema;

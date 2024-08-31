@@ -49,7 +49,7 @@ class LookupHandler(APIHandler):
             return TierInfo(NotebookTierInfo(
                 tierType='notebook',
                 name=tier.name,
-                identifiers=list(tier.identifiers),
+                ids=list(tier.identifiers),
                 started=started,
                 children=[child.name for child in tier],
                 metaSchema=MetaSchema.model_validate(tier.__meta_manager__.build_model().model_json_schema())
@@ -58,7 +58,7 @@ class LookupHandler(APIHandler):
             return TierInfo(FolderTierInfo(
                 tierType='folder',
                 name=tier.name,
-                identifiers=list(tier.identifiers),
+                ids=list(tier.identifiers),
                 children=[child.name for child in tier]
             ))
 
@@ -125,20 +125,20 @@ class TreeHandler(APIHandler):
     def get(self, query: TreeGetParametersQuery) -> TreeResponse:
         assert env.project
 
-        cas_ids = query.ids__
+        ids = query.ids__
 
         try:
             tier = env.project.home
 
-            while cas_ids:
-                id_ = cas_ids.pop(0)
+            while ids:
+                id_ = ids.pop(0)
                 tier = tier[id_]
 
         except ValueError:
-            raise ValueError("Invalid tier name", cas_ids)
+            raise ValueError("Invalid tier name", ids)
 
         if not tier.exists():
-            raise ValueError("Tier does not exist", cas_ids)
+            raise ValueError("Tier does not exist", ids)
 
         return serialize_branch(tier)
 

@@ -202,7 +202,7 @@ export interface components {
         TierInfo: components["schemas"]["FolderTierInfo"] | components["schemas"]["NotebookTierInfo"];
         CommonTierInfo: {
             name: string;
-            identifiers: string[];
+            ids: string[];
             children?: string[];
         };
         FolderTierInfo: components["schemas"]["CommonTierInfo"] & {

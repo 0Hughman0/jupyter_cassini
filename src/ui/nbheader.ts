@@ -96,7 +96,7 @@ export class TierNotebookHeaderTB extends BoxPanel {
    * Show the tier this notebook corresponds to in the browser
    */
   showInBrowser() {
-    cassini.launchTierBrowser(this.model.identifiers);
+    cassini.launchTierBrowser(this.model.ids);
   }
 
   /**
@@ -192,7 +192,7 @@ export class TierNotebookHeader extends Panel {
         children ? Object.entries(children) : [],
         data => data && cassini.launchTier(data),
         (data, id) =>
-          cassini.launchTierBrowser([...this.model.identifiers, id]),
+          cassini.launchTierBrowser([...this.model.ids, id]),
         () => this.model.treeData.then(data => data && openNewChildDialog(data))
       ));
       childrenBox.addWidget(childrenSummary);
@@ -205,7 +205,7 @@ export class TierNotebookHeader extends Panel {
   }
 
   showInBrowser() {
-    cassini.launchTierBrowser(this.model.identifiers);
+    cassini.launchTierBrowser(this.model.ids);
   }
 
   /**

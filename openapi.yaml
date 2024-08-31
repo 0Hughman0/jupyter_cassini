@@ -40,7 +40,7 @@ components:
       properties:
         name:
           type: string
-        identifiers:
+        ids:
           type: array
           items: 
             type: string
@@ -50,7 +50,7 @@ components:
             type: string
       required:
         - name
-        - identifiers
+        - ids
     
     FolderTierInfo:
       type: object
@@ -162,6 +162,7 @@ components:
           additionalProperties: true
       required:
         - name
+    
     TreeResponse:
       type: object
       allOf:

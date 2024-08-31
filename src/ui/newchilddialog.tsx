@@ -77,7 +77,7 @@ export class NewChildWidget extends Widget {
     this.parentName = tier.name;
 
     const layout = (this.layout = new PanelLayout());
-    const namePrefix = tier.identifiers.length ? tier.name : '';
+    const namePrefix = tier.ids.length ? tier.name : '';
     const nameTemplate = namePrefix + tier.childClsInfo.namePartTemplate;
     const identifierInput = (this.identifierInput = new IdDialog({
       title: 'Identitifier',

@@ -192,7 +192,7 @@ const CasSearch = (props: ICasSearchProps) => {
     if (e.key === 'Enter') {
       CassiniServer.lookup(query).then(tierInfo => {
         model.currentPath.clear();
-        model.currentPath.pushAll(tierInfo.identifiers);
+        model.currentPath.pushAll(tierInfo.ids);
       });
     }
   };
@@ -500,7 +500,7 @@ function ChildrenTable(props: IChildrenTableProps) {
           const id = data[props.row.index][0];
           const tierLaunchData = {
             ...tierChildData,
-            identifiers: [...path, id]
+            ids: [...path, id]
           };
           return (
             <div className="cas-row-icon-area">
