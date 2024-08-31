@@ -303,11 +303,13 @@ export class TierBrowserModel {
   currentPath: ObservableList<string>;
   treeManager: TreeManager;
   protected _additionalColumnsStore: IAdditionalColumnsStore;
+  protected _current: Promise<ITreeData | null>
 
   constructor() {
     this.currentPath = new ObservableList<string>();
     this.treeManager = cassini.treeManager;
     this.currentPath.changed.connect(() => {
+      this._current = this.treeManager.get(this.sCurrentPath)
       this._childrenUpdated.emit(this.current);
     }, this);
 
@@ -321,6 +323,10 @@ export class TierBrowserModel {
       additionalColumns: new Set(),
       children: {}
     };
+  }
+
+  get current(): Promise<ITreeData | null> {
+    return this._current
   }
 
   private _childrenUpdated = new Signal<this, Promise<ITreeData | null>>(this);
@@ -361,13 +367,6 @@ export class TierBrowserModel {
         return {};
       }
     });
-  }
-
-  /**
-   * The current tier that's displayed in the Tree
-   */
-  get current(): Promise<ITreeData | null> {
-    return this.treeManager.get(this.sCurrentPath);
   }
 
   /**
