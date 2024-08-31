@@ -13,7 +13,8 @@ const JLfetch = async (info: Request) => {
   const { method, body } = info;
   const init: RequestInit = { method, body };
 
-  // seems in some browsers, body is turned into a stream, which causes chaos.
+  // seems in some browsers, body is turned into a stream, which causes chaos when used to make a new request object
+  // see https://issues.chromium.org/issues/40237822#makechanges
   if (body instanceof ReadableStream ) {
     init.body = await info.text()
   }
