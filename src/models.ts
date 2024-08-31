@@ -11,7 +11,7 @@ import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
 
 import { cassini, ITreeChildData, ITreeData, TreeManager } from './core';
-import { MetaSchema, TierInfo } from './schema/types';
+import { MetaSchema, TierInfo, IChange } from './schema/types';
 
 const CORE_META: (keyof TierModel)[] = ['description', 'conclusion', 'started'];
 
@@ -270,15 +270,7 @@ export class TierModel {
 }
 
 export namespace TierModel {
-  export interface IOptions {
-    name: string;
-    ids: string[];
-    children?: { [id: string]: { name: string } };
-    metaPath?: string;
-    metaSchema?: MetaSchema;
-    hltsPath?: string;
-    notebookPath?: string;
-  }
+  export type TierModelChange = IChange<TierModel | null, TierModel | null>
 }
 
 export interface IAdditionalColumnsStore {

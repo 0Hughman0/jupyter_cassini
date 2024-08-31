@@ -2,7 +2,7 @@
 import { SplitPanel } from '@lumino/widgets';
 
 import { cassini, ILaunchable } from '../core';
-import { TierModel, TierBrowserModel as TierTreeModel } from '../models';
+import { TierBrowserModel as TierTreeModel } from '../models';
 import { TierBrowser as TierTree } from './treeview';
 import { TierViewer } from './tierviewer';
 
@@ -41,7 +41,7 @@ export class BrowserPanel extends SplitPanel {
       const browser = (this.browser = new TierTree(treeModel));
 
       browser.tierSelected.connect((sender, tierSelectedSignal) => {
-        this.previewTier(tierSelectedSignal.path, tierSelectedSignal.tier);
+        this.previewTier(tierSelectedSignal.name);
       }, this);
       browser.tierLaunched.connect((sender, tierData) => {
         this.launchTier(tierData);
@@ -50,7 +50,7 @@ export class BrowserPanel extends SplitPanel {
       this.addWidget(browser);
       SplitPanel.setStretch(browser, 0);
 
-      const tierContent = (this.viewer = new TierViewer(tier));
+      const tierContent = (this.viewer = new TierViewer());
 
       this.addWidget(tierContent);
       SplitPanel.setStretch(tierContent, 1);
@@ -68,11 +68,10 @@ export class BrowserPanel extends SplitPanel {
   /**
    * View a tier in the brower's TierViewer, which is kinda like a preview.
    *
-   * @param ids { string[] } - not currently used.
-   * @param tierData { TierModel.IOptions } - info required to open (preview?) a tier in a tierView
+   * @param name { string }
    */
-  previewTier(ids: string[], tierData: TierModel.IOptions): void {
-    cassini.tierModelManager.get(tierData.name).then(tierModel => {
+  previewTier(name: string): void {
+    cassini.tierModelManager.get(name).then(tierModel => {
       this.viewer.model = tierModel
     })
   }

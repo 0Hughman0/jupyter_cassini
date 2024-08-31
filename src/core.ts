@@ -23,9 +23,6 @@ export interface ILaunchable {
   notebookPath?: string;
 }
 
-/* eslint-disable @typescript-eslint/no-empty-interface */
-export interface IViewable extends TierModel.IOptions {}
-
 /**
  * All ITreeData instances must implement ITreeChild data.
  *

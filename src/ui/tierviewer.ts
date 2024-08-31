@@ -23,6 +23,7 @@ import { cassini } from '../core';
 import { TierModel } from '../models';
 import { MetaEditor } from './metaeditor';
 
+
 export function createElementWidget(
   element: string,
   textContent: string
@@ -51,7 +52,6 @@ export class MarkdownEditor extends Panel {
    *
    * @param content
    * @param rendered
-   * @param contentChanged - signal to emit
    */
   constructor(
     content: string,
@@ -111,6 +111,8 @@ export class MarkdownEditor extends Panel {
     this.onAfterAttach = () => {
       Widget.attach(this.editButton, iconArea);
       Widget.attach(this.checkButton, iconArea);
+
+      this.setRendered(rendered);
     };
   }
 
@@ -195,14 +197,11 @@ export class TierViewer extends BoxPanel {
   
   protected hltsRenderPromise: Promise<boolean>;
 
-  constructor(tierData: TierModel.IOptions) {
+  constructor(model: TierModel | null = null) {
     super();
 
     this.modelChanged.connect((sender, model) => this.onModelChanged(model), this)
-
-    cassini.tierModelManager.get(tierData.name).then(
-      tierModel => {this.model = tierModel}
-    )
+    this.model = model
     
     this.addClass('cas-tier-widget');
 
@@ -279,25 +278,34 @@ export class TierViewer extends BoxPanel {
     content.addWidget(metaView);
   }
 
-  get modelChanged(): ISignal<TierViewer, TierModel | null> {
+  get modelChanged(): ISignal<TierViewer, TierModel.TierModelChange> {
     return this._modelChanged;
   }
 
-  private _modelChanged = new Signal<TierViewer, TierModel | null>(this)
+  private _modelChanged = new Signal<TierViewer, TierModel.TierModelChange>(this)
 
   get model(): TierModel | null {
     return this._model
   }
 
   set model(model: TierModel | null) {
+    const oldModel = this._model
     this._model = model
-    this._modelChanged.emit(model)
+    this._modelChanged.emit({old: oldModel, new: model})
   }
 
-  onModelChanged(model: TierModel | null): void {
-    if (!model) {
+  onModelChanged(change: TierModel.TierModelChange): void {
+    if (change.old) {
+      Signal.disconnectBetween(change.old, this)
+      Signal.disconnectSender(this.descriptionCell)
+      Signal.disconnectSender(this.concCell)
+    }
+
+    if (!change.new) {
       return
     }
+
+    const model = change.new
 
     console.log(model);
 
