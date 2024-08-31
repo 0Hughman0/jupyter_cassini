@@ -299,6 +299,8 @@ export class TierViewer extends BoxPanel {
       return
     }
 
+    console.log(model);
+
     model.ready.then(() => this.onContentChanged());
     model.changed.connect(this.onContentChanged, this)
     
