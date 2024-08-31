@@ -200,12 +200,12 @@ export interface components {
             status: "success" | "failure";
         };
         TierInfo: components["schemas"]["FolderTierInfo"] | components["schemas"]["NotebookTierInfo"];
-        CommontTierInfo: {
+        CommonTierInfo: {
             name: string;
             identifiers: string[];
             children?: string[];
         };
-        FolderTierInfo: components["schemas"]["CommontTierInfo"] & {
+        FolderTierInfo: components["schemas"]["CommonTierInfo"] & {
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
@@ -215,7 +215,8 @@ export interface components {
         NotebookTierInfo: {
             /** Format: date-time */
             started: string;
-        } & (components["schemas"]["CommontTierInfo"] & {
+            metaSchema: components["schemas"]["metaSchema"];
+        } & (components["schemas"]["CommonTierInfo"] & {
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}

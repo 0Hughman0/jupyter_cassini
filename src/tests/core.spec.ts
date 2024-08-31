@@ -2,7 +2,7 @@ import { Contents } from '@jupyterlab/services';
 
 import { ITreeData, TreeManager, TierModelTreeManager, Cassini } from '../core';
 import { TierModel } from '../models';
-import { ITreeResponse } from '../services';
+import { TreeResponse } from '../schema/types';
 
 import {
   HOME_RESPONSE,
@@ -23,7 +23,7 @@ describe('TreeManager', () => {
 
   test('conversion', () => {
     const treeData: ITreeData = TreeManager._treeResponseToData(
-      HOME_RESPONSE as ITreeResponse,
+      HOME_RESPONSE as TreeResponse,
       ['1', '1', 'a']
     );
 

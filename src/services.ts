@@ -4,17 +4,9 @@ import createClient from 'openapi-fetch';
 import { URLExt } from '@jupyterlab/coreutils';
 
 import { ServerConnection } from '@jupyterlab/services';
-import { paths, components } from './schema/schema';
+import { paths } from './schema/schema';
+import { TierInfo, TreeResponse, NewChildInfo, Status } from './schema/types'
 
-export type IChildClsInfo = components['schemas']['ChildClsInfo'];
-export type ITreeChildResponse = components['schemas']['TreeChildResponse'];
-export type ITreeResponse = components['schemas']['TreeResponse'];
-export type FolderTierInfo = components["schemas"]["FolderTierInfo"]
-export type NotebookTierInfo = components["schemas"]["NotebookTierInfo"]
-export type ITierInfo = components['schemas']['TierInfo'];
-export type INewChildInfo = components['schemas']['NewChildInfo'];
-
-export type Status = components['schemas']['Status'];
 
 type fetchType = typeof fetch;
 
@@ -64,7 +56,7 @@ export namespace CassiniServer {
   }
   */
 
-  export function lookup(query: string): Promise<ITierInfo> {
+  export function lookup(query: string): Promise<TierInfo> {
     return client
       .GET('/lookup', {
         params: {
@@ -87,7 +79,7 @@ export namespace CassiniServer {
    * @param ids the identifiers or casPath or path or ids of the tier you want to view tree data for
    * @returns
    */
-  export function tree(ids: string[]): Promise<ITreeResponse> {
+  export function tree(ids: string[]): Promise<TreeResponse> {
     return client
       .GET('/tree', {
         params: {
@@ -110,7 +102,7 @@ export namespace CassiniServer {
    * @param info Parameters to pass to the new_child.setup_files() server-side method
    * @returns the tree response for the new child.
    */
-  export function newChild(info: INewChildInfo): Promise<ITreeResponse> {
+  export function newChild(info: NewChildInfo): Promise<TreeResponse> {
     return client
       .POST('/newChild', {
         body: info

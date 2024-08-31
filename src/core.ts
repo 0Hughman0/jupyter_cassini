@@ -9,11 +9,12 @@ import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import {
   CassiniServer,
-  ITreeResponse,
-  ITreeChildResponse,
-  INewChildInfo
 } from './services';
 import { TierModel } from './models';
+import { TreeResponse,
+  TreeChildResponse,
+  NewChildInfo } from './schema/types'
+
 import { BrowserPanel } from './ui/browser';
 
 export interface ILaunchable {
@@ -31,13 +32,13 @@ export interface IViewable extends TierModel.IOptions {}
  *
  * children can then be overwritten with ITreeData to add a new level.
  */
-export interface ITreeData extends Omit<ITreeResponse, 'started' | 'children'> {
+export interface ITreeData extends Omit<TreeResponse, 'started' | 'children'> {
   started: Date | null;
   children: { [id: string]: ITreeChildData };
   identifiers: string[];
 }
 
-export interface ITreeChildData extends Omit<ITreeChildResponse, 'started'> {
+export interface ITreeChildData extends Omit<TreeChildResponse, 'started'> {
   started: Date | null;
 }
 
@@ -202,7 +203,7 @@ export class TreeManager {
    * Currently just parses started into an actual Date object.
    */
   static _treeResponseToData(
-    treeResponse: ITreeResponse,
+    treeResponse: TreeResponse,
     ids: string[]
   ): ITreeData {
     const { started, children, ...rest } = treeResponse;
@@ -429,7 +430,7 @@ export class Cassini {
 
   newChild(
     parentTier: ITreeData,
-    newChildInfo: INewChildInfo
+    newChildInfo: NewChildInfo
   ): Promise<ITreeData | null> {
     return CassiniServer.newChild(newChildInfo).then(treeResponse => {
       return this.treeManager.fetchTierData(parentTier.identifiers); // refresh the tree.

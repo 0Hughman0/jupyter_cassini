@@ -9,7 +9,7 @@ import {
 import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
 
 import { cassini } from '../core';
-import { ITreeResponse, ITierInfo } from '../services';
+import { TreeResponse, TierInfo } from '../schema/types';
 
 export const TEST_META_CONTENT: JSONObject = {
   description: 'this is a test',
@@ -22,9 +22,9 @@ export const TEST_HLT_CONTENT = {
   cos: [{ data: { 'text/markdown': '## cos' }, metadata: {}, transient: {} }]
 };
 
-export const HOME_RESPONSE: ITreeResponse = require('./test_home_branch.json');
-export const WP1_RESPONSE: ITreeResponse = require('./test_WP1_branch.json');
-export const WP1_1_RESPONSE: ITreeResponse = require('./test_WP1_1_branch.json');
+export const HOME_RESPONSE: TreeResponse = require('./test_home_branch.json');
+export const WP1_RESPONSE: TreeResponse = require('./test_WP1_branch.json');
+export const WP1_1_RESPONSE: TreeResponse = require('./test_WP1_1_branch.json');
 
 export async function createTierFiles(
   metaContent: JSONObject,
@@ -62,7 +62,7 @@ export function mockServer() {
 
     switch (pathname) {
       case '/jupyter_cassini/tree': {
-        let responseData: ITreeResponse;
+        let responseData: TreeResponse;
 
         switch (query['ids[]']?.toString()) {
           case [].toString(): {
@@ -87,7 +87,7 @@ export function mockServer() {
       }
 
       case '/jupyter_cassini/lookup': {
-        let responseData: ITierInfo;
+        let responseData: TierInfo;
 
         switch (query.name) {
           case 'Home': {

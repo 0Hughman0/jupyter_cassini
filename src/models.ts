@@ -11,6 +11,7 @@ import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
 
 import { cassini, ITreeChildData, ITreeData, TreeManager } from './core';
+import { MetaSchema } from './schema/types';
 
 const CORE_META: (keyof TierModel)[] = ['description', 'conclusion', 'started'];
 
@@ -41,6 +42,7 @@ export class TierModel {
   readonly identifiers: string[];
   readonly notebookPath: string | undefined;
   readonly started: Date;
+  readonly metaSchema: MetaSchema | undefined
 
   readonly hltsPath: string | undefined;
 
@@ -55,6 +57,7 @@ export class TierModel {
     this.notebookPath = options.notebookPath;
 
     this.hltsPath = options.hltsPath;
+    this.metaSchema = options.metaSchema;
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.identifiers.toString()) {
@@ -268,6 +271,7 @@ export namespace TierModel {
     identifiers: string[];
     children?: { [id: string]: { name: string } };
     metaPath?: string;
+    metaSchema?: MetaSchema;
     hltsPath?: string;
     notebookPath?: string;
   }

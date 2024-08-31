@@ -16,6 +16,7 @@ from .schema.models import (
     NewChildInfo,
     TreeResponse,
     TierInfo,
+    MetaSchema,
     LookupGetParametersQuery,
     OpenGetParametersQuery,
     TreeGetParametersQuery,
@@ -50,7 +51,8 @@ class LookupHandler(APIHandler):
                 name=tier.name,
                 identifiers=list(tier.identifiers),
                 started=started,
-                children=[child.name for child in tier]
+                children=[child.name for child in tier],
+                metaSchema=MetaSchema.model_validate(tier.__meta_manager__.build_model().model_json_schema())
             ))
         else:
             return TierInfo(FolderTierInfo(

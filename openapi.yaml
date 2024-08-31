@@ -35,7 +35,7 @@ components:
           folder: "#/components/schemas/FolderTierInfo"
           notebook: "#/components/schemas/NotebookTierInfo"
     
-    CommontTierInfo:
+    CommonTierInfo:
       type: object
       properties:
         name:
@@ -55,18 +55,21 @@ components:
     FolderTierInfo:
       type: object
       allOf:
-        - $ref: "#/components/schemas/CommontTierInfo"
+        - $ref: "#/components/schemas/CommonTierInfo"
       
     NotebookTierInfo:
       type: object
       allOf:
-        - $ref: "#/components/schemas/CommontTierInfo"
+        - $ref: "#/components/schemas/CommonTierInfo"
       properties:
         started: 
           type: string
           format: date-time
+        metaSchema:
+          $ref: "#/components/schemas/metaSchema"
       required:
         - started
+        - metaSchema
 
     metaSchema:
       type: object
