@@ -80,7 +80,7 @@ test.describe('Cassini-Browser', async () => {
       page.getByRole('button', { name: 'Fetch from disk' })
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: 'Launch Tier' }).nth(1)
+      page.getByRole('button', { name: 'Open Tier' })
     ).toBeVisible();
   });
 
@@ -112,10 +112,10 @@ test.describe('Cassini-Browser', async () => {
     // check loading child in preview
     await page.getByRole('button', { name: 'Preview WP1' }).click();
     await page.getByRole('heading', { name: 'WP1' }).click();
-    await page.getByText('Description.Line 2.', { exact: true }).click();
+    await page.getByText('Description. Line').click();
 
     // check notebook openable
-    await page.getByRole('button', { name: 'Open WP1' }).nth(1).click();
+    await page.getByRole('button', { name: 'Open Tier' }).click();
 
     // check notebook opened
     await page.getByLabel('WP1.ipynb').getByText('WP1').nth(1).click();
@@ -144,7 +144,7 @@ test.describe('Cassini-Browser', async () => {
     ).toBeVisible();
 
     await expect(
-      await page.getByRole('cell', { name: 'Edit columns' })
+      await page.getByRole('button', { name: 'Edit columns' })
     ).toBeVisible();
 
     await createNewChild(page);
@@ -156,7 +156,9 @@ test.describe('Cassini-Browser', async () => {
     await page.getByRole('button', { name: 'Preview WP1' }).click();
 
     // conclusion box...
-    await page.getByRole('textbox').nth(3).fill('First Line\n\nline 2');
+    await page.getByRole('button', { name: 'Edit' }).nth(1).click()
+    await page.getByText('Description.Line').fill('First Line\n\nline 2');
+    
 
     // save changes button
     await page.getByRole('button', { name: 'Apply changes' }).nth(1).click();

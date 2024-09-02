@@ -1,4 +1,4 @@
-import { TreeResponse, TierInfo } from "../schema/types";
+import { TreeResponse, FolderTierInfo, NotebookTierInfo } from "../schema/types";
 
 
 export const HOME_TREE: TreeResponse = {
@@ -117,9 +117,9 @@ export const WP1_1_TREE: TreeResponse = {
     }
 }
 
-export const HOME_INFO: TierInfo = {"name":"Home","ids":[],"children":["WP1"],"tierType":"folder"}
-export const WP1_INFO: TierInfo = {"name":"WP1","ids":["1"],"children":[],"started":"2024-08-31T19:36:58.587310Z","notebookPath":"WorkPackages/WP1.ipynb","metaPath":"WorkPackages/.wps/WP1.json","hltsPath":"WorkPackages/.wps/WP1.hlts","metaSchema":{"properties":{"conclusion":{"title":"Conclusion","type":"string","x-cas-field":"core"},"description":{"title":"Description","type":"string","x-cas-field":"core"},"started":{"title":"Started","type":"string","format":"date-time","x-cas-field":"core"},"cas_lib_version":{"title":"Cas Lib Version","type":"string","x-cas-field":"private"}},"$defs":{"JsonValue":{}},"additionalProperties":{"$ref":"#/$defs/JsonValue"},"title":"NotebookTierBaseMetaCache","type":"object"},"tierType":"notebook"}
-export const WP1_1_INFO: TierInfo = {"name":"WP1.1","ids":["1","1"],"children":[],"started":"2024-08-31T20:54:15.719157Z","notebookPath":"WorkPackages/WP1/WP1.1.ipynb","metaPath":"WorkPackages/WP1/.exps/WP1.1.json","hltsPath":"WorkPackages/WP1/.exps/WP1.1.hlts","metaSchema":{"properties":{"conclusion":{"title":"Conclusion","type":"string","x-cas-field":"core"},"cas_lib_version":{"title":"Cas Lib Version","type":"string","x-cas-field":"private"},"started":{"title":"Started","type":"string","format":"date-time","x-cas-field":"core"},"description":{"title":"Description","type":"string","x-cas-field":"core"}},"$defs":{"JsonValue":{}},"additionalProperties":{"$ref":"#/$defs/JsonValue"},"title":"NotebookTierBaseMetaCache","type":"object"},"tierType":"notebook"}
+export const HOME_INFO: FolderTierInfo = {"name":"Home","ids":[],"children":["WP1"],"tierType":"folder"}
+export const WP1_INFO: NotebookTierInfo = {"name":"WP1","ids":["1"],"children":[],"started":"2024-08-31T19:36:58.587310Z","notebookPath":"WorkPackages/WP1.ipynb","metaPath":"WorkPackages/.wps/WP1.json","hltsPath":"WorkPackages/.wps/WP1.hlts","metaSchema":{"properties":{"conclusion":{"title":"Conclusion","type":"string","x-cas-field":"core"},"description":{"title":"Description","type":"string","x-cas-field":"core"},"started":{"title":"Started","type":"string","format":"date-time","x-cas-field":"core"},"cas_lib_version":{"title":"Cas Lib Version","type":"string","x-cas-field":"private"}},"$defs":{"JsonValue":{}},"additionalProperties":{"$ref":"#/$defs/JsonValue"},"title":"NotebookTierBaseMetaCache","type":"object"},"tierType":"notebook"}
+export const WP1_1_INFO: NotebookTierInfo = {"name":"WP1.1","ids":["1","1"],"children":[],"started":"2024-08-31T20:54:15.719157Z","notebookPath":"WorkPackages/WP1/WP1.1.ipynb","metaPath":"WorkPackages/WP1/.exps/WP1.1.json","hltsPath":"WorkPackages/WP1/.exps/WP1.1.hlts","metaSchema":{"properties":{"conclusion":{"title":"Conclusion","type":"string","x-cas-field":"core"},"cas_lib_version":{"title":"Cas Lib Version","type":"string","x-cas-field":"private"},"started":{"title":"Started","type":"string","format":"date-time","x-cas-field":"core"},"description":{"title":"Description","type":"string","x-cas-field":"core"}},"$defs":{"JsonValue":{}},"additionalProperties":{"$ref":"#/$defs/JsonValue"},"title":"NotebookTierBaseMetaCache","type":"object"},"tierType":"notebook"}
 
 
 export const TEST_META_CONTENT = {

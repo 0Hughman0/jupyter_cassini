@@ -15,20 +15,21 @@ const JLfetch = async (info: Request) => {
 
   // seems in some browsers, body is turned into a stream, which causes chaos when used to make a new request object
   // see https://issues.chromium.org/issues/40237822#makechanges
-  if (body instanceof ReadableStream ) {
-    init.body = await info.text()
-  }
+  try {
+    if (body instanceof ReadableStream ) {
+      init.body = await info.text()
+    }
+  } catch (ReferenceError) {}
   
   const settings = ServerConnection.makeSettings();  
   return ServerConnection.makeRequest(url, init, settings);
 };
 
 const settings = ServerConnection.makeSettings();
-const {fetch, baseUrl, ...fetchSettings} = settings
 
 export const client = createClient<paths>({
   baseUrl: URLExt.join(settings.baseUrl, 'jupyter_cassini'),
-  fetch: JLfetch, ...fetchSettings
+  fetch: JLfetch
 });
 
 /**

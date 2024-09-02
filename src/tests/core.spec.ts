@@ -1,4 +1,5 @@
-import { Contents } from '@jupyterlab/services';
+import 'jest';
+//import { ServiceManager } from '@jupyterlab/services';
 
 import { ITreeData, TreeManager, TierModelTreeManager, Cassini } from '../core';
 import { TierModel } from '../models';
@@ -8,20 +9,32 @@ import {
   HOME_TREE,
   WP1_TREE,
   WP1_1_TREE,
-  TEST_HLT_CONTENT,
+  //TEST_HLT_CONTENT,
   TEST_META_CONTENT,
+  WP1_INFO,
+  WP1_1_INFO
   
 } from './test_cases';
 import {
-  mockServer,
+  mockServerAPI,
   createTierFiles
 } from './tools'
 
-import 'jest';
 
 describe('TreeManager', () => {
   beforeEach(() => {
-    mockServer();
+    mockServerAPI({
+      '/tree': [
+        {query: {"ids[]": ''}, response: HOME_TREE},
+        {query: {"ids[]": '1'}, response: WP1_TREE},
+        {query: {"ids[]": '1,1'}, response: WP1_1_TREE},
+        {query: {"ids[]": '1,1,a'}, response: WP1_1_TREE} // cheeky
+      ],
+      '/lookup': [
+        {query: {"name": 'WP1'}, response: WP1_INFO},
+        {query: {"name": 'WP1.1'}, response: WP1_1_INFO},
+      ]
+    });
   });
 
   test('conversion', () => {
@@ -152,10 +165,19 @@ describe('TreeManager', () => {
 
 describe('TreeModelManager', () => {
   let modelManager: TierModelTreeManager;
-  let metaFile: Contents.IModel;
 
   beforeEach(async () => {
-    ({ metaFile } = await createTierFiles(TEST_META_CONTENT, TEST_HLT_CONTENT));
+    mockServerAPI({
+      '/lookup': [
+        {query: {"name": 'WP1'}, response: WP1_INFO},
+        {query: {"name": 'WP1.1'}, response: WP1_INFO}, // cheeky
+      ]
+    });
+    
+    await createTierFiles([
+      {path: WP1_INFO.metaPath, content: TEST_META_CONTENT},
+      {path: WP1_1_INFO.metaPath, content: TEST_META_CONTENT},  
+    ]);
 
     modelManager = new TierModelTreeManager();
   });
@@ -169,16 +191,16 @@ describe('TreeModelManager', () => {
 
     expect(first).toBe(cachedFirst);
 
-    const second = await modelManager.get('WP1.2');
+    const second = await modelManager.get('WP1.1');
 
     expect(second).not.toBe(first);
 
-    const cachedSecond = await modelManager.get('WP1.2')
+    const cachedSecond = await modelManager.get('WP1.1')
 
     expect(second).toBe(cachedSecond);
 
     expect(modelManager.cache['WP1']).toBe(first);
-    expect(modelManager.cache['WP1.2']).toBe(second);
+    expect(modelManager.cache['WP1.1']).toBe(second);
   });
 });
 
@@ -187,10 +209,7 @@ describe('cassini', () => {
     const cassini = new Cassini();
     expect(cassini.ready).toBeDefined();
 
-    const { manager } = await createTierFiles(
-      TEST_META_CONTENT,
-      TEST_HLT_CONTENT
-    );
+    const { manager } = await createTierFiles([]);
 
     await cassini.initialize(
       null as any,

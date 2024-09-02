@@ -225,7 +225,7 @@ export class TierViewer extends BoxPanel {
 
     const launchButton = this.launchButton = new ToolbarButton({
       icon: launchIcon,
-      tooltip: "Launch Tier"
+      tooltip: "Open Tier"
     });
 
     toolbar.addItem('save', saveButton);

@@ -1,30 +1,29 @@
 import { TierBrowserModel, TierModel } from '../models';
 import {
   createTierFiles,
-  mockServer,
-  TEST_HLT_CONTENT,
-  TEST_META_CONTENT
+  mockServer
 } from './tools';
+import { 
+  TEST_HLT_CONTENT,
+  TEST_META_CONTENT,
+  WP1_INFO
+} from './test_cases'
 
 import 'jest';
 
 describe('tier-model', () => {
-  let metaFile: any;
-  let hltsFile: any;
+  //let metaFile: any;
+  //let hltsFile: any;
 
   beforeEach(async () => {
-    ({ metaFile, hltsFile } = await createTierFiles(
-      TEST_META_CONTENT,
-      TEST_HLT_CONTENT
-    ));
+    await createTierFiles([
+      {path: WP1_INFO.metaPath, content: TEST_META_CONTENT},
+      {path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT},
+    ]);
   });
 
   test('model-ready-no-hlts', async () => {
-    const tier = new TierModel({
-      name: 'WP1',
-      ids: ['1'],
-      metaPath: metaFile.path
-    });
+    const tier = new TierModel(WP1_INFO);
     expect(tier.metaFile?.isReady).toBe(false);
 
     expect(tier.description).toBe('');
@@ -37,12 +36,7 @@ describe('tier-model', () => {
   });
 
   test('model-ready-hlts', async () => {
-    const tier = new TierModel({
-      name: 'WP1',
-      ids: ['1'],
-      metaPath: metaFile.path,
-      hltsPath: hltsFile.path
-    });
+    const tier = new TierModel(WP1_INFO);
     expect(tier.metaFile?.isReady).toBe(false);
     // expect(tier.hltsFile?.isReady).toBe(false) // doesn't work because hlts file is set in a callback... hmmm
 
@@ -59,12 +53,7 @@ describe('tier-model', () => {
   });
 
   test('changed', async () => {
-    const tier = await new TierModel({
-      name: 'WP1',
-      ids: ['1'],
-      metaPath: metaFile.path,
-      hltsPath: hltsFile.path
-    }).ready;
+    const tier = await new TierModel(WP1_INFO).ready;
     const sentinal = jest.fn();
 
     tier.changed.connect(sentinal);

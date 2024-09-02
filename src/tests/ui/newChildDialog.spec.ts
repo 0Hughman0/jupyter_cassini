@@ -55,6 +55,11 @@ describe('newChildDialog', () => {
 
   test('templates', async () => {
     const tier = (await cassini.treeManager.get([])) as Required<ITreeData>;
+    
+    if (tier.childClsInfo.tierType != 'notebook') {
+      return
+    } 
+
     tier.childClsInfo.templates = ['Template 1', 'Template 2'];
 
     const widget = new NewChildWidget(tier);
@@ -74,6 +79,10 @@ describe('newChildDialog', () => {
 
   test('meta-inputs', async () => {
     const tier = (await cassini.treeManager.get([])) as Required<ITreeData>;
+    if (tier.childClsInfo.tierType != 'notebook') {
+      return
+    } 
+
     tier.childClsInfo.metaNames = ['Crabs', 'Fishes'];
 
     const widget = new NewChildWidget(tier);

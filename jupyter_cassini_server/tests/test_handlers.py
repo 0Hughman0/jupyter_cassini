@@ -35,8 +35,8 @@ def project_via_env(refresh_project, tmp_path):
 
     refresh_project()
     project_file = shutil.copy(
-        "jupyter_cassini_server/tests/project_cases/basic.py",
-        tmp_path / "my_project.py",
+        "jupyter_cassini_server/tests/project/cas_project.py",
+        tmp_path / "cas_project.py",
     )
 
     os.environ["CASSINI_PROJECT"] = project_file.as_posix()

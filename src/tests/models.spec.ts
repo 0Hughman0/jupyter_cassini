@@ -9,7 +9,6 @@ import { CassiniServer } from '../services';
 import {
   HOME_TREE,
   WP1_TREE,
-  WP1_1_TREE,
   TEST_HLT_CONTENT,
   TEST_META_CONTENT,
   WP1_INFO,
@@ -20,6 +19,7 @@ import {
 } from './tools'
 
 import 'jest';
+import { FolderTierInfo } from '../schema/types';
 
 describe('TierModel', () => {
   let manager = new ServiceManagerMock();
@@ -27,10 +27,11 @@ describe('TierModel', () => {
   let hltsFile: Contents.IModel;
 
   beforeEach(async () => {
-    ({ manager, metaFile, hltsFile } = await createTierFiles(
-      TEST_META_CONTENT,
-      TEST_HLT_CONTENT
-    ));
+    const {manager, files} = await createTierFiles([
+      {path: WP1_INFO.metaPath, content: TEST_META_CONTENT},
+    ]);
+    manager.isReady;
+    metaFile = files[0]
   });
 
   describe('complete-meta', () => {
@@ -78,8 +79,6 @@ describe('TierModel', () => {
       const tier = new TierModel(WP1_INFO);
       await tier.ready;
 
-      //cassini.treeManager.cache = {}
-
       await cassini.treeManager.cacheTreeData(
         ['1'],
         TreeManager._treeResponseToData(WP1_TREE, ['1'])
@@ -91,16 +90,14 @@ describe('TierModel', () => {
       await expect(tier.children).resolves.toEqual(
         TreeManager._treeResponseToData(WP1_TREE, ['1']).children
       );
-
-      //cassini.treeManager.cache = {}
     });
   });
 
   describe('missing meta', () => {
     test('no meta', () => {
-      const noMeta = structuredClone(WP1_INFO)
-      noMeta.tierType = 'folder'
-  
+      const { ids, children } = WP1_INFO
+      const noMeta: FolderTierInfo = { name: 'No meta Yoo', ids, children, tierType: 'folder'}
+      
       const tier = new TierModel(noMeta);
 
       expect(tier.name).toBe('No meta Yoo');

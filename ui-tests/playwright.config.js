@@ -9,9 +9,10 @@ module.exports = {
   webServer: {
     command: 'jlpm start',
     url: 'http://localhost:8888/lab',
-    timeout: 120 * 1000,
+    timeout: 10 * 1000,
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',
-    stderr: 'pipe'
+    stderr: 'pipe',
+    retries: 1
   }
 };
