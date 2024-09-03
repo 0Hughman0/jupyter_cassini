@@ -5,6 +5,7 @@ import { ITreeData, cassini } from '../../core';
 import { mockServer } from '../tools';
 
 import 'jest';
+import { ChildClsNotebookInfo } from '../../schema/types';
 
 describe('newChildDialog', () => {
   beforeEach(() => {
@@ -56,11 +57,9 @@ describe('newChildDialog', () => {
   test('templates', async () => {
     const tier = (await cassini.treeManager.get([])) as Required<ITreeData>;
     
-    if (tier.childClsInfo.tierType != 'notebook') {
-      return
-    } 
-
-    tier.childClsInfo.templates = ['Template 1', 'Template 2'];
+    const clsInfo = tier.childClsInfo as ChildClsNotebookInfo
+    
+    clsInfo.templates = ['Template 1', 'Template 2'];
 
     const widget = new NewChildWidget(tier);
 
@@ -68,22 +67,30 @@ describe('newChildDialog', () => {
       Array.from(widget.templateSelector.list.childNodes).map(
         node => node.textContent
       )
-    ).toEqual(tier.childClsInfo.templates);
+    ).toEqual(clsInfo.templates);
 
     widget.templateSelector.list.selectedIndex = 0;
 
     expect(widget.templateSelector.getValue()).toEqual(
-      tier.childClsInfo.templates[0]
+      clsInfo.templates[0]
     );
   });
 
   test('meta-inputs', async () => {
     const tier = (await cassini.treeManager.get([])) as Required<ITreeData>;
-    if (tier.childClsInfo.tierType != 'notebook') {
-      return
-    } 
+    const clsInfo = tier.childClsInfo as ChildClsNotebookInfo
 
-    tier.childClsInfo.metaNames = ['Crabs', 'Fishes'];
+    clsInfo.metaSchema = {
+      'properties':
+        {
+          'Crabs': {
+            'type': 'string'
+          },
+           'Fishes': {
+            'type': 'string'
+           }
+          }
+        }
 
     const widget = new NewChildWidget(tier);
 
@@ -95,9 +102,21 @@ describe('newChildDialog', () => {
 
   test('serialisation', async () => {
     const tier = (await cassini.treeManager.get([])) as Required<ITreeData>;
+    const clsInfo = tier.childClsInfo as ChildClsNotebookInfo
 
-    tier.childClsInfo.metaNames = ['Crabs', 'Fishes'];
-    tier.childClsInfo.templates = ['Template 1', 'Template 2'];
+    clsInfo.metaSchema = {
+      'properties':
+        {
+          'Crabs': {
+            'type': 'string'
+          },
+           'Fishes': {
+            'type': 'string'
+           }
+          }
+        }
+
+    clsInfo.templates = ['Template 1', 'Template 2'];
 
     const widget = new NewChildWidget(tier);
 

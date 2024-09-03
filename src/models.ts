@@ -316,6 +316,8 @@ export class TierBrowserModel {
   constructor() {
     this.currentPath = new ObservableList<string>();
     this.treeManager = cassini.treeManager;
+    this._current = Promise.resolve(null)
+    
     this.currentPath.changed.connect(() => {
       this._current = this.treeManager.get(this.sCurrentPath)
       this._childrenUpdated.emit(this.current);

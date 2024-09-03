@@ -1,6 +1,7 @@
 import { components } from "./schema"
 
 export type ChildClsInfo = components['schemas']['ChildClsInfo'];
+export type ChildClsNotebookInfo = components['schemas']['ChildClsNotebookInfo'];
 
 export type TreeChildResponse = components['schemas']['TreeChildResponse'];
 export type TreeResponse = components['schemas']['TreeResponse'];

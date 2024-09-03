@@ -1,4 +1,3 @@
-import { Contents } from '@jupyterlab/services';
 import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
 
 import { TierModel, TierBrowserModel } from '../models';
@@ -23,15 +22,13 @@ import { FolderTierInfo } from '../schema/types';
 
 describe('TierModel', () => {
   let manager = new ServiceManagerMock();
-  let metaFile: Contents.IModel;
-  let hltsFile: Contents.IModel;
 
   beforeEach(async () => {
-    const {manager, files} = await createTierFiles([
+    const { manager } = await createTierFiles([
       {path: WP1_INFO.metaPath, content: TEST_META_CONTENT},
+      {path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT},
     ]);
     manager.isReady;
-    metaFile = files[0]
   });
 
   describe('complete-meta', () => {
@@ -121,18 +118,23 @@ describe('TierModel', () => {
     test('missing description', async () => {
       const { description, ...noDescription } = TEST_META_CONTENT;
 
-      (metaFile.content as any) = JSON.stringify(noDescription);
-
       const tier = new TierModel(WP1_INFO);
+      
       await tier.ready;
-
+      
+      tier.metaFile && tier.metaFile?.model.fromJSON(noDescription);
       expect(tier.description).toBe('');
     });
   });
 
   describe('hlts', () => {
     test('no-hlts', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tierInfo = Object.assign({}, WP1_INFO)
+      delete tierInfo['hltsPath']
+      
+      expect(tierInfo.hltsPath).toBeUndefined()
+      
+      const tier = new TierModel(tierInfo);
       await tier.ready;
 
       expect(tier.hltsFile).toBe(undefined);
@@ -140,6 +142,8 @@ describe('TierModel', () => {
     });
 
     test('init', async () => {
+      expect(WP1_INFO.hltsPath).toBeDefined()
+      
       const tier = new TierModel(WP1_INFO);
       await tier.ready;
 
@@ -156,9 +160,23 @@ describe('TierModel', () => {
     });
 
     test('later-load-hlts', async () => {
-      manager.contents.delete(hltsFile.path);
+      /*
 
-      const tier = new TierModel(WP1_INFO);
+      TODO: redo this, the logic for this is crazy complicated.
+
+      Instead, get CassiniServer.lookup to only include a hltsPath if the file exists.
+
+      Then make hltsPath readonly.
+
+      Then make refresh in the tier viewer just rebuild the whole model.
+      */
+
+      manager.contents.delete(WP1_INFO.hltsPath || '');
+
+      const {hltsPath, ...noHlts} = WP1_INFO
+      hltsPath?.length
+      
+      const tier = new TierModel(noHlts);
       await tier.ready;
 
       expect(tier.hltsFile).toBe(undefined);
@@ -189,6 +207,10 @@ describe('TierModel', () => {
 
   describe('io', () => {
     test('save', async () => {
+      const { manager } = await createTierFiles([
+        {path: WP1_INFO.metaPath, content: TEST_META_CONTENT}
+      ])
+
       const tier = new TierModel(WP1_INFO);
       await tier.ready;
 
@@ -240,6 +262,8 @@ describe('TierBrowserModel', () => {
   });
 
   test('initial', async () => {
+    model.currentPath.clear()
+    
     await expect(model.current).resolves.toMatchObject(
       TreeManager._treeResponseToData(HOME_TREE, [])
     );
