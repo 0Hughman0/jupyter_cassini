@@ -161,7 +161,7 @@ test.describe('Cassini-Browser', async () => {
     
 
     // save changes button
-    await page.getByRole('button', { name: 'Apply changes' }).nth(1).click();
+    await page.getByRole('button', { name: 'Apply changes' }).click();
 
     await page.getByRole('button', { name: 'Save changes to disk' }).click();
 
@@ -226,7 +226,7 @@ test.describe('Cassini-Browser', async () => {
       await expect(
         page.getByRole('heading', { name: 'Children' })
       ).toBeVisible();
-      await expect(page.getByText('Description.Line 2.')).toBeVisible();
+      await expect(page.getByText('First Line line')).toBeVisible();
 
       await page.getByRole('button', { name: 'Create new child' }).click();
       await page.getByLabel('Identifier').click();

@@ -12,7 +12,8 @@ import {
   //TEST_HLT_CONTENT,
   TEST_META_CONTENT,
   WP1_INFO,
-  WP1_1_INFO
+  WP1_1_INFO,
+  TEST_HLT_CONTENT
   
 } from './test_cases';
 import {
@@ -176,7 +177,9 @@ describe('TreeModelManager', () => {
     
     await createTierFiles([
       {path: WP1_INFO.metaPath, content: TEST_META_CONTENT},
-      {path: WP1_1_INFO.metaPath, content: TEST_META_CONTENT},  
+      {path: WP1_1_INFO.metaPath, content: TEST_META_CONTENT},
+      {path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT},  
+      {path: WP1_1_INFO.hltsPath || '', content: TEST_HLT_CONTENT},  
     ]);
 
     modelManager = new TierModelTreeManager();

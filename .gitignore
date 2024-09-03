@@ -135,4 +135,7 @@ dmypy.json
 demo/*
 !demo/launch.bat
 !demo/cas_project.py
-
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

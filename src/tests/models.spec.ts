@@ -1,5 +1,3 @@
-import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
-
 import { TierModel, TierBrowserModel } from '../models';
 import { TreeManager, cassini } from '../core';
 
@@ -19,16 +17,18 @@ import {
 
 import 'jest';
 import { FolderTierInfo } from '../schema/types';
+import { ServiceManager } from '@jupyterlab/services';
 
 describe('TierModel', () => {
-  let manager = new ServiceManagerMock();
+  let theManager: ServiceManager.IManager;
 
   beforeEach(async () => {
     const { manager } = await createTierFiles([
       {path: WP1_INFO.metaPath, content: TEST_META_CONTENT},
       {path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT},
     ]);
-    manager.isReady;
+    await manager.ready
+    theManager = manager;
   });
 
   describe('complete-meta', () => {
@@ -162,10 +162,6 @@ describe('TierModel', () => {
 
   describe('io', () => {
     test('save', async () => {
-      const { manager } = await createTierFiles([
-        {path: WP1_INFO.metaPath, content: TEST_META_CONTENT}
-      ])
-
       const tier = new TierModel(WP1_INFO);
       await tier.ready;
 
@@ -179,7 +175,7 @@ describe('TierModel', () => {
 
       expect(tier.dirty).toBe(false);
 
-      const contentModel = (await manager.contents.get(
+      const contentModel = (await theManager.contents.get(
         tier.metaFile?.path as string,
         { content: true }
       )) as any;

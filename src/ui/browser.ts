@@ -61,6 +61,7 @@ export class BrowserPanel extends SplitPanel {
         // browser.renderPromise is undefined until the react widget is attached to the window... I think!
         treeModel.currentPath.clear();
         treeModel.currentPath.pushAll(ids);
+        this.previewTier(tier.name);
       });
     });
   }
