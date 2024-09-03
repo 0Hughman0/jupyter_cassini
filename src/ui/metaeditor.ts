@@ -21,35 +21,38 @@ export class MetaEditor extends Panel {
 
   constructor(tierModel: TierModel | null) {
     super();
-    this.modelChanged.connect((sender, model) => this.onModelChanged(model), this)
-    this.model = tierModel
+    this.modelChanged.connect(
+      (sender, model) => this.onModelChanged(model),
+      this
+    );
+    this.model = tierModel;
   }
 
   get modelChanged(): ISignal<this, TierModel | null> {
     return this._modelChanged;
   }
 
-  private _modelChanged = new Signal<this, TierModel | null>(this)
+  private _modelChanged = new Signal<this, TierModel | null>(this);
 
   get model(): TierModel | null {
-    return this._model
+    return this._model;
   }
 
   set model(model: TierModel | null) {
-    this._model = model
+    this._model = model;
 
-    this._modelChanged.emit(model)
+    this._modelChanged.emit(model);
   }
 
   onModelChanged(model: TierModel | null): void {
     if (this.table) {
-      this.table.dispose()
+      this.table.dispose();
     }
 
     if (!model) {
-      return
+      return;
     }
-    
+
     const table = (this.table = new MetaTableWidget(
       model.additionalMeta,
       this.onMetaUpdate.bind(this),
@@ -67,7 +70,7 @@ export class MetaEditor extends Panel {
      * inserts updated meta into model.
      */
     if (!this.model) {
-      return
+      return;
     }
 
     const meta = this.model.metaFile?.model.toJSON() as JSONObject;
@@ -84,7 +87,7 @@ export class MetaEditor extends Panel {
      * Removes a meta from the model
      */
     if (!this.model) {
-      return
+      return;
     }
 
     const meta = this.model.metaFile?.model.toJSON() as JSONObject;
@@ -98,7 +101,7 @@ export class MetaEditor extends Panel {
      * Asks the widget to re-render with the attributes provided. This is a bit odd, but is kinda needed because of how mimetype renders.
      */
     if (!this.model || !this.table) {
-      return
+      return;
     }
     const meta: { [name: string]: JSONValue } = {};
 
@@ -149,15 +152,17 @@ export class RenderMimeMetaEditor
     const resolver = options.resolver as RenderMimeRegistry.UrlResolver; // uhoh this could be unstable!
     this._path = resolver.path;
 
-    this.fetchModel = cassini.tierModelManager.get(this.name).then(tierModel => {
-      if (!tierModel) {
-        return;
-      }
+    this.fetchModel = cassini.tierModelManager
+      .get(this.name)
+      .then(tierModel => {
+        if (!tierModel) {
+          return;
+        }
 
-      this.model = tierModel
-      console.log(this.model);
-      return this.model;
-    });
+        this.model = tierModel;
+        console.log(this.model);
+        return this.model;
+      });
 
     this.fetchModel.then(model => {
       if (model) {
@@ -171,15 +176,15 @@ export class RenderMimeMetaEditor
     return this._modelChanged;
   }
 
-  private _modelChanged = new Signal<this, TierModel | null>(this)
+  private _modelChanged = new Signal<this, TierModel | null>(this);
 
   get model(): TierModel | null {
-    return this._model
+    return this._model;
   }
 
   set model(model: TierModel | null) {
-    this._model = model
-    this._modelChanged.emit(model)
+    this._model = model;
+    this._modelChanged.emit(model);
   }
 
   /**

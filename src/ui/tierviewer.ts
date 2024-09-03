@@ -1,5 +1,5 @@
 import { BoxPanel, Panel, Widget } from '@lumino/widgets';
-import { Signal, ISignal } from '@lumino/signaling'
+import { Signal, ISignal } from '@lumino/signaling';
 
 import {
   Toolbar,
@@ -22,7 +22,6 @@ import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
 import { cassini } from '../core';
 import { TierModel } from '../models';
 import { MetaEditor } from './metaeditor';
-
 
 export function createElementWidget(
   element: string,
@@ -53,10 +52,7 @@ export class MarkdownEditor extends Panel {
    * @param content
    * @param rendered
    */
-  constructor(
-    content: string,
-    rendered: boolean
-  ) {
+  constructor(content: string, rendered: boolean) {
     super();
 
     this.addClass('cas-MarkdownEditor');
@@ -117,10 +113,10 @@ export class MarkdownEditor extends Panel {
   }
 
   get contentChanged(): ISignal<this, string> {
-    return this._contentChanged
+    return this._contentChanged;
   }
 
-  private _contentChanged = new Signal<this, string>(this)
+  private _contentChanged = new Signal<this, string>(this);
 
   /**
    * The content of the text editor.
@@ -193,16 +189,19 @@ export class TierViewer extends BoxPanel {
   metaView: MetaEditor;
   _model: TierModel | null;
   toolbar: Toolbar;
-  launchButton: ToolbarButton
-  
+  launchButton: ToolbarButton;
+
   protected hltsRenderPromise: Promise<boolean>;
 
   constructor(model: TierModel | null = null) {
     super();
 
-    this.modelChanged.connect((sender, model) => this.onModelChanged(model), this)
-    this.model = model
-    
+    this.modelChanged.connect(
+      (sender, model) => this.onModelChanged(model),
+      this
+    );
+    this.model = model;
+
     this.addClass('cas-tier-widget');
 
     const toolbar = (this.toolbar = new Toolbar());
@@ -223,10 +222,10 @@ export class TierViewer extends BoxPanel {
       tooltip: 'Fetch from disk'
     });
 
-    const launchButton = this.launchButton = new ToolbarButton({
+    const launchButton = (this.launchButton = new ToolbarButton({
       icon: launchIcon,
-      tooltip: "Open Tier"
-    });
+      tooltip: 'Open Tier'
+    }));
 
     toolbar.addItem('save', saveButton);
     toolbar.addItem('refresh', refreshButton);
@@ -247,7 +246,7 @@ export class TierViewer extends BoxPanel {
     content.addWidget(createElementWidget('h2', 'Description'));
 
     const descriptionCell = (this.descriptionCell = new MarkdownEditor(
-      "",
+      '',
       true
     ));
 
@@ -262,18 +261,13 @@ export class TierViewer extends BoxPanel {
 
     content.addWidget(createElementWidget('h2', 'Conclusion'));
 
-    const concCell = (this.concCell = new MarkdownEditor(
-      "",
-      true
-    ));
+    const concCell = (this.concCell = new MarkdownEditor('', true));
 
     content.addWidget(concCell);
 
     content.addWidget(createElementWidget('h2', 'Meta'));
 
-    const metaView = (this.metaView = new MetaEditor(
-      this.model
-    ));
+    const metaView = (this.metaView = new MetaEditor(this.model));
 
     content.addWidget(metaView);
   }
@@ -282,51 +276,51 @@ export class TierViewer extends BoxPanel {
     return this._modelChanged;
   }
 
-  private _modelChanged = new Signal<TierViewer, TierModel.ModelChange>(this)
+  private _modelChanged = new Signal<TierViewer, TierModel.ModelChange>(this);
 
   get model(): TierModel | null {
-    return this._model
+    return this._model;
   }
 
   set model(model: TierModel | null) {
-    const oldModel = this._model
-    this._model = model
-    this._modelChanged.emit({old: oldModel, new: model})
+    const oldModel = this._model;
+    this._model = model;
+    this._modelChanged.emit({ old: oldModel, new: model });
   }
 
   onModelChanged(change: TierModel.ModelChange): void {
     if (change.old) {
-      Signal.disconnectBetween(change.old, this)
-      Signal.disconnectSender(this.descriptionCell)
-      Signal.disconnectSender(this.concCell)
+      Signal.disconnectBetween(change.old, this);
+      Signal.disconnectSender(this.descriptionCell);
+      Signal.disconnectSender(this.concCell);
     }
 
     if (!change.new) {
-      return
+      return;
     }
 
-    const model = change.new
+    const model = change.new;
 
     console.log(model);
 
     model.ready.then(() => this.onContentChanged());
-    model.changed.connect(this.onContentChanged, this)
-    
+    model.changed.connect(this.onContentChanged, this);
+
     this.descriptionCell.contentChanged.connect((sender, description) => {
-      model.description = description
-    }, this)
+      model.description = description;
+    }, this);
 
     this.concCell.contentChanged.connect((sender, conclusion) => {
-      model.conclusion = conclusion
-    }, this)
+      model.conclusion = conclusion;
+    }, this);
 
     this.launchButton.onClick = () => {
       cassini.launchTier(model);
-    }
+    };
 
-    this.metaView.model = model
-    
-    this.onContentChanged()
+    this.metaView.model = model;
+
+    this.onContentChanged();
   }
 
   /**
@@ -335,7 +329,7 @@ export class TierViewer extends BoxPanel {
    */
   onContentChanged(): void {
     if (!this.model) {
-      return
+      return;
     }
 
     if (!this.model.metaFile) {
@@ -391,8 +385,10 @@ export class TierViewer extends BoxPanel {
   }
 
   refresh(): void {
-    cassini.tierModelManager.get(this.model?.name || '', true).then(tierModel => {
-      this.model = tierModel
-    })
+    cassini.tierModelManager
+      .get(this.model?.name || '', true)
+      .then(tierModel => {
+        this.model = tierModel;
+      });
   }
 }

@@ -56,9 +56,9 @@ describe('newChildDialog', () => {
 
   test('templates', async () => {
     const tier = (await cassini.treeManager.get([])) as Required<ITreeData>;
-    
-    const clsInfo = tier.childClsInfo as ChildClsNotebookInfo
-    
+
+    const clsInfo = tier.childClsInfo as ChildClsNotebookInfo;
+
     clsInfo.templates = ['Template 1', 'Template 2'];
 
     const widget = new NewChildWidget(tier);
@@ -71,26 +71,23 @@ describe('newChildDialog', () => {
 
     widget.templateSelector.list.selectedIndex = 0;
 
-    expect(widget.templateSelector.getValue()).toEqual(
-      clsInfo.templates[0]
-    );
+    expect(widget.templateSelector.getValue()).toEqual(clsInfo.templates[0]);
   });
 
   test('meta-inputs', async () => {
     const tier = (await cassini.treeManager.get([])) as Required<ITreeData>;
-    const clsInfo = tier.childClsInfo as ChildClsNotebookInfo
+    const clsInfo = tier.childClsInfo as ChildClsNotebookInfo;
 
     clsInfo.metaSchema = {
-      'properties':
-        {
-          'Crabs': {
-            'type': 'string'
-          },
-           'Fishes': {
-            'type': 'string'
-           }
-          }
+      properties: {
+        Crabs: {
+          type: 'string'
+        },
+        Fishes: {
+          type: 'string'
         }
+      }
+    };
 
     const widget = new NewChildWidget(tier);
 
@@ -102,19 +99,18 @@ describe('newChildDialog', () => {
 
   test('serialisation', async () => {
     const tier = (await cassini.treeManager.get([])) as Required<ITreeData>;
-    const clsInfo = tier.childClsInfo as ChildClsNotebookInfo
+    const clsInfo = tier.childClsInfo as ChildClsNotebookInfo;
 
     clsInfo.metaSchema = {
-      'properties':
-        {
-          'Crabs': {
-            'type': 'string'
-          },
-           'Fishes': {
-            'type': 'string'
-           }
-          }
+      properties: {
+        Crabs: {
+          type: 'string'
+        },
+        Fishes: {
+          type: 'string'
         }
+      }
+    };
 
     clsInfo.templates = ['Template 1', 'Template 2'];
 

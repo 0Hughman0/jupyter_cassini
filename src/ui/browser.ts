@@ -73,8 +73,8 @@ export class BrowserPanel extends SplitPanel {
    */
   previewTier(name: string): void {
     cassini.tierModelManager.get(name).then(tierModel => {
-      this.viewer.model = tierModel
-    })
+      this.viewer.model = tierModel;
+    });
   }
 
   /**

@@ -88,15 +88,17 @@ export class NewChildWidget extends Widget {
 
     this.subInputs = {
       id: identifierInput
-    }
+    };
 
     layout.addWidget(identifierInput);
 
-    if (tier.childClsInfo.tierType == "notebook") {
-      const descriptionInput = (this.descriptionInput = new InputTextAreaDialog({
-        title: 'Da Description',
-        label: 'Description'
-      }));
+    if (tier.childClsInfo.tierType === 'notebook') {
+      const descriptionInput = (this.descriptionInput = new InputTextAreaDialog(
+        {
+          title: 'Da Description',
+          label: 'Description'
+        }
+      ));
 
       layout.addWidget(descriptionInput);
 
@@ -108,28 +110,30 @@ export class NewChildWidget extends Widget {
 
       layout.addWidget(templateSelector);
 
-      this.subInputs.description = descriptionInput
-      this.subInputs.template = templateSelector
+      this.subInputs.description = descriptionInput;
+      this.subInputs.template = templateSelector;
 
       const metaInputs: (InputTextDialog | InputNumberDialog)[] =
-      (this.metaInputs = []);
+        (this.metaInputs = []);
 
-      for (const [name, info] of Object.entries(tier.childClsInfo.metaSchema.properties)) {
+      for (const [name, info] of Object.entries(
+        tier.childClsInfo.metaSchema.properties
+      )) {
         let input;
 
         if (['private', 'core'].includes(info['x-cas-field'] ?? '')) {
-          continue
+          continue;
         }
-  
+
         if (typeof info.type === 'string') {
           input = new InputTextDialog({ title: '', label: name });
         } else {
           input = new InputNumberDialog({ title: '', label: name });
         }
-  
+
         metaInputs.push(input);
         this.subInputs[name] = input;
-  
+
         layout.addWidget(input);
       }
     }

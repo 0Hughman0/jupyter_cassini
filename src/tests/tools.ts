@@ -10,33 +10,37 @@ import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
 
 import { cassini } from '../core';
 import { TreeResponse, TierInfo } from '../schema/types';
-import { HOME_TREE, WP1_TREE, WP1_1_TREE, HOME_INFO, WP1_INFO, WP1_1_INFO } from './test_cases';
-import { paths } from '../schema/schema'
+import {
+  HOME_TREE,
+  WP1_TREE,
+  WP1_1_TREE,
+  HOME_INFO,
+  WP1_INFO,
+  WP1_1_INFO
+} from './test_cases';
+import { paths } from '../schema/schema';
 
 export interface IFile {
-  path: string
-  content: JSONObject
+  path: string;
+  content: JSONObject;
 }
 
-
-export async function createTierFiles(
-  files: IFile[]
-): Promise<{
+export async function createTierFiles(files: IFile[]): Promise<{
   manager: ServiceManager.IManager;
   files: Contents.IModel[];
 }> {
   const manager = new ServiceManagerMock();
   cassini.contentService = manager;
 
-  const filesOut: Contents.IModel[] = []
+  const filesOut: Contents.IModel[] = [];
 
   for (const file of files) {
-    const newFile = (await manager.contents.newUntitled({
+    const newFile = await manager.contents.newUntitled({
       path: file.path,
       type: 'file'
-    }));
+    });
 
-    (newFile as any)['content'] = JSON.stringify(file.content)
+    (newFile as any)['content'] = JSON.stringify(file.content);
     await manager.contents.rename(newFile.path, file.path);
 
     filesOut.push(newFile);
@@ -50,7 +54,7 @@ export function mockServer() {
     const { pathname, search } = URLExt.parse(url);
 
     const query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
-    
+
     switch (pathname) {
       case '/jupyter_cassini/tree': {
         let responseData: TreeResponse;
@@ -90,7 +94,7 @@ export function mockServer() {
             break;
           }
           case 'WP1.1': {
-            responseData = WP1_1_INFO
+            responseData = WP1_1_INFO;
             break;
           }
           default: {
@@ -106,11 +110,11 @@ export function mockServer() {
 }
 
 export interface MockAPICall {
-  query: { [key: string]: string }
-  response: any
+  query: { [key: string]: string };
+  response: any;
 }
 
-export type MockAPICalls = {[endpoint in keyof paths]?: MockAPICall[]}
+export type MockAPICalls = { [endpoint in keyof paths]?: MockAPICall[] };
 
 export function mockServerAPI(calls: MockAPICalls): void {
   ServerConnection.makeRequest = jest.fn((url, init, settings) => {
@@ -118,19 +122,22 @@ export function mockServerAPI(calls: MockAPICalls): void {
 
     const query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
 
-    const mockResponses = calls[pathname.replace('/jupyter_cassini', '') as keyof MockAPICalls] as MockAPICall[] | undefined
+    const mockResponses = calls[
+      pathname.replace('/jupyter_cassini', '') as keyof MockAPICalls
+    ] as MockAPICall[] | undefined;
 
     if (!mockResponses) {
-      throw TypeError(`Could not find endpoint ${pathname}`)
+      throw TypeError(`Could not find endpoint ${pathname}`);
     }
 
     for (const response of mockResponses) {
       if (JSON.stringify(response.query) == JSON.stringify(query)) {
-        return Promise.resolve(new Response(JSON.stringify(response.response)))
+        return Promise.resolve(new Response(JSON.stringify(response.response)));
       }
     }
 
-    throw TypeError(`Couldn't find matching mock response to query ${JSON.stringify(query)}`)
-
+    throw TypeError(
+      `Couldn't find matching mock response to query ${JSON.stringify(query)}`
+    );
   }) as jest.Mocked<typeof ServerConnection.makeRequest>;
 }

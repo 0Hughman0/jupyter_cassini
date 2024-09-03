@@ -14,26 +14,21 @@ import {
   WP1_INFO,
   WP1_1_INFO,
   TEST_HLT_CONTENT
-  
 } from './test_cases';
-import {
-  mockServerAPI,
-  createTierFiles
-} from './tools'
-
+import { mockServerAPI, createTierFiles } from './tools';
 
 describe('TreeManager', () => {
   beforeEach(() => {
     mockServerAPI({
       '/tree': [
-        {query: {"ids[]": ''}, response: HOME_TREE},
-        {query: {"ids[]": '1'}, response: WP1_TREE},
-        {query: {"ids[]": '1,1'}, response: WP1_1_TREE},
-        {query: {"ids[]": '1,1,a'}, response: WP1_1_TREE} // cheeky
+        { query: { 'ids[]': '' }, response: HOME_TREE },
+        { query: { 'ids[]': '1' }, response: WP1_TREE },
+        { query: { 'ids[]': '1,1' }, response: WP1_1_TREE },
+        { query: { 'ids[]': '1,1,a' }, response: WP1_1_TREE } // cheeky
       ],
       '/lookup': [
-        {query: {"name": 'WP1'}, response: WP1_INFO},
-        {query: {"name": 'WP1.1'}, response: WP1_1_INFO},
+        { query: { name: 'WP1' }, response: WP1_INFO },
+        { query: { name: 'WP1.1' }, response: WP1_1_INFO }
       ]
     });
   });
@@ -45,9 +40,7 @@ describe('TreeManager', () => {
     );
 
     expect(treeData.started).toEqual(
-      HOME_TREE.started === undefined
-        ? null
-        : new Date(HOME_TREE.started)
+      HOME_TREE.started === undefined ? null : new Date(HOME_TREE.started)
     );
 
     expect(treeData.ids).toEqual(['1', '1', 'a']);
@@ -126,10 +119,7 @@ describe('TreeManager', () => {
     let treeManager = new TreeManager();
     await treeManager.initialize();
 
-    const wp1_1_Data = TreeManager._treeResponseToData(WP1_1_TREE, [
-      '1',
-      '1'
-    ]);
+    const wp1_1_Data = TreeManager._treeResponseToData(WP1_1_TREE, ['1', '1']);
 
     const first = await treeManager.get(['1', '1']);
     expect(first).toMatchObject(wp1_1_Data);
@@ -170,16 +160,16 @@ describe('TreeModelManager', () => {
   beforeEach(async () => {
     mockServerAPI({
       '/lookup': [
-        {query: {"name": 'WP1'}, response: WP1_INFO},
-        {query: {"name": 'WP1.1'}, response: WP1_INFO}, // cheeky
+        { query: { name: 'WP1' }, response: WP1_INFO },
+        { query: { name: 'WP1.1' }, response: WP1_INFO } // cheeky
       ]
     });
-    
+
     await createTierFiles([
-      {path: WP1_INFO.metaPath, content: TEST_META_CONTENT},
-      {path: WP1_1_INFO.metaPath, content: TEST_META_CONTENT},
-      {path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT},  
-      {path: WP1_1_INFO.hltsPath || '', content: TEST_HLT_CONTENT},  
+      { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
+      { path: WP1_1_INFO.metaPath, content: TEST_META_CONTENT },
+      { path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT },
+      { path: WP1_1_INFO.hltsPath || '', content: TEST_HLT_CONTENT }
     ]);
 
     modelManager = new TierModelTreeManager();
@@ -198,7 +188,7 @@ describe('TreeModelManager', () => {
 
     expect(second).not.toBe(first);
 
-    const cachedSecond = await modelManager.get('WP1.1')
+    const cachedSecond = await modelManager.get('WP1.1');
 
     expect(second).toBe(cachedSecond);
 

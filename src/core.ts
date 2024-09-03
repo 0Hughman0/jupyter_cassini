@@ -7,14 +7,14 @@ import { ServiceManager } from '@jupyterlab/services';
 import { IEditorFactoryService } from '@jupyterlab/codeeditor';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import {
-  CassiniServer,
-} from './services';
+import { CassiniServer } from './services';
 import { TierModel } from './models';
-import { TreeResponse,
+import {
+  TreeResponse,
   TreeChildResponse,
-  NewChildInfo, 
-  TierInfo} from './schema/types'
+  NewChildInfo,
+  TierInfo
+} from './schema/types';
 
 import { BrowserPanel } from './ui/browser';
 
@@ -269,15 +269,14 @@ export class TierModelTreeManager {
    *
    * I wanted this to be synchronus, but an alternative, which is probably sensible is to use the treeManager.lookup.
    */
-  get(
-    name: string,
-    forceRefresh?: boolean
-  ): Promise<TierModel> {
+  get(name: string, forceRefresh?: boolean): Promise<TierModel> {
     if (Object.keys(this.cache).includes(name) && !forceRefresh) {
-      return Promise.resolve(this.cache[name])
+      return Promise.resolve(this.cache[name]);
     }
 
-    return CassiniServer.lookup(name).then(tierInfo => this._insertNewTierModel(name, tierInfo));
+    return CassiniServer.lookup(name).then(tierInfo =>
+      this._insertNewTierModel(name, tierInfo)
+    );
   }
 
   _insertNewTierModel(name: string, tierInfo: TierInfo) {

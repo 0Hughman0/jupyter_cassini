@@ -31,7 +31,7 @@ export class TierNotebookHeaderTB extends BoxPanel {
   constructor(tierModel: TierModel) {
     super();
 
-    this.model = tierModel
+    this.model = tierModel;
 
     this.addClass('cas-TierNotebookHeader');
 
@@ -132,7 +132,7 @@ export class TierNotebookHeader extends Panel {
 
     this.addClass('cas-TierNotebookHeader');
 
-    this.model = tierModel
+    this.model = tierModel;
 
     const title = document.createElement('h1');
     title.textContent = this.model.name;
@@ -155,7 +155,7 @@ export class TierNotebookHeader extends Panel {
     ));
     descriptionEditor.contentChanged.connect((sender, description) => {
       this.model.description = description;
-    }, this)
+    }, this);
     descriptionBox.addWidget(descriptionEditor);
 
     content.addWidget(descriptionBox);
@@ -172,8 +172,8 @@ export class TierNotebookHeader extends Panel {
       true
     ));
     conclusionEditor.contentChanged.connect((sender, conclusion) => {
-        this.model.conclusion = conclusion;
-    }, this)
+      this.model.conclusion = conclusion;
+    }, this);
 
     conclusionBox.addWidget(conclusionEditor);
 
@@ -192,8 +192,7 @@ export class TierNotebookHeader extends Panel {
       const childrenSummary = (this.childrenSummary = new ChildrenSummaryWidget(
         children ? Object.entries(children) : [],
         data => data && cassini.launchTier(data),
-        (data, id) =>
-          cassini.launchTierBrowser([...this.model.ids, id]),
+        (data, id) => cassini.launchTierBrowser([...this.model.ids, id]),
         () => this.model.treeData.then(data => data && openNewChildDialog(data))
       ));
       childrenBox.addWidget(childrenSummary);
@@ -240,17 +239,19 @@ export class RMHeader extends Panel implements IRenderMime.IRenderer {
     const resolver = options.resolver as RenderMimeRegistry.UrlResolver; // uhoh this could be unstable!
     this._path = resolver.path;
 
-    this.fetchModel = cassini.tierModelManager.get(this.name).then(tierModel => {
-      if (!tierModel) {
-        return;
-      }
+    this.fetchModel = cassini.tierModelManager
+      .get(this.name)
+      .then(tierModel => {
+        if (!tierModel) {
+          return;
+        }
 
-      this.model = tierModel
-      
-      this.addWidget(new TierNotebookHeader(this.model))
+        this.model = tierModel;
 
-      return this.model;
-    });
+        this.addWidget(new TierNotebookHeader(this.model));
+
+        return this.model;
+      });
   }
 
   ready(): Promise<void> {

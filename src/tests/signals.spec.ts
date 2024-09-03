@@ -1,13 +1,6 @@
 import { TierBrowserModel, TierModel } from '../models';
-import {
-  createTierFiles,
-  mockServer
-} from './tools';
-import { 
-  TEST_HLT_CONTENT,
-  TEST_META_CONTENT,
-  WP1_INFO
-} from './test_cases'
+import { createTierFiles, mockServer } from './tools';
+import { TEST_HLT_CONTENT, TEST_META_CONTENT, WP1_INFO } from './test_cases';
 
 import 'jest';
 
@@ -17,8 +10,8 @@ describe('tier-model', () => {
 
   beforeEach(async () => {
     await createTierFiles([
-      {path: WP1_INFO.metaPath, content: TEST_META_CONTENT},
-      {path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT},
+      { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
+      { path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT }
     ]);
   });
 

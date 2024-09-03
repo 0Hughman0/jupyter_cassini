@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { Ajv, ValidateFunction } from 'ajv';
-import addFormats from "ajv-formats"
+import addFormats from 'ajv-formats';
 
 import { ObservableList } from '@jupyterlab/observables';
 import {
@@ -16,10 +16,9 @@ import { Signal, ISignal } from '@lumino/signaling';
 import { cassini, ITreeChildData, ITreeData, TreeManager } from './core';
 import { MetaSchema, TierInfo, IChange } from './schema/types';
 
-
-const ajv = new Ajv()
-addFormats(ajv)
-ajv.addKeyword('x-cas-field')
+const ajv = new Ajv();
+addFormats(ajv);
+ajv.addKeyword('x-cas-field');
 
 /**
  * Browser-side model of a cassini tier.
@@ -48,8 +47,8 @@ export class TierModel {
   readonly ids: string[];
   readonly notebookPath: string | undefined;
   readonly started: Date;
-  readonly metaSchema: MetaSchema | undefined
-  readonly metaValidator: ValidateFunction<any>
+  readonly metaSchema: MetaSchema | undefined;
+  readonly metaValidator: ValidateFunction<any>;
 
   readonly hltsPath: string | undefined;
 
@@ -62,15 +61,15 @@ export class TierModel {
     this.name = options.name;
     this.ids = options.ids;
 
-    if (options.tierType == 'folder') {
-      return
+    if (options.tierType === 'folder') {
+      return;
     }
-    
+
     this.notebookPath = options.notebookPath;
     this.hltsPath = options.hltsPath;
     this.metaSchema = options.metaSchema;
-    this.metaValidator = ajv.compile(this.metaSchema)
-  
+    this.metaValidator = ajv.compile(this.metaSchema);
+
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.ids.toString()) {
         this._changed.emit();
@@ -99,7 +98,7 @@ export class TierModel {
       });
     }
 
-    if (options.hltsPath) {      
+    if (options.hltsPath) {
       const hltsFile = (this.hltsFile = new Context({
         manager: cassini.contentService,
         factory: new TextModelFactory(),
@@ -160,14 +159,17 @@ export class TierModel {
     const o = {} as JSONObject;
     const metaJSON = this.meta;
 
-    const properties = this?.metaSchema && this.metaSchema.properties
-    
+    const properties = this?.metaSchema && this.metaSchema.properties;
+
     for (const key in metaJSON) {
-      
-      if (properties && properties[key] && (['core', 'private'].includes(properties[key]['x-cas-field'] || ''))) {
-        continue
+      if (
+        properties &&
+        properties[key] &&
+        ['core', 'private'].includes(properties[key]['x-cas-field'] || '')
+      ) {
+        continue;
       }
-      
+
       o[key] = metaJSON[key] as JSONValue;
     }
 
@@ -257,7 +259,7 @@ export class TierModel {
 }
 
 export namespace TierModel {
-  export type ModelChange = IChange<TierModel | null, TierModel | null>
+  export type ModelChange = IChange<TierModel | null, TierModel | null>;
 }
 
 export interface IAdditionalColumnsStore {
@@ -282,15 +284,15 @@ export class TierBrowserModel {
   currentPath: ObservableList<string>;
   treeManager: TreeManager;
   protected _additionalColumnsStore: IAdditionalColumnsStore;
-  protected _current: Promise<ITreeData | null>
+  protected _current: Promise<ITreeData | null>;
 
   constructor() {
     this.currentPath = new ObservableList<string>();
     this.treeManager = cassini.treeManager;
-    this._current = Promise.resolve(null)
-    
+    this._current = Promise.resolve(null);
+
     this.currentPath.changed.connect(() => {
-      this._current = this.treeManager.get(this.sCurrentPath)
+      this._current = this.treeManager.get(this.sCurrentPath);
       this._childrenUpdated.emit(this.current);
     }, this);
 
@@ -307,7 +309,7 @@ export class TierBrowserModel {
   }
 
   get current(): Promise<ITreeData | null> {
-    return this._current
+    return this._current;
   }
 
   private _childrenUpdated = new Signal<this, Promise<ITreeData | null>>(this);

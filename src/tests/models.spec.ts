@@ -8,12 +8,9 @@ import {
   WP1_TREE,
   TEST_HLT_CONTENT,
   TEST_META_CONTENT,
-  WP1_INFO,
-  
+  WP1_INFO
 } from './test_cases';
-import {
-  createTierFiles
-} from './tools'
+import { createTierFiles } from './tools';
 
 import 'jest';
 import { FolderTierInfo } from '../schema/types';
@@ -24,10 +21,10 @@ describe('TierModel', () => {
 
   beforeEach(async () => {
     const { manager } = await createTierFiles([
-      {path: WP1_INFO.metaPath, content: TEST_META_CONTENT},
-      {path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT},
+      { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
+      { path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT }
     ]);
-    await manager.ready
+    await manager.ready;
     theManager = manager;
   });
 
@@ -92,9 +89,14 @@ describe('TierModel', () => {
 
   describe('missing meta', () => {
     test('no meta', () => {
-      const { ids, children } = WP1_INFO
-      const noMeta: FolderTierInfo = { name: 'No meta Yoo', ids, children, tierType: 'folder'}
-      
+      const { ids, children } = WP1_INFO;
+      const noMeta: FolderTierInfo = {
+        name: 'No meta Yoo',
+        ids,
+        children,
+        tierType: 'folder'
+      };
+
       const tier = new TierModel(noMeta);
 
       expect(tier.name).toBe('No meta Yoo');
@@ -119,9 +121,9 @@ describe('TierModel', () => {
       const { description, ...noDescription } = TEST_META_CONTENT;
 
       const tier = new TierModel(WP1_INFO);
-      
+
       await tier.ready;
-      
+
       tier.metaFile && tier.metaFile?.model.fromJSON(noDescription);
       expect(tier.description).toBe('');
     });
@@ -129,11 +131,11 @@ describe('TierModel', () => {
 
   describe('hlts', () => {
     test('no-hlts', async () => {
-      const tierInfo = Object.assign({}, WP1_INFO)
-      delete tierInfo['hltsPath']
-      
-      expect(tierInfo.hltsPath).toBeUndefined()
-      
+      const tierInfo = Object.assign({}, WP1_INFO);
+      delete tierInfo['hltsPath'];
+
+      expect(tierInfo.hltsPath).toBeUndefined();
+
       const tier = new TierModel(tierInfo);
       await tier.ready;
 
@@ -142,8 +144,8 @@ describe('TierModel', () => {
     });
 
     test('init', async () => {
-      expect(WP1_INFO.hltsPath).toBeDefined()
-      
+      expect(WP1_INFO.hltsPath).toBeDefined();
+
       const tier = new TierModel(WP1_INFO);
       await tier.ready;
 
@@ -213,8 +215,8 @@ describe('TierBrowserModel', () => {
   });
 
   test('initial', async () => {
-    model.currentPath.clear()
-    
+    model.currentPath.clear();
+
     await expect(model.current).resolves.toMatchObject(
       TreeManager._treeResponseToData(HOME_TREE, [])
     );

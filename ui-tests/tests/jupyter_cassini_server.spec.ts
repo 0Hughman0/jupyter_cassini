@@ -1,7 +1,6 @@
 import { expect, test, galata } from '@jupyterlab/galata';
 import { ContentsHelper } from '@jupyterlab/galata/lib/contents';
-import * as path from 'path'
-
+import * as path from 'path';
 
 /**
  * Don't load JupyterLab webpage before running the tests.
@@ -42,17 +41,25 @@ async function createWP1(contentMangager: ContentsHelper) {
   It seems that creating files only works if they don't already exist
   */
 
-  const dNb = await contentMangager.deleteFile(`./WorkPackages/WP1.ipynb`)
-  const dMeta = await contentMangager.deleteFile(`./WorkPackages/.wps/WP1.json`)
-  const dFolder = await contentMangager.deleteDirectory(`./WorkPackages/WP1`)
-  const nb = await contentMangager.uploadFile(path.resolve(__dirname, '../test_project/WP1.ipynb'), `./WorkPackages/WP1.ipynb`)
-  const meta = await contentMangager.uploadFile(path.resolve(__dirname, '../test_project/WP1.json'), `./WorkPackages/.wps/WP1.json`)
-  const folder = await contentMangager.createDirectory(`./WorkPackages/WP1`)
+  const dNb = await contentMangager.deleteFile(`./WorkPackages/WP1.ipynb`);
+  const dMeta = await contentMangager.deleteFile(
+    `./WorkPackages/.wps/WP1.json`
+  );
+  const dFolder = await contentMangager.deleteDirectory(`./WorkPackages/WP1`);
+  const nb = await contentMangager.uploadFile(
+    path.resolve(__dirname, '../test_project/WP1.ipynb'),
+    `./WorkPackages/WP1.ipynb`
+  );
+  const meta = await contentMangager.uploadFile(
+    path.resolve(__dirname, '../test_project/WP1.json'),
+    `./WorkPackages/.wps/WP1.json`
+  );
+  const folder = await contentMangager.createDirectory(`./WorkPackages/WP1`);
 
-  console.log(`${dNb}, ${dMeta}, ${dFolder}`)
+  console.log(`${dNb}, ${dMeta}, ${dFolder}`);
 
   if (!nb || !meta || !folder) {
-    throw Error("Creating WP1 failed!")
+    throw Error('Creating WP1 failed!');
   }
 }
 
@@ -68,8 +75,8 @@ test.describe('Cassini-Browser', async () => {
     */
 
     const contentMangager = new ContentsHelper(request);
-    await createWP1(contentMangager); 
-    
+    await createWP1(contentMangager);
+
     // keep in mind that the server is only started once.
     // this means the test isolation isn't great in terms of the state of cassini backend.
     await page.goto('http://localhost:8888/lab?', {
@@ -85,9 +92,9 @@ test.describe('Cassini-Browser', async () => {
 
     */
     const contents = galata.newContentsHelper(request);
-    await contents.deleteDirectory(`WorkPackages`)
-    await contents.createDirectory(`WorkPackages`)
-  })
+    await contents.deleteDirectory(`WorkPackages`);
+    await contents.createDirectory(`WorkPackages`);
+  });
 
   test('browser-loaded', async ({ page }) => {
     const searchBox = await page.getByPlaceholder('Search by name');
@@ -113,9 +120,7 @@ test.describe('Cassini-Browser', async () => {
     await expect(
       page.getByRole('button', { name: 'Fetch from disk' })
     ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: 'Open Tier' })
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open Tier' })).toBeVisible();
   });
 
   test('create-child-dialogue', async ({ page }) => {
@@ -135,7 +140,9 @@ test.describe('Cassini-Browser', async () => {
   });
 
   test('create-child', async ({ page }) => {
-    await page.getByRole('button', { name: 'Create new child of Home' }).click();
+    await page
+      .getByRole('button', { name: 'Create new child of Home' })
+      .click();
     await page.getByLabel('Identifier').click();
     await page.getByLabel('Identifier').fill('2');
     await page.locator('textarea').click();
@@ -192,9 +199,9 @@ test.describe('Cassini-Browser', async () => {
     await page.getByRole('button', { name: 'Preview WP1' }).click();
 
     // conclusion box...
-    await page.getByRole('button', { name: 'Edit' }).nth(1).click()
+    await page.getByRole('button', { name: 'Edit' }).nth(1).click();
     await page.getByRole('textbox').nth(2).fill('First Line\n\nline 2');
-    
+
     // save changes button
     await page.getByRole('button', { name: 'Apply changes' }).click();
 
@@ -235,15 +242,12 @@ test.describe('Cassini-Browser', async () => {
 
   test.describe('Tier-Header', async () => {
     test.beforeEach(async ({ page }) => {
-      
       // keep in mind that the server is only started once.
       // this means the test isolation isn't great in terms of the state of cassini backend.
       await page.goto('http://localhost:8888/lab?', {
         waitUntil: 'domcontentloaded'
       });
       await page.getByLabel('Launcher').getByText('Browser').click();
-
-      
     });
 
     test('header-content', async ({ page }) => {

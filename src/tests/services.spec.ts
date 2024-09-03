@@ -1,6 +1,6 @@
 import { CassiniServer } from '../services';
-import {  mockServer } from './tools';
-import { WP1_TREE } from './test_cases'
+import { mockServer } from './tools';
+import { WP1_TREE } from './test_cases';
 
 import 'jest';
 
