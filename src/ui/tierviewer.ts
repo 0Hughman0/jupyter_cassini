@@ -218,7 +218,7 @@ export class TierViewer extends BoxPanel {
     const refreshButton = new ToolbarButton({
       icon: refreshIcon,
       onClick: () => {
-        this.fetch();
+        this.refresh();
       },
       tooltip: 'Fetch from disk'
     });
@@ -390,7 +390,9 @@ export class TierViewer extends BoxPanel {
     this.model && this.model.save(); // this could be bad if people are half-way through editing a value in a different widget somewhere.
   }
 
-  fetch(): void {
-    this.model && this.model.revert();
+  refresh(): void {
+    cassini.tierModelManager.get(this.model?.name || '', true).then(tierModel => {
+      this.model = tierModel
+    })
   }
 }

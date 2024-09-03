@@ -46,6 +46,12 @@ class LookupHandler(APIHandler):
 
         if isinstance(tier, NotebookTierBase):
             started = tier.started.replace(tzinfo=datetime.timezone.utc)
+            raw_hlts_path = tier.highlights_file if tier.highlights_file else None
+
+            if raw_hlts_path and raw_hlts_path.exists():
+                hlts_path = encode_path(raw_hlts_path, project)
+            else:
+                hlts_path = None
 
             return TierInfo(NotebookTierInfo(
                 tierType='notebook',
@@ -53,7 +59,7 @@ class LookupHandler(APIHandler):
                 ids=list(tier.identifiers),
                 notebookPath=encode_path(tier.file, project),
                 metaPath=encode_path(tier.meta_file, project),
-                hltsPath=encode_path(tier.highlights_file, project) if tier.highlights_file else None,
+                hltsPath=hlts_path,
                 started=started,
                 children=[child.name for child in tier],
                 metaSchema=MetaSchema.model_validate(tier.__meta_manager__.build_model().model_json_schema())

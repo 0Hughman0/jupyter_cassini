@@ -158,51 +158,6 @@ describe('TierModel', () => {
         }
       ]);
     });
-
-    test('later-load-hlts', async () => {
-      /*
-
-      TODO: redo this, the logic for this is crazy complicated.
-
-      Instead, get CassiniServer.lookup to only include a hltsPath if the file exists.
-
-      Then make hltsPath readonly.
-
-      Then make refresh in the tier viewer just rebuild the whole model.
-      */
-
-      manager.contents.delete(WP1_INFO.hltsPath || '');
-
-      const {hltsPath, ...noHlts} = WP1_INFO
-      hltsPath?.length
-      
-      const tier = new TierModel(noHlts);
-      await tier.ready;
-
-      expect(tier.hltsFile).toBe(undefined);
-
-      const newHlts = await manager.contents.newUntitled({
-        path: '/WorkPackages/WP1/.exps/', // filename is set as unique
-        type: 'file'
-      });
-
-      (newHlts as any).content = JSON.stringify(TEST_HLT_CONTENT);
-
-      (tier as any).hltsPath = newHlts.path;
-
-      await tier.revert();
-
-      expect(tier.hltsFile?.isReady).toBe(true);
-
-      expect(tier.hltsOutputs).toEqual([
-        {
-          data: { 'text/markdown': '## cos' },
-          metadata: {},
-          output_type: 'display_data',
-          transient: {}
-        }
-      ]);
-    });
   });
 
   describe('io', () => {

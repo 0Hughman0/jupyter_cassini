@@ -99,28 +99,21 @@ export class TierModel {
       });
     }
 
-    if (options.hltsPath) {
-      // check the file exists.
-      cassini.contentService.contents
-        .get(options.hltsPath, { content: false })
-        .then(model => {
-          // only create Context if it does.
-          const hltsFile = (this.hltsFile = new Context({
-            manager: cassini.contentService,
-            factory: new TextModelFactory(),
-            path: options.hltsPath as string
-          }));
-          this._required.push(hltsFile.ready);
+    if (options.hltsPath) {      
+      const hltsFile = (this.hltsFile = new Context({
+        manager: cassini.contentService,
+        factory: new TextModelFactory(),
+        path: options.hltsPath as string
+      }));
+      this._required.push(hltsFile.ready);
 
-          hltsFile.initialize(false);
+      hltsFile.initialize(false);
 
-          this.hltsFile.ready.then(() => {
-            this.hltsFile?.model.contentChanged.connect(() => {
-              this._changed.emit();
-            }, this);
-          });
-        })
-        .catch(reason => reason); // fails if file doesn't exist
+      this.hltsFile.ready.then(() => {
+        this.hltsFile?.model.contentChanged.connect(() => {
+          this._changed.emit();
+        }, this);
+      });
     }
   }
 
@@ -256,31 +249,9 @@ export class TierModel {
    *
    */
   revert() {
-    let highlightsExists: Promise<void>;
-
-    if (this.hltsPath && !this.hltsFile) {
-      // Highlights may have been added since initialisation - so check!
-      highlightsExists = cassini.contentService.contents
-        .get(this.hltsPath, { content: false })
-        .then(model => {
-          const hltsFile = (this.hltsFile = new Context({
-            manager: cassini.contentService,
-            factory: new TextModelFactory(),
-            path: this.hltsPath as string
-          }));
-
-          hltsFile.initialize(false);
-        })
-        .catch(reason => reason);
-    } else {
-      highlightsExists = Promise.resolve();
-    }
-
     return Promise.all([
       this.metaFile?.revert(),
-      highlightsExists.then(() =>
-        this.hltsFile?.ready.then(() => this.hltsFile?.revert())
-      )
+      this.hltsFile?.revert()
     ]).then();
   }
 }
