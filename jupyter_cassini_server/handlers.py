@@ -1,8 +1,5 @@
-import os
-import sys
-import functools
-from pathlib import Path
-import importlib
+from typing import TypeVar, Callable, Any, Union
+import datetime
 
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
@@ -10,188 +7,165 @@ from jupyter_server.utils import url_path_join
 import tornado
 
 from cassini import env
-from cassini.core import TierABC, NotebookTierBase
+from cassini.core import NotebookTierBase
 
+from jupyter_cassini_server.safety import needs_project, with_types
+from jupyter_cassini_server.serialisation import serialize_branch, encode_path
 
-def needs_project(meth):
-    @functools.wraps(meth)
-    def wraps(self, *args, **kwargs):
-        if not env.project:
-            self.finish("Current project not set, jupyterlab needs to be launched by Cassini")
-            return
-
-        return meth(self, *args, **kwargs)
-
-    return wraps
-
-
-def serialize_child(tier: TierABC):
-    project_folder = env.project.project_folder
-    """
-    Note, doesn't populate children field... maybe will later...
-    """
-    branch = {'name': tier.name}
-
-    branch['folder'] = tier.folder.relative_to(project_folder).as_posix()
-
-    if isinstance(tier, NotebookTierBase):
-        branch['metaPath'] = tier.meta_file.relative_to(project_folder).as_posix()
-        branch['additionalMeta'] = {k: tier.meta[k] for k in tier.meta.keys() if k not in ['description', 'started', 'conclusion']}
-        branch['started'] = tier.started.isoformat()
-
-        if tier.description:
-            branch['info'] = tier.description.split('\n')[0]
-
-        if tier.conclusion:
-            branch['outcome'] = tier.conclusion.split('\n')[0]
-        
-        branch['hltsPath'] = tier.highlights_file.relative_to(project_folder).as_posix()
-        branch['notebookPath'] = tier.file.relative_to(project_folder).as_posix()
-    
-    return branch
-
-
-def serialize_branch(tier: TierABC):
-    tree = serialize_child(tier)
-
-    tree['children'] = {}
-
-    child_cls = tier.child_cls
-
-    if not child_cls:
-        tree['childClsInfo'] = None
-
-        return tree
-
-    child_cls_info = {}
-    
-    child_cls_info['idRegex'] = child_cls.id_regex
-    child_cls_info['name'] = child_cls.__name__
-    child_cls_info['namePartTemplate'] = child_cls.name_part_template
-
-    child_metas = set()
-    
-    for child in tier:
-        tree['children'][child.id] = serialize_child(child)
-
-        if isinstance(child, NotebookTierBase):
-            child_metas.update(child.meta.keys())
-
-    if issubclass(child_cls, NotebookTierBase):
-        child_metas.discard('name')
-        child_metas.discard('started')
-        child_metas.discard('description')
-        child_metas.discard('conclusion')
-
-        child_cls_info['metaNames'] = list(child_metas)
-
-        child_cls_info['templates'] = [template.name for template in child_cls.get_templates(env.project)]
-
-    tree['childClsInfo'] = child_cls_info
-    return tree
+from .schema.models import (
+    NewChildInfo,
+    TreeResponse,
+    TierInfo,
+    MetaSchema,
+    LookupGetParametersQuery,
+    OpenGetParametersQuery,
+    TreeGetParametersQuery,
+    FolderTierInfo,
+    NotebookTierInfo,
+    Status,
+    Status1,
+)
 
 
 class LookupHandler(APIHandler):
-    # The following decorator should be present on all verb methods (head, get, post, 
-    # patch, put, delete, options) to ensure only authorized user can request the 
+    # The following decorator should be present on all verb methods (head, get, post,
+    # patch, put, delete, options) to ensure only authorized user can request the
     # Jupyter server
     @tornado.web.authenticated
     @needs_project
-    def get(self):
-        cas_id = self.get_argument('id', '')
-        try:
-            tier = env.project[cas_id]
+    @with_types(LookupGetParametersQuery, TierInfo, "GET")
+    def get(self, query: LookupGetParametersQuery) -> TierInfo:
+        assert env.project
+        project = env.project
 
-            if not tier.exists():
-                return self.send_error(404)
-            
-            data = serialize_branch(tier)
-            data['identifiers'] = tier.identifiers
+        name = query.name
+        tier = project[name]
 
-            self.finish(data)
-        except (ValueError, AttributeError):
-            self.finish("Not found")
+        if not tier.exists():
+            raise ValueError(name, "not found")
+
+        if isinstance(tier, NotebookTierBase):
+            started = tier.started.replace(tzinfo=datetime.timezone.utc)
+            raw_hlts_path = tier.highlights_file if tier.highlights_file else None
+
+            if raw_hlts_path and raw_hlts_path.exists():
+                hlts_path = encode_path(raw_hlts_path, project)
+            else:
+                hlts_path = None
+
+            return TierInfo(NotebookTierInfo(
+                tierType='notebook',
+                name=tier.name,
+                ids=list(tier.identifiers),
+                notebookPath=encode_path(tier.file, project),
+                metaPath=encode_path(tier.meta_file, project),
+                hltsPath=hlts_path,
+                started=started,
+                children=[child.name for child in tier],
+                metaSchema=MetaSchema.model_validate(tier.__meta_manager__.build_model().model_json_schema())
+            ))
+        else:
+            return TierInfo(FolderTierInfo(
+                tierType='folder',
+                name=tier.name,
+                ids=list(tier.identifiers),
+                children=[child.name for child in tier]
+            ))
 
 
 class OpenHandler(APIHandler):
-    # The following decorator should be present on all verb methods (head, get, post, 
-    # patch, put, delete, options) to ensure only authorized user can request the 
+    # The following decorator should be present on all verb methods (head, get, post,
+    # patch, put, delete, options) to ensure only authorized user can request the
     # Jupyter server
     @tornado.web.authenticated
     @needs_project
-    def get(self):
-        cas_id = self.get_argument('id', '')
+    @with_types(OpenGetParametersQuery, Status, "GET")
+    def get(self, query: OpenGetParametersQuery) -> Status:
+        assert env.project
+
+        name = query.name
         try:
-            tier = env.project[cas_id]
+            tier = env.project[name]
             tier.open_folder()
-            self.finish(1)
+            return Status(status=Status1.success)
+
         except (ValueError, AttributeError):
-            self.finish(0)
+            return Status(status=Status1.failure)
 
 
 class NewChildHandler(APIHandler):
 
     @tornado.web.authenticated
     @needs_project
-    def post(self):
-        data = self.get_json_body()
+    @with_types(NewChildInfo, TreeResponse, "POST")
+    def post(self, query: NewChildInfo) -> TreeResponse:
+        assert env.project
 
-        parent_name = data.pop('parent')
-        template_name = data.pop('template')
-        identifier = data.pop('id')
+        parent_name = query.parent
+        identifier = query.id
+        template_name = query.template
 
-        meta = data
+        meta = query.model_extra
 
-        try:
-            parent = env.project[parent_name]
-        except (ValueError, AttributeError):
-            return self.finish(0)
+        parent = env.project[parent_name]
+
+        if not parent.child_cls:
+            raise ValueError("parent has no child class", query.parent)
 
         child = parent[identifier]
 
-        template = {path.name: path for path in parent.child_cls.get_templates(env.project)}.get(template_name)
+        if isinstance(child, NotebookTierBase) and template_name:
+            template_options = {
+                path.name: path for path in child.get_templates(env.project)
+            }
+            template = template_options.get(template_name)
+        else:
+            template = None
 
         child.setup_files(template, meta=meta)
 
-        self.finish(serialize_branch(child))
-    
+        return serialize_branch(child)
+
 
 class TreeHandler(APIHandler):
 
     @tornado.web.authenticated
     @needs_project
-    def get(self):
-        cas_ids = self.get_argument('identifiers', None)
-        cas_ids = [] if not cas_ids else cas_ids.split(',')
+    @with_types(TreeGetParametersQuery, TreeResponse, "GET")
+    def get(self, query: TreeGetParametersQuery) -> TreeResponse:
+        assert env.project
+
+        ids = query.ids__
 
         try:
             tier = env.project.home
 
-            while cas_ids:
-                id_ = cas_ids.pop(0)
+            while ids:
+                id_ = ids.pop(0)
                 tier = tier[id_]
-        except (ValueError, AttributeError):
-            return self.send_error(404)
+
+        except ValueError:
+            raise ValueError("Invalid tier name", ids)
 
         if not tier.exists():
-            return self.send_error(404)
+            raise ValueError("Tier does not exist", ids)
 
-        self.finish(serialize_branch(tier))
-        
+        return serialize_branch(tier)
+
 
 def setup_handlers(web_app):
     host_pattern = ".*$"
-    
+
     base_url = web_app.settings["base_url"]
     lookup_pattern = url_path_join(base_url, "jupyter_cassini", "lookup")
     tree_pattern = url_path_join(base_url, "jupyter_cassini", "tree")
     open_pattern = url_path_join(base_url, "jupyter_cassini", "open")
     new_child_pattern = url_path_join(base_url, "jupyter_cassini", "newChild")
-    
-    handlers = [(lookup_pattern, LookupHandler), 
-                (tree_pattern, TreeHandler),
-                (open_pattern, OpenHandler),
-                (new_child_pattern, NewChildHandler)
-                ]
-    web_app.add_handlers(host_pattern, handlers)
 
+    handlers = [
+        (lookup_pattern, LookupHandler),
+        (tree_pattern, TreeHandler),
+        (open_pattern, OpenHandler),
+        (new_child_pattern, NewChildHandler),
+    ]
+    web_app.add_handlers(host_pattern, handlers)

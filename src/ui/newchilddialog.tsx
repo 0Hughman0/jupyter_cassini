@@ -77,7 +77,7 @@ export class NewChildWidget extends Widget {
     this.parentName = tier.name;
 
     const layout = (this.layout = new PanelLayout());
-    const namePrefix = tier.identifiers.length ? tier.name : '';
+    const namePrefix = tier.ids.length ? tier.name : '';
     const nameTemplate = namePrefix + tier.childClsInfo.namePartTemplate;
     const identifierInput = (this.identifierInput = new IdDialog({
       title: 'Identitifier',
@@ -85,42 +85,57 @@ export class NewChildWidget extends Widget {
       idRegex: tier.childClsInfo.idRegex as string,
       nameTemplate: nameTemplate
     }));
-    const descriptionInput = (this.descriptionInput = new InputTextAreaDialog({
-      title: 'Da Description',
-      label: 'Description'
-    }));
-    const templateSelector = (this.templateSelector = new InputItemsDialog({
-      title: 'template',
-      label: 'Template',
-      items: tier.childClsInfo.templates || []
-    }));
 
     this.subInputs = {
-      id: identifierInput,
-      description: descriptionInput,
-      template: templateSelector
+      id: identifierInput
     };
 
-    const metaInputs: (InputTextDialog | InputNumberDialog)[] =
-      (this.metaInputs = []);
-
     layout.addWidget(identifierInput);
-    layout.addWidget(descriptionInput);
-    layout.addWidget(templateSelector);
 
-    for (const additionalMeta of tier.childClsInfo.metaNames) {
-      let input;
+    if (tier.childClsInfo.tierType === 'notebook') {
+      const descriptionInput = (this.descriptionInput = new InputTextAreaDialog(
+        {
+          title: 'Da Description',
+          label: 'Description'
+        }
+      ));
 
-      if (typeof additionalMeta === 'string') {
-        input = new InputTextDialog({ title: '', label: additionalMeta });
-      } else {
-        input = new InputNumberDialog({ title: '', label: additionalMeta });
+      layout.addWidget(descriptionInput);
+
+      const templateSelector = (this.templateSelector = new InputItemsDialog({
+        title: 'template',
+        label: 'Template',
+        items: tier.childClsInfo.templates || []
+      }));
+
+      layout.addWidget(templateSelector);
+
+      this.subInputs.description = descriptionInput;
+      this.subInputs.template = templateSelector;
+
+      const metaInputs: (InputTextDialog | InputNumberDialog)[] =
+        (this.metaInputs = []);
+
+      for (const [name, info] of Object.entries(
+        tier.childClsInfo.metaSchema.properties
+      )) {
+        let input;
+
+        if (['private', 'core'].includes(info['x-cas-field'] ?? '')) {
+          continue;
+        }
+
+        if (typeof info.type === 'string') {
+          input = new InputTextDialog({ title: '', label: name });
+        } else {
+          input = new InputNumberDialog({ title: '', label: name });
+        }
+
+        metaInputs.push(input);
+        this.subInputs[name] = input;
+
+        layout.addWidget(input);
       }
-
-      metaInputs.push(input);
-      this.subInputs[additionalMeta] = input;
-
-      layout.addWidget(input);
     }
   }
 

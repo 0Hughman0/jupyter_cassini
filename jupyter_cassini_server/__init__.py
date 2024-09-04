@@ -12,16 +12,11 @@ from .handlers import setup_handlers
 
 
 def _jupyter_labextension_paths():
-    return [{
-        "src": "labextension",
-        "dest": "jupyter_cassini"
-    }]
+    return [{"src": "labextension", "dest": "jupyter_cassini"}]
 
 
 def _jupyter_server_extension_points():
-    return [{
-        "module": "jupyter_cassini_server"
-    }]
+    return [{"module": "jupyter_cassini_server"}]
 
 
 def _load_jupyter_server_extension(server_app):
@@ -36,7 +31,11 @@ def _load_jupyter_server_extension(server_app):
         server_app.log.info(f"Found pre-set project, {env.project}")
     else:
         find_project()
-        server_app.log.info(f"Found project {env.project} using CASSINI_PROJECT={os.environ.get('CASSINI_PROJECT')}")
+        server_app.log.info(
+            f"Found project {env.project} using CASSINI_PROJECT={os.environ.get('CASSINI_PROJECT')}"
+        )
 
     setup_handlers(server_app.web_app)
-    server_app.log.info("Registered HelloWorld extension at URL path /jupyter_cassini_server")
+    server_app.log.info(
+        "Registered HelloWorld extension at URL path /jupyter_cassini_server"
+    )

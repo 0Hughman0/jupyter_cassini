@@ -8,6 +8,7 @@ import { PathExt } from '@jupyterlab/coreutils';
 import { TierModel } from '../models';
 import { MetaTableWidget } from './metatable';
 import { JSONValue } from '@lumino/coreutils';
+import { Signal, ISignal } from '@lumino/signaling';
 
 import { cassini } from '../core';
 
@@ -15,33 +16,51 @@ import { cassini } from '../core';
  * Widget for modifying the meta of a TierModel.
  */
 export class MetaEditor extends Panel {
-  protected model: TierModel;
-  table: MetaTableWidget;
+  protected _model: TierModel | null;
+  table: MetaTableWidget | null;
 
-  constructor(tierModel: TierModel, attributes?: string[]) {
+  constructor(tierModel: TierModel | null) {
     super();
-
+    this.modelChanged.connect(
+      (sender, model) => this.onModelChanged(model),
+      this
+    );
     this.model = tierModel;
+  }
+
+  get modelChanged(): ISignal<this, TierModel | null> {
+    return this._modelChanged;
+  }
+
+  private _modelChanged = new Signal<this, TierModel | null>(this);
+
+  get model(): TierModel | null {
+    return this._model;
+  }
+
+  set model(model: TierModel | null) {
+    this._model = model;
+
+    this._modelChanged.emit(model);
+  }
+
+  onModelChanged(model: TierModel | null): void {
+    if (this.table) {
+      this.table.dispose();
+    }
+
+    if (!model) {
+      return;
+    }
 
     const table = (this.table = new MetaTableWidget(
-      {},
+      model.additionalMeta,
       this.onMetaUpdate.bind(this),
       this.onRemoveMeta.bind(this),
-      this.model.changed
+      model.changed
     ));
 
     this.addWidget(table);
-
-    if (attributes) {
-      this.render(attributes);
-    }
-  }
-
-  ready() {
-    /**
-     * Does the widget have all the data it needs to render correctly?
-     */
-    return this.model.ready;
   }
 
   onMetaUpdate(attribute: string, newValue: string): void {
@@ -50,6 +69,10 @@ export class MetaEditor extends Panel {
      *
      * inserts updated meta into model.
      */
+    if (!this.model) {
+      return;
+    }
+
     const meta = this.model.metaFile?.model.toJSON() as JSONObject;
 
     meta[attribute] = JSON.parse(newValue);
@@ -63,6 +86,10 @@ export class MetaEditor extends Panel {
      *
      * Removes a meta from the model
      */
+    if (!this.model) {
+      return;
+    }
+
     const meta = this.model.metaFile?.model.toJSON() as JSONObject;
     delete meta[attribute];
 
@@ -73,17 +100,18 @@ export class MetaEditor extends Panel {
     /**
      * Asks the widget to re-render with the attributes provided. This is a bit odd, but is kinda needed because of how mimetype renders.
      */
-    this.ready().then(() => {
-      const meta: { [name: string]: JSONValue } = {};
+    if (!this.model || !this.table) {
+      return;
+    }
+    const meta: { [name: string]: JSONValue } = {};
 
-      for (const key of attributes) {
-        const val = this.model.additionalMeta[key];
-        meta[key] = val;
-      }
+    for (const key of attributes) {
+      const val = this.model.additionalMeta[key];
+      meta[key] = val;
+    }
 
-      this.table.attributes = meta;
-      this.table.update();
-    });
+    this.table.attributes = meta;
+    this.table.update();
   }
 }
 
@@ -99,7 +127,7 @@ export class RenderMimeMetaEditor
   implements IRenderMime.IRenderer
 {
   protected _path: string;
-  protected tierModel: TierModel;
+  protected _model: TierModel | null;
   protected editor: MetaEditor;
   private fetchModel: Promise<TierModel | undefined>;
 
@@ -124,17 +152,17 @@ export class RenderMimeMetaEditor
     const resolver = options.resolver as RenderMimeRegistry.UrlResolver; // uhoh this could be unstable!
     this._path = resolver.path;
 
-    this.fetchModel = cassini.treeManager.lookup(this.name).then(tierInfo => {
-      if (!tierInfo) {
-        return;
-      }
+    this.fetchModel = cassini.tierModelManager
+      .get(this.name)
+      .then(tierModel => {
+        if (!tierModel) {
+          return;
+        }
 
-      this.tierModel = cassini.tierModelManager.get(tierInfo.name)(tierInfo);
-
-      console.log('B');
-      console.log(this.tierModel);
-      return this.tierModel;
-    });
+        this.model = tierModel;
+        console.log(this.model);
+        return this.model;
+      });
 
     this.fetchModel.then(model => {
       if (model) {
@@ -142,6 +170,21 @@ export class RenderMimeMetaEditor
         this.addWidget(this.editor);
       }
     });
+  }
+
+  get modelChanged(): ISignal<this, TierModel | null> {
+    return this._modelChanged;
+  }
+
+  private _modelChanged = new Signal<this, TierModel | null>(this);
+
+  get model(): TierModel | null {
+    return this._model;
+  }
+
+  set model(model: TierModel | null) {
+    this._model = model;
+    this._modelChanged.emit(model);
   }
 
   /**

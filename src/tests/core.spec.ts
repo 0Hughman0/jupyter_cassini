@@ -1,43 +1,53 @@
-import { Contents } from '@jupyterlab/services';
+import 'jest';
+//import { ServiceManager } from '@jupyterlab/services';
 
 import { ITreeData, TreeManager, TierModelTreeManager, Cassini } from '../core';
 import { TierModel } from '../models';
-import { ITreeResponse } from '../services';
+import { TreeResponse } from '../schema/types';
 
 import {
-  HOME_RESPONSE,
-  WP1_RESPONSE,
-  WP1_1_RESPONSE,
-  mockServer,
-  TEST_HLT_CONTENT,
+  HOME_TREE,
+  WP1_TREE,
+  WP1_1_TREE,
+  //TEST_HLT_CONTENT,
   TEST_META_CONTENT,
-  createTierFiles
-} from './tools';
-
-import 'jest';
+  WP1_INFO,
+  WP1_1_INFO,
+  TEST_HLT_CONTENT
+} from './test_cases';
+import { mockServerAPI, createTierFiles } from './tools';
 
 describe('TreeManager', () => {
   beforeEach(() => {
-    mockServer();
+    mockServerAPI({
+      '/tree': [
+        { query: { 'ids[]': '' }, response: HOME_TREE },
+        { query: { 'ids[]': '1' }, response: WP1_TREE },
+        { query: { 'ids[]': '1,1' }, response: WP1_1_TREE },
+        { query: { 'ids[]': '1,1,a' }, response: WP1_1_TREE } // cheeky
+      ],
+      '/lookup': [
+        { query: { name: 'WP1' }, response: WP1_INFO },
+        { query: { name: 'WP1.1' }, response: WP1_1_INFO }
+      ]
+    });
   });
 
   test('conversion', () => {
     const treeData: ITreeData = TreeManager._treeResponseToData(
-      HOME_RESPONSE as ITreeResponse,
+      HOME_TREE as TreeResponse,
       ['1', '1', 'a']
     );
 
     expect(treeData.started).toEqual(
-      HOME_RESPONSE.started === undefined
-        ? null
-        : new Date(HOME_RESPONSE.started)
+      HOME_TREE.started === undefined ? null : new Date(HOME_TREE.started)
     );
 
-    expect(treeData.identifiers).toEqual(['1', '1', 'a']);
+    expect(treeData.ids).toEqual(['1', '1', 'a']);
 
     for (const id of Object.keys(treeData.children)) {
       const dataChild = treeData.children[id];
-      const responseChild = HOME_RESPONSE.children[id];
+      const responseChild = HOME_TREE.children[id];
 
       expect(dataChild.started).toEqual(
         responseChild.started === undefined
@@ -50,7 +60,7 @@ describe('TreeManager', () => {
   test('initial', async () => {
     const treeManager = new TreeManager();
 
-    const homeData = TreeManager._treeResponseToData(HOME_RESPONSE, []);
+    const homeData = TreeManager._treeResponseToData(HOME_TREE, []);
 
     const first = await treeManager.initialize();
     expect(first).toMatchObject(homeData);
@@ -63,7 +73,7 @@ describe('TreeManager', () => {
   test('forcing-fetch', async () => {
     let treeManager = new TreeManager();
 
-    const homeData = TreeManager._treeResponseToData(HOME_RESPONSE, []);
+    const homeData = TreeManager._treeResponseToData(HOME_TREE, []);
 
     const first = await treeManager.initialize();
 
@@ -87,7 +97,7 @@ describe('TreeManager', () => {
     let treeManager = new TreeManager();
     await treeManager.initialize();
 
-    const wp1_Data = TreeManager._treeResponseToData(WP1_RESPONSE, ['1']);
+    const wp1_Data = TreeManager._treeResponseToData(WP1_TREE, ['1']);
 
     expect(treeManager.cache['children']['1']).not.toHaveProperty('children');
 
@@ -109,10 +119,7 @@ describe('TreeManager', () => {
     let treeManager = new TreeManager();
     await treeManager.initialize();
 
-    const wp1_1_Data = TreeManager._treeResponseToData(WP1_1_RESPONSE, [
-      '1',
-      '1'
-    ]);
+    const wp1_1_Data = TreeManager._treeResponseToData(WP1_1_TREE, ['1', '1']);
 
     const first = await treeManager.get(['1', '1']);
     expect(first).toMatchObject(wp1_1_Data);
@@ -128,7 +135,7 @@ describe('TreeManager', () => {
 
     const first = await treeManager.lookup('WP1');
 
-    const wp1_1_Data = TreeManager._treeResponseToData(WP1_RESPONSE, ['1']);
+    const wp1_1_Data = TreeManager._treeResponseToData(WP1_TREE, ['1']);
 
     expect(first).toMatchObject(wp1_1_Data);
 
@@ -149,49 +156,44 @@ describe('TreeManager', () => {
 
 describe('TreeModelManager', () => {
   let modelManager: TierModelTreeManager;
-  let metaFile: Contents.IModel;
 
   beforeEach(async () => {
-    ({ metaFile } = await createTierFiles(TEST_META_CONTENT, TEST_HLT_CONTENT));
+    mockServerAPI({
+      '/lookup': [
+        { query: { name: 'WP1' }, response: WP1_INFO },
+        { query: { name: 'WP1.1' }, response: WP1_INFO } // cheeky
+      ]
+    });
+
+    await createTierFiles([
+      { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
+      { path: WP1_1_INFO.metaPath, content: TEST_META_CONTENT },
+      { path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT },
+      { path: WP1_1_INFO.hltsPath || '', content: TEST_HLT_CONTENT }
+    ]);
 
     modelManager = new TierModelTreeManager();
   });
 
   test('initialise', async () => {
-    const first = modelManager.get('WP1')({
-      name: 'WP1',
-      metaPath: metaFile.path,
-      identifiers: ['1']
-    });
+    const first = await modelManager.get('WP1');
 
     expect(first).toBeInstanceOf(TierModel);
 
-    const cachedFirst = modelManager.get('WP1')({
-      name: 'WP1',
-      metaPath: metaFile.path,
-      identifiers: ['1']
-    });
+    const cachedFirst = await modelManager.get('WP1');
 
     expect(first).toBe(cachedFirst);
 
-    const second = modelManager.get('WP1.2')({
-      name: 'WP1.2',
-      metaPath: metaFile.path,
-      identifiers: ['1', '2']
-    });
+    const second = await modelManager.get('WP1.1');
 
     expect(second).not.toBe(first);
 
-    const cachedSecond = modelManager.get('WP1.2')({
-      name: 'WP1.2',
-      metaPath: metaFile.path,
-      identifiers: ['1', '2']
-    });
+    const cachedSecond = await modelManager.get('WP1.1');
 
     expect(second).toBe(cachedSecond);
 
     expect(modelManager.cache['WP1']).toBe(first);
-    expect(modelManager.cache['WP1.2']).toBe(second);
+    expect(modelManager.cache['WP1.1']).toBe(second);
   });
 });
 
@@ -200,10 +202,7 @@ describe('cassini', () => {
     const cassini = new Cassini();
     expect(cassini.ready).toBeDefined();
 
-    const { manager } = await createTierFiles(
-      TEST_META_CONTENT,
-      TEST_HLT_CONTENT
-    );
+    const { manager } = await createTierFiles([]);
 
     await cassini.initialize(
       null as any,

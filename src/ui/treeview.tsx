@@ -30,7 +30,7 @@ import {
   SortingState
 } from '@tanstack/react-table';
 
-import { ITreeData, ITreeChildData, ILaunchable, IViewable } from '../core';
+import { ITreeData, ITreeChildData, ILaunchable } from '../core';
 import { TierBrowserModel } from '../models';
 import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
@@ -38,7 +38,7 @@ import { openNewChildDialog } from './newchilddialog';
 
 interface IBrowserProps {
   model: TierBrowserModel;
-  onTierSelected: (casPath: string[], tierData: IViewable) => void;
+  onTierSelected: (casPath: string[], name: string) => void;
   onTierLaunched: (tierData: ILaunchable) => void;
   onCreateChild: (tierData: ITreeData) => void;
 }
@@ -77,7 +77,12 @@ export class BrowserComponent extends React.Component<
         .then(children => setState({ children: children }));
       this.props.model.current.then(tierData => {
         setState({
-          childMetas: (tierData && tierData.childClsInfo?.metaNames) || []
+          childMetas:
+            (tierData &&
+              tierData?.childClsInfo &&
+              tierData.childClsInfo.tierType === 'notebook' &&
+              Object.keys(tierData.childClsInfo.metaSchema.properties)) ||
+            []
         });
         setState({ additionalColumns: props.model.additionalColumns });
       });
@@ -192,7 +197,7 @@ const CasSearch = (props: ICasSearchProps) => {
     if (e.key === 'Enter') {
       CassiniServer.lookup(query).then(tierInfo => {
         model.currentPath.clear();
-        model.currentPath.pushAll(tierInfo.identifiers);
+        model.currentPath.pushAll(tierInfo.ids);
       });
     }
   };
@@ -209,7 +214,7 @@ const CasSearch = (props: ICasSearchProps) => {
 
 interface ICrumbsProps {
   model: TierBrowserModel;
-  onTierSelected: (casPath: string[], tierData: IViewable) => void;
+  onTierSelected: (casPath: string[], name: string) => void;
   onTierLaunched: (tierData: ILaunchable) => void;
   onCreateChild: (tierData: ITreeData) => void;
 }
@@ -309,7 +314,7 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps, ICrumbsState> {
                 icon={caretRightIcon}
                 className="jp-BreadCrumbs-home jp-ToolbarButtonComponent-icon"
                 onClick={() => {
-                  tier && onTierSelected([...path], tier);
+                  tier && onTierSelected([...path], tier.name);
                 }}
                 tooltip={`Preview ${tier?.name}`}
               />
@@ -326,7 +331,7 @@ interface IChildrenTableProps {
   additionalColumns: Set<string>;
   model: TierBrowserModel;
   onTierLaunched: (tier: ILaunchable) => void;
-  onTierSelected: (casPath: string[], tier: IViewable) => void;
+  onTierSelected: (casPath: string[], name: string) => void;
   onCreateChild: (tierData: ITreeData) => void;
   onSelectMetas: (event: React.MouseEvent) => void;
 }
@@ -500,7 +505,7 @@ function ChildrenTable(props: IChildrenTableProps) {
           const id = data[props.row.index][0];
           const tierLaunchData = {
             ...tierChildData,
-            identifiers: [...path, id]
+            ids: [...path, id]
           };
           return (
             <div className="cas-row-icon-area">
@@ -509,7 +514,7 @@ function ChildrenTable(props: IChildrenTableProps) {
                   icon={caretRightIcon}
                   onClick={() => {
                     child
-                      ? onTierSelected([...path, id], tierLaunchData)
+                      ? onTierSelected([...path, id], tierLaunchData.name)
                       : null;
                   }}
                   tooltip={`Preview ${tierLaunchData.name}`}
@@ -632,7 +637,7 @@ function ChildrenTable(props: IChildrenTableProps) {
 
 export interface ITierSelectedSignal {
   path: string[];
-  tier: IViewable;
+  name: string;
 }
 
 /**
@@ -666,8 +671,8 @@ export class TierBrowser extends ReactWidget {
   }
 
   render(): JSX.Element {
-    const onTierSelected = (path: string[], branch: IViewable) => {
-      this._tierSelected.emit({ path: path, tier: branch });
+    const onTierSelected = (path: string[], name: string) => {
+      this._tierSelected.emit({ path: path, name: name });
     };
 
     const onTierLaunched = (branch: ILaunchable) => {

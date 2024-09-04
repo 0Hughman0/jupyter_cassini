@@ -7,22 +7,21 @@ import { ServiceManager } from '@jupyterlab/services';
 import { IEditorFactoryService } from '@jupyterlab/codeeditor';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import {
-  CassiniServer,
-  ITreeResponse,
-  ITreeChildResponse,
-  INewChildInfo
-} from './services';
+import { CassiniServer } from './services';
 import { TierModel } from './models';
+import {
+  TreeResponse,
+  TreeChildResponse,
+  NewChildInfo,
+  TierInfo
+} from './schema/types';
+
 import { BrowserPanel } from './ui/browser';
 
 export interface ILaunchable {
   name: string;
   notebookPath?: string;
 }
-
-/* eslint-disable @typescript-eslint/no-empty-interface */
-export interface IViewable extends TierModel.IOptions {}
 
 /**
  * All ITreeData instances must implement ITreeChild data.
@@ -31,13 +30,13 @@ export interface IViewable extends TierModel.IOptions {}
  *
  * children can then be overwritten with ITreeData to add a new level.
  */
-export interface ITreeData extends Omit<ITreeResponse, 'started' | 'children'> {
+export interface ITreeData extends Omit<TreeResponse, 'started' | 'children'> {
   started: Date | null;
   children: { [id: string]: ITreeChildData };
-  identifiers: string[];
+  ids: string[];
 }
 
-export interface ITreeChildData extends Omit<ITreeChildResponse, 'started'> {
+export interface ITreeChildData extends Omit<TreeChildResponse, 'started'> {
   started: Date | null;
 }
 
@@ -95,30 +94,30 @@ export class TreeManager {
    * If not found then ITreeData will be null.
    *
    */
-  get(casPath: string[], forceRefresh = false): Promise<ITreeData | null> {
+  get(ids: string[], forceRefresh = false): Promise<ITreeData | null> {
     if (forceRefresh) {
-      return this.fetchTierData(casPath);
+      return this.fetchTierData(ids);
     }
 
     let branch = this.cache;
 
-    for (const id of casPath) {
+    for (const id of ids) {
       const children = branch?.children;
 
       if (children === undefined) {
-        return this.fetchTierData(casPath);
+        return this.fetchTierData(ids);
       }
 
       branch = children[id] as ITreeData;
 
       if (branch === undefined) {
-        return this.fetchTierData(casPath);
+        return this.fetchTierData(ids);
       }
     }
 
     if (branch?.children === undefined) {
       // need to load one level down for the tier tree
-      return this.fetchTierData(casPath);
+      return this.fetchTierData(ids);
     }
 
     return new Promise(resolve => resolve(branch));
@@ -137,7 +136,7 @@ export class TreeManager {
     }
 
     const tierInfo = await CassiniServer.lookup(name);
-    return this.get(tierInfo.identifiers);
+    return this.get(tierInfo.ids);
   }
 
   /**
@@ -202,7 +201,7 @@ export class TreeManager {
    * Currently just parses started into an actual Date object.
    */
   static _treeResponseToData(
-    treeResponse: ITreeResponse,
+    treeResponse: TreeResponse,
     ids: string[]
   ): ITreeData {
     const { started, children, ...rest } = treeResponse;
@@ -210,7 +209,7 @@ export class TreeManager {
     const newTree: ITreeData = {
       started: null,
       children: {},
-      identifiers: ids,
+      ids: ids,
       ...rest
     };
 
@@ -270,19 +269,17 @@ export class TierModelTreeManager {
    *
    * I wanted this to be synchronus, but an alternative, which is probably sensible is to use the treeManager.lookup.
    */
-  get(
-    name: string,
-    forceRefresh?: boolean
-  ): (tierInfo: TierModel.IOptions) => TierModel {
+  get(name: string, forceRefresh?: boolean): Promise<TierModel> {
     if (Object.keys(this.cache).includes(name) && !forceRefresh) {
-      return tierInfo => this.cache[name];
+      return Promise.resolve(this.cache[name]);
     }
 
-    return (tierInfo: TierModel.IOptions) =>
-      this._insertNewTierModel(name, tierInfo);
+    return CassiniServer.lookup(name).then(tierInfo =>
+      this._insertNewTierModel(name, tierInfo)
+    );
   }
 
-  _insertNewTierModel(name: string, tierInfo: TierModel.IOptions) {
+  _insertNewTierModel(name: string, tierInfo: TierInfo) {
     const model = new TierModel(tierInfo);
 
     this.cache[name] = model;
@@ -356,17 +353,17 @@ export class Cassini {
    *
    * If there's already a window open that has the same indentifiers, it will just show that window.
    *
-   * @param {string[]} [identifiers] - the identifiers for the tier to be opened. if not provided will just open a new window... I think!
+   * @param {string[]} [ids] - the identifiers for the tier to be opened. if not provided will just open a new window... I think!
    *
    */
-  async launchTierBrowser(identifiers?: string[]) {
+  async launchTierBrowser(ids?: string[]) {
     await this.ready;
 
-    const id = `cassini-browser-${identifiers}`;
+    const id = `cassini-browser-${ids}`;
 
     // if no identifiers provided, assume user wants a new browser, otherwise open existing.
     if (
-      identifiers &&
+      ids &&
       Array.from(this.app.shell.widgets())
         .map(w => w.id)
         .includes(id)
@@ -375,7 +372,7 @@ export class Cassini {
       return;
     }
 
-    const browser = new BrowserPanel(identifiers);
+    const browser = new BrowserPanel(ids);
 
     const content = browser;
 
@@ -429,10 +426,10 @@ export class Cassini {
 
   newChild(
     parentTier: ITreeData,
-    newChildInfo: INewChildInfo
+    newChildInfo: NewChildInfo
   ): Promise<ITreeData | null> {
     return CassiniServer.newChild(newChildInfo).then(treeResponse => {
-      return this.treeManager.fetchTierData(parentTier.identifiers); // refresh the tree.
+      return this.treeManager.fetchTierData(parentTier.ids); // refresh the tree.
     });
   }
 }

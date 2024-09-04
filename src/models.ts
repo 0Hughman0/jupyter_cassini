@@ -1,4 +1,7 @@
 /* eslint-disable prettier/prettier */
+import { Ajv, ValidateFunction } from 'ajv';
+import addFormats from 'ajv-formats';
+
 import { ObservableList } from '@jupyterlab/observables';
 import {
   DocumentRegistry,
@@ -11,8 +14,11 @@ import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
 
 import { cassini, ITreeChildData, ITreeData, TreeManager } from './core';
+import { MetaSchema, TierInfo, IChange } from './schema/types';
 
-const CORE_META: (keyof TierModel)[] = ['description', 'conclusion', 'started'];
+const ajv = new Ajv();
+addFormats(ajv);
+ajv.addKeyword('x-cas-field');
 
 /**
  * Browser-side model of a cassini tier.
@@ -38,9 +44,11 @@ const CORE_META: (keyof TierModel)[] = ['description', 'conclusion', 'started'];
  */
 export class TierModel {
   readonly name: string;
-  readonly identifiers: string[];
+  readonly ids: string[];
   readonly notebookPath: string | undefined;
   readonly started: Date;
+  readonly metaSchema: MetaSchema | undefined;
+  readonly metaValidator: ValidateFunction<any>;
 
   readonly hltsPath: string | undefined;
 
@@ -49,18 +57,24 @@ export class TierModel {
 
   protected _required: Promise<any>[];
 
-  constructor(options: TierModel.IOptions) {
+  constructor(options: TierInfo) {
     this.name = options.name;
-    this.identifiers = options.identifiers;
-    this.notebookPath = options.notebookPath;
+    this.ids = options.ids;
 
+    if (options.tierType === 'folder') {
+      return;
+    }
+
+    this.notebookPath = options.notebookPath;
     this.hltsPath = options.hltsPath;
+    this.metaSchema = options.metaSchema;
+    this.metaValidator = ajv.compile(this.metaSchema);
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
-      if (ids.toString() === this.identifiers.toString()) {
+      if (ids.toString() === this.ids.toString()) {
         this._changed.emit();
       }
-    });
+    }, this);
 
     this._required = [];
 
@@ -80,32 +94,25 @@ export class TierModel {
           if (change.name === 'dirty') {
             this._changed.emit(); // the dirtiness of the metaFile is also part of the state of this model.
           }
-        });
+        }, this);
       });
     }
 
     if (options.hltsPath) {
-      // check the file exists.
-      cassini.contentService.contents
-        .get(options.hltsPath, { content: false })
-        .then(model => {
-          // only create Context if it does.
-          const hltsFile = (this.hltsFile = new Context({
-            manager: cassini.contentService,
-            factory: new TextModelFactory(),
-            path: options.hltsPath as string
-          }));
-          this._required.push(hltsFile.ready);
+      const hltsFile = (this.hltsFile = new Context({
+        manager: cassini.contentService,
+        factory: new TextModelFactory(),
+        path: options.hltsPath as string
+      }));
+      this._required.push(hltsFile.ready);
 
-          hltsFile.initialize(false);
+      hltsFile.initialize(false);
 
-          this.hltsFile.ready.then(() => {
-            this.hltsFile?.model.contentChanged.connect(() => {
-              this._changed.emit();
-            }, this);
-          });
-        })
-        .catch(reason => reason); // fails if file doesn't exist
+      this.hltsFile.ready.then(() => {
+        this.hltsFile?.model.contentChanged.connect(() => {
+          this._changed.emit();
+        }, this);
+      });
     }
   }
 
@@ -125,7 +132,7 @@ export class TierModel {
   }
 
   get treeData(): Promise<ITreeData | null> {
-    return cassini.treeManager.get(this.identifiers);
+    return cassini.treeManager.get(this.ids);
   }
 
   get children(): Promise<{ [id: string]: ITreeChildData } | null> {
@@ -151,17 +158,28 @@ export class TierModel {
   get additionalMeta(): JSONObject {
     const o = {} as JSONObject;
     const metaJSON = this.meta;
+
+    const properties = this?.metaSchema && this.metaSchema.properties;
+
     for (const key in metaJSON) {
-      if ((CORE_META as string[]).indexOf(key) < 0) {
-        o[key] = metaJSON[key] as JSONValue;
+      if (
+        properties &&
+        properties[key] &&
+        ['core', 'private'].includes(properties[key]['x-cas-field'] || '')
+      ) {
+        continue;
       }
+
+      o[key] = metaJSON[key] as JSONValue;
     }
+
     return o;
   }
 
   get description(): string {
     return (this.meta['description'] as string) || '';
   }
+
   set description(value: string) {
     if (!this.metaFile) {
       throw 'Tier has no meta, cannot store description';
@@ -233,44 +251,15 @@ export class TierModel {
    *
    */
   revert() {
-    let highlightsExists: Promise<void>;
-
-    if (this.hltsPath && !this.hltsFile) {
-      // Highlights may have been added since initialisation - so check!
-      highlightsExists = cassini.contentService.contents
-        .get(this.hltsPath, { content: false })
-        .then(model => {
-          const hltsFile = (this.hltsFile = new Context({
-            manager: cassini.contentService,
-            factory: new TextModelFactory(),
-            path: this.hltsPath as string
-          }));
-
-          hltsFile.initialize(false);
-        })
-        .catch(reason => reason);
-    } else {
-      highlightsExists = Promise.resolve();
-    }
-
     return Promise.all([
       this.metaFile?.revert(),
-      highlightsExists.then(() =>
-        this.hltsFile?.ready.then(() => this.hltsFile?.revert())
-      )
+      this.hltsFile?.revert()
     ]).then();
   }
 }
 
 export namespace TierModel {
-  export interface IOptions {
-    name: string;
-    identifiers: string[];
-    children?: { [id: string]: { name: string } };
-    metaPath?: string;
-    hltsPath?: string;
-    notebookPath?: string;
-  }
+  export type ModelChange = IChange<TierModel | null, TierModel | null>;
 }
 
 export interface IAdditionalColumnsStore {
@@ -295,11 +284,15 @@ export class TierBrowserModel {
   currentPath: ObservableList<string>;
   treeManager: TreeManager;
   protected _additionalColumnsStore: IAdditionalColumnsStore;
+  protected _current: Promise<ITreeData | null>;
 
   constructor() {
     this.currentPath = new ObservableList<string>();
     this.treeManager = cassini.treeManager;
+    this._current = Promise.resolve(null);
+
     this.currentPath.changed.connect(() => {
+      this._current = this.treeManager.get(this.sCurrentPath);
       this._childrenUpdated.emit(this.current);
     }, this);
 
@@ -307,12 +300,16 @@ export class TierBrowserModel {
       if (ids.toString() === this.sCurrentPath.toString()) {
         this._childrenUpdated.emit(this.current);
       }
-    });
+    }, this);
 
     this._additionalColumnsStore = {
       additionalColumns: new Set(),
       children: {}
     };
+  }
+
+  get current(): Promise<ITreeData | null> {
+    return this._current;
   }
 
   private _childrenUpdated = new Signal<this, Promise<ITreeData | null>>(this);
@@ -353,13 +350,6 @@ export class TierBrowserModel {
         return {};
       }
     });
-  }
-
-  /**
-   * The current tier that's displayed in the Tree
-   */
-  get current(): Promise<ITreeData | null> {
-    return this.treeManager.get(this.sCurrentPath);
   }
 
   /**

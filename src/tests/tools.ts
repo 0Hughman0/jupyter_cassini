@@ -9,49 +9,44 @@ import {
 import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
 
 import { cassini } from '../core';
-import { ITreeResponse, ITierInfo } from '../services';
+import { TreeResponse, TierInfo } from '../schema/types';
+import {
+  HOME_TREE,
+  WP1_TREE,
+  WP1_1_TREE,
+  HOME_INFO,
+  WP1_INFO,
+  WP1_1_INFO
+} from './test_cases';
+import { paths } from '../schema/schema';
 
-export const TEST_META_CONTENT: JSONObject = {
-  description: 'this is a test',
-  conclusion: 'concluded',
-  started: '01/22/2023',
-  temperature: 273
-};
+export interface IFile {
+  path: string;
+  content: JSONObject;
+}
 
-export const TEST_HLT_CONTENT = {
-  cos: [{ data: { 'text/markdown': '## cos' }, metadata: {}, transient: {} }]
-};
-
-export const HOME_RESPONSE: ITreeResponse = require('./test_home_branch.json');
-export const WP1_RESPONSE: ITreeResponse = require('./test_WP1_branch.json');
-export const WP1_1_RESPONSE: ITreeResponse = require('./test_WP1_1_branch.json');
-
-export async function createTierFiles(
-  metaContent: JSONObject,
-  hltsContent?: JSONObject
-): Promise<{
+export async function createTierFiles(files: IFile[]): Promise<{
   manager: ServiceManager.IManager;
-  metaFile: Contents.IModel;
-  hltsFile: Contents.IModel;
+  files: Contents.IModel[];
 }> {
   const manager = new ServiceManagerMock();
   cassini.contentService = manager;
 
-  const metaFile = (await manager.contents.newUntitled({
-    path: '/WorkPackages/WP1/.exps/',
-    type: 'file'
-  })) as any;
+  const filesOut: Contents.IModel[] = [];
 
-  (metaFile as any)['content'] = JSON.stringify(metaContent);
+  for (const file of files) {
+    const newFile = await manager.contents.newUntitled({
+      path: file.path,
+      type: 'file'
+    });
 
-  const hltsFile = await manager.contents.newUntitled({
-    path: '/WorkPackages/WP1/.exps/', // filename is set as unique
-    type: 'file'
-  });
+    (newFile as any)['content'] = JSON.stringify(file.content);
+    await manager.contents.rename(newFile.path, file.path);
 
-  (hltsFile as any)['content'] = JSON.stringify(hltsContent);
+    filesOut.push(newFile);
+  }
 
-  return { manager, metaFile, hltsFile };
+  return { manager: manager, files: filesOut };
 }
 
 export function mockServer() {
@@ -62,23 +57,23 @@ export function mockServer() {
 
     switch (pathname) {
       case '/jupyter_cassini/tree': {
-        let responseData: ITreeResponse;
+        let responseData: TreeResponse;
 
-        switch (query.identifiers?.toString()) {
+        switch (query['ids[]']?.toString()) {
           case [].toString(): {
-            responseData = HOME_RESPONSE;
+            responseData = HOME_TREE;
             break;
           }
           case ['1'].toString(): {
-            responseData = WP1_RESPONSE;
+            responseData = WP1_TREE;
             break;
           }
           case ['1', '1'].toString(): {
-            responseData = WP1_1_RESPONSE;
+            responseData = WP1_1_TREE;
             break;
           }
           default: {
-            throw 'No mock data for request';
+            throw `No mock data for tree request: ${JSON.stringify(query)}`;
           }
         }
         return new Promise(resolve =>
@@ -87,26 +82,23 @@ export function mockServer() {
       }
 
       case '/jupyter_cassini/lookup': {
-        let responseData: ITierInfo;
+        let responseData: TierInfo;
 
-        switch (query.id) {
+        switch (query.name) {
           case 'Home': {
-            responseData = { identifiers: [], ...(HOME_RESPONSE as any) };
+            responseData = HOME_INFO;
             break;
           }
           case 'WP1': {
-            responseData = { identifiers: ['1'], ...(WP1_RESPONSE as any) };
+            responseData = WP1_INFO;
             break;
           }
           case 'WP1.1': {
-            responseData = {
-              identifiers: ['1', '1'],
-              ...(WP1_1_RESPONSE as any)
-            };
+            responseData = WP1_1_INFO;
             break;
           }
           default: {
-            throw 'No mock data for request';
+            throw `No mock data for lookup request ${JSON.stringify(query)}`;
           }
         }
         return new Promise(resolve =>
@@ -114,5 +106,38 @@ export function mockServer() {
         );
       }
     }
+  }) as jest.Mocked<typeof ServerConnection.makeRequest>;
+}
+
+export interface MockAPICall {
+  query: { [key: string]: string };
+  response: any;
+}
+
+export type MockAPICalls = { [endpoint in keyof paths]?: MockAPICall[] };
+
+export function mockServerAPI(calls: MockAPICalls): void {
+  ServerConnection.makeRequest = jest.fn((url, init, settings) => {
+    const { pathname, search } = URLExt.parse(url);
+
+    const query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
+
+    const mockResponses = calls[
+      pathname.replace('/jupyter_cassini', '') as keyof MockAPICalls
+    ] as MockAPICall[] | undefined;
+
+    if (!mockResponses) {
+      throw TypeError(`Could not find endpoint ${pathname}`);
+    }
+
+    for (const response of mockResponses) {
+      if (JSON.stringify(response.query) == JSON.stringify(query)) {
+        return Promise.resolve(new Response(JSON.stringify(response.response)));
+      }
+    }
+
+    throw TypeError(
+      `Couldn't find matching mock response to query ${JSON.stringify(query)}`
+    );
   }) as jest.Mocked<typeof ServerConnection.makeRequest>;
 }

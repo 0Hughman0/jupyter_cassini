@@ -2,7 +2,7 @@
 import { SplitPanel } from '@lumino/widgets';
 
 import { cassini, ILaunchable } from '../core';
-import { TierModel, TierBrowserModel as TierTreeModel } from '../models';
+import { TierBrowserModel as TierTreeModel } from '../models';
 import { TierBrowser as TierTree } from './treeview';
 import { TierViewer } from './tierviewer';
 
@@ -41,7 +41,7 @@ export class BrowserPanel extends SplitPanel {
       const browser = (this.browser = new TierTree(treeModel));
 
       browser.tierSelected.connect((sender, tierSelectedSignal) => {
-        this.openTier(tierSelectedSignal.path, tierSelectedSignal.tier);
+        this.previewTier(tierSelectedSignal.name);
       }, this);
       browser.tierLaunched.connect((sender, tierData) => {
         this.launchTier(tierData);
@@ -50,7 +50,7 @@ export class BrowserPanel extends SplitPanel {
       this.addWidget(browser);
       SplitPanel.setStretch(browser, 0);
 
-      const tierContent = (this.viewer = new TierViewer(tier));
+      const tierContent = (this.viewer = new TierViewer());
 
       this.addWidget(tierContent);
       SplitPanel.setStretch(tierContent, 1);
@@ -61,6 +61,7 @@ export class BrowserPanel extends SplitPanel {
         // browser.renderPromise is undefined until the react widget is attached to the window... I think!
         treeModel.currentPath.clear();
         treeModel.currentPath.pushAll(ids);
+        this.previewTier(tier.name);
       });
     });
   }
@@ -68,28 +69,12 @@ export class BrowserPanel extends SplitPanel {
   /**
    * View a tier in the brower's TierViewer, which is kinda like a preview.
    *
-   * @param casPath { string[] } - not currently used.
-   * @param tierData { TierModel.IOptions } - info required to open (preview?) a tier in a tierView
+   * @param name { string }
    */
-  openTier(casPath: string[], tierData: TierModel.IOptions): void {
-    this.viewer.setHidden(true);
-    this.viewer.dispose();
-    const newTier = (this.viewer = new TierViewer(tierData));
-
-    if (newTier.model.metaFile) {
-      newTier.model.metaFile.ready.then(value => {
-        this.viewer.update();
-      });
-    }
-
-    if (newTier.model.hltsFile) {
-      newTier.model.hltsFile.ready.then(value => {
-        this.viewer.update();
-      });
-    }
-
-    this.addWidget(newTier);
-    SplitPanel.setStretch(newTier, 1);
+  previewTier(name: string): void {
+    cassini.tierModelManager.get(name).then(tierModel => {
+      this.viewer.model = tierModel;
+    });
   }
 
   /**

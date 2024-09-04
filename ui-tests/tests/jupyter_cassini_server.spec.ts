@@ -1,12 +1,13 @@
-import { expect, test } from '@jupyterlab/galata';
+import { expect, test, galata } from '@jupyterlab/galata';
+import { ContentsHelper } from '@jupyterlab/galata/lib/contents';
+import * as path from 'path';
 
 /**
  * Don't load JupyterLab webpage before running the tests.
  * This is required to ensure we capture all log messages.
  */
 test.use({
-  autoGoto: false,
-  tmpPath: process.env.JUPYTERLAB_GALATA_ROOT_DIR // handled by the cassini server
+  autoGoto: false
 });
 
 test('Extension activates', async ({ page }) => {
@@ -34,25 +35,65 @@ test('Launcher Available', async ({ page }) => {
   await launcherButton.click();
 });
 
-async function createNewChild(page) {
-  await page.getByRole('button', { name: 'Create new child of Home' }).click();
-  await page.getByLabel('Identifier').click();
-  await page.getByLabel('Identifier').fill('1');
-  await page.locator('textarea').click();
-  await page.locator('textarea').fill('Description.\n\nLine 2.');
-  await page.getByRole('button', { name: 'Ok' }).click();
+async function createWP1(contentMangager: ContentsHelper) {
+  /*
+
+  It seems that creating files only works if they don't already exist
+  */
+
+  const dNb = await contentMangager.deleteFile(`./WorkPackages/WP1.ipynb`);
+  const dMeta = await contentMangager.deleteFile(
+    `./WorkPackages/.wps/WP1.json`
+  );
+  const dFolder = await contentMangager.deleteDirectory(`./WorkPackages/WP1`);
+  const nb = await contentMangager.uploadFile(
+    path.resolve(__dirname, '../test_project/WP1.ipynb'),
+    `./WorkPackages/WP1.ipynb`
+  );
+  const meta = await contentMangager.uploadFile(
+    path.resolve(__dirname, '../test_project/WP1.json'),
+    `./WorkPackages/.wps/WP1.json`
+  );
+  const folder = await contentMangager.createDirectory(`./WorkPackages/WP1`);
+
+  console.log(`${dNb}, ${dMeta}, ${dFolder}`);
+
+  if (!nb || !meta || !folder) {
+    throw Error('Creating WP1 failed!');
+  }
 }
 
 test.describe('Cassini-Browser', async () => {
-  test.describe.configure({ retries: 3 }); // tests are flakey, particularly notebook.runCell in highlights!
+  test.describe.configure({ retries: 1 }); // tests are flakey, particularly notebook.runCell in highlights!
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, request }) => {
+    /*
+    
+    Keep in mind from the perspective of this framework, the server is fixed and does not reset between tests.
+
+    Therefore we need to handle creating and cleaning up instances of Tiers ourselves.
+    */
+
+    const contentMangager = new ContentsHelper(request);
+    await createWP1(contentMangager);
+
     // keep in mind that the server is only started once.
     // this means the test isolation isn't great in terms of the state of cassini backend.
     await page.goto('http://localhost:8888/lab?', {
       waitUntil: 'domcontentloaded'
     });
     await page.getByLabel('Launcher').getByText('Browser').click();
+  });
+
+  test.afterEach(async ({ request }) => {
+    /*
+
+    Will clear out the directory where WP1 is contained.
+
+    */
+    const contents = galata.newContentsHelper(request);
+    await contents.deleteDirectory(`WorkPackages`);
+    await contents.createDirectory(`WorkPackages`);
   });
 
   test('browser-loaded', async ({ page }) => {
@@ -79,9 +120,7 @@ test.describe('Cassini-Browser', async () => {
     await expect(
       page.getByRole('button', { name: 'Fetch from disk' })
     ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: 'Open Home' }).nth(1)
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open Tier' })).toBeVisible();
   });
 
   test('create-child-dialogue', async ({ page }) => {
@@ -101,30 +140,36 @@ test.describe('Cassini-Browser', async () => {
   });
 
   test('create-child', async ({ page }) => {
-    // create new child
-    await createNewChild(page);
+    await page
+      .getByRole('button', { name: 'Create new child of Home' })
+      .click();
+    await page.getByLabel('Identifier').click();
+    await page.getByLabel('Identifier').fill('2');
+    await page.locator('textarea').click();
+    await page.locator('textarea').fill('Description.\n\nLine 2.');
+    await page.getByRole('button', { name: 'Ok' }).click();
 
     // check new child in table
     await expect(
-      await page.getByRole('cell', { name: 'WP1', exact: true })
+      await page.getByRole('cell', { name: 'WP2', exact: true })
     ).toBeVisible();
 
     // check loading child in preview
-    await page.getByRole('button', { name: 'Preview WP1' }).click();
-    await page.getByRole('heading', { name: 'WP1' }).click();
-    await page.getByText('Description.Line 2.', { exact: true }).click();
+    await page.getByRole('button', { name: 'Preview WP2' }).click();
+    await page.getByRole('heading', { name: 'WP2' }).click();
+    await page.getByText('Description. Line').click();
 
     // check notebook openable
-    await page.getByRole('button', { name: 'Open WP1' }).nth(1).click();
+    await page.getByRole('button', { name: 'Open Tier' }).click();
 
     // check notebook opened
-    await page.getByLabel('WP1.ipynb').getByText('WP1').nth(1).click();
+    await page.getByLabel('WP2.ipynb').getByText('WP2').nth(1).click();
 
     // check heading back to browser
     await page.getByRole('tab', { name: 'Launcher' }).click();
     await page.getByLabel('Launcher').getByText('Browser').click();
     await expect(
-      await page.getByRole('cell', { name: 'WP1', exact: true })
+      await page.getByRole('cell', { name: 'WP2', exact: true })
     ).toBeVisible();
   });
 
@@ -144,10 +189,8 @@ test.describe('Cassini-Browser', async () => {
     ).toBeVisible();
 
     await expect(
-      await page.getByRole('cell', { name: 'Edit columns' })
+      await page.getByRole('button', { name: 'Edit columns' })
     ).toBeVisible();
-
-    await createNewChild(page);
 
     const info = await page.getByRole('cell', { name: 'Description.' });
 
@@ -156,10 +199,11 @@ test.describe('Cassini-Browser', async () => {
     await page.getByRole('button', { name: 'Preview WP1' }).click();
 
     // conclusion box...
-    await page.getByRole('textbox').nth(3).fill('First Line\n\nline 2');
+    await page.getByRole('button', { name: 'Edit' }).nth(1).click();
+    await page.getByRole('textbox').nth(2).fill('First Line\n\nline 2');
 
     // save changes button
-    await page.getByRole('button', { name: 'Apply changes' }).nth(1).click();
+    await page.getByRole('button', { name: 'Apply changes' }).click();
 
     await page.getByRole('button', { name: 'Save changes to disk' }).click();
 
@@ -174,9 +218,6 @@ test.describe('Cassini-Browser', async () => {
   });
 
   test('highlights', async ({ page }) => {
-    // create new child
-    await createNewChild(page);
-
     // check notebook openable
     await page.getByRole('button', { name: 'Open WP1' }).click();
 
@@ -207,8 +248,6 @@ test.describe('Cassini-Browser', async () => {
         waitUntil: 'domcontentloaded'
       });
       await page.getByLabel('Launcher').getByText('Browser').click();
-
-      await createNewChild(page);
     });
 
     test('header-content', async ({ page }) => {
@@ -224,7 +263,7 @@ test.describe('Cassini-Browser', async () => {
       await expect(
         page.getByRole('heading', { name: 'Children' })
       ).toBeVisible();
-      await expect(page.getByText('Description.Line 2.')).toBeVisible();
+      await expect(page.getByText('test description').nth(1)).toBeVisible();
 
       await page.getByRole('button', { name: 'Create new child' }).click();
       await page.getByLabel('Identifier').click();
