@@ -9,15 +9,6 @@ import {
 import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
 
 import { cassini } from '../core';
-import { TreeResponse, TierInfo } from '../schema/types';
-import {
-  HOME_TREE,
-  WP1_TREE,
-  WP1_1_TREE,
-  HOME_INFO,
-  WP1_INFO,
-  WP1_1_INFO
-} from './test_cases';
 import { paths } from '../schema/schema';
 
 export interface IFile {
@@ -49,65 +40,6 @@ export async function createTierFiles(files: IFile[]): Promise<{
   return { manager: manager, files: filesOut };
 }
 
-export function mockServer() {
-  ServerConnection.makeRequest = jest.fn((url, init, settings) => {
-    const { pathname, search } = URLExt.parse(url);
-
-    const query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
-
-    switch (pathname) {
-      case '/jupyter_cassini/tree': {
-        let responseData: TreeResponse;
-
-        switch (query['ids[]']?.toString()) {
-          case [].toString(): {
-            responseData = HOME_TREE;
-            break;
-          }
-          case ['1'].toString(): {
-            responseData = WP1_TREE;
-            break;
-          }
-          case ['1', '1'].toString(): {
-            responseData = WP1_1_TREE;
-            break;
-          }
-          default: {
-            throw `No mock data for tree request: ${JSON.stringify(query)}`;
-          }
-        }
-        return new Promise(resolve =>
-          resolve(new Response(JSON.stringify(responseData)))
-        );
-      }
-
-      case '/jupyter_cassini/lookup': {
-        let responseData: TierInfo;
-
-        switch (query.name) {
-          case 'Home': {
-            responseData = HOME_INFO;
-            break;
-          }
-          case 'WP1': {
-            responseData = WP1_INFO;
-            break;
-          }
-          case 'WP1.1': {
-            responseData = WP1_1_INFO;
-            break;
-          }
-          default: {
-            throw `No mock data for lookup request ${JSON.stringify(query)}`;
-          }
-        }
-        return new Promise(resolve =>
-          resolve(new Response(JSON.stringify(responseData)))
-        );
-      }
-    }
-  }) as jest.Mocked<typeof ServerConnection.makeRequest>;
-}
 
 export interface MockAPICall {
   query: { [key: string]: string };

@@ -2,15 +2,20 @@ import { InputTextDialog, InputNumberDialog } from '../../ui/dialogwidgets';
 import { NewChildWidget } from '../../ui/newchilddialog';
 import { ITreeData, cassini } from '../../core';
 
-import { mockServer } from '../tools';
+import { mockServerAPI } from '../tools';
+import { HOME_TREE, WP1_TREE } from '../test_cases';
 
 import 'jest';
 import { ChildClsNotebookInfo } from '../../schema/types';
 
 describe('newChildDialog', () => {
   beforeEach(() => {
-    mockServer();
-  });
+    mockServerAPI({
+      '/tree': [
+        { query: { 'ids[]': '' }, response: HOME_TREE },
+        { query: { 'ids[]': '1' }, response: WP1_TREE },
+      ]})
+  })
 
   test('idInput', async () => {
     const tier = (await cassini.treeManager.get([])) as Required<ITreeData>;

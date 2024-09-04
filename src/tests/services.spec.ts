@@ -1,11 +1,18 @@
 import { CassiniServer } from '../services';
-import { mockServer } from './tools';
+import { mockServerAPI } from './tools';
 import { WP1_TREE } from './test_cases';
 
 import 'jest';
 
 describe('lookup', () => {
-  beforeEach(() => mockServer());
+  beforeEach(
+    () => {
+      mockServerAPI({
+        '/tree': [
+          { query: { 'ids[]': '1' }, response: WP1_TREE },
+        ]
+      })
+  });
 
   test('valid', async () => {
     const out = await CassiniServer.tree(['1']);

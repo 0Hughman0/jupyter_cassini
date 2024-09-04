@@ -1,6 +1,6 @@
 import { TierBrowserModel, TierModel } from '../models';
-import { createTierFiles, mockServer } from './tools';
-import { TEST_HLT_CONTENT, TEST_META_CONTENT, WP1_INFO } from './test_cases';
+import { createTierFiles, mockServerAPI } from './tools';
+import { TEST_HLT_CONTENT, TEST_META_CONTENT, WP1_INFO, WP1_TREE, HOME_TREE } from './test_cases';
 
 import 'jest';
 
@@ -87,7 +87,11 @@ describe('tier-model', () => {
 
 describe('tree-model', () => {
   beforeEach(() => {
-    mockServer();
+    mockServerAPI({
+      '/tree': [
+        { query: { 'ids[]': '' }, response: HOME_TREE },
+        { query: { 'ids[]': '1' }, response: WP1_TREE },
+    ]});
   });
 
   test('currentPath', async () => {
