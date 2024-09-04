@@ -62,7 +62,7 @@ def test_get_all_valid():
     s = Server(query=urlencode(dict(valid_query)))
     s.endpoint()
     
-    assert s.query == Query(param='value')
+    assert s.query == valid_query
     assert Response.model_validate_json(s.finished) == valid_response
 
 
@@ -74,7 +74,7 @@ def test_get_invalid_query():
             self.query = query
             return valid_response
 
-    s = Server(query=urlencode(dict(valid_query)))
+    s = Server(query=urlencode({'invalid': 'yaya'}))
     s.endpoint()
 
     assert s.error == 400

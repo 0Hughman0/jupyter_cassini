@@ -1,6 +1,7 @@
 import shutil
 import os
 from unittest.mock import Mock
+import sys
 
 import pytest
 from cassini import env
@@ -15,6 +16,8 @@ CWD = os.getcwd()
 @pytest.fixture
 def project_via_env(tmp_path):
     env._reset()
+    
+    assert env.project is None
 
     project_file = shutil.copy(
         "jupyter_cassini_server/tests/project/cas_project.py",
@@ -25,7 +28,9 @@ def project_via_env(tmp_path):
     project = find_project()
     project.setup_files()
 
-    return project
+    yield project
+
+    del sys.modules['cas_project']
 
 
 async def test_lookup_home(project_via_env, jp_fetch) -> None:
