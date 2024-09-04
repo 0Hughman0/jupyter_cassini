@@ -40,7 +40,6 @@ export async function createTierFiles(files: IFile[]): Promise<{
   return { manager: manager, files: filesOut };
 }
 
-
 export interface MockAPICall {
   query: { [key: string]: string };
   response: any;

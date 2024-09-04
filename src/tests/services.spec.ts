@@ -5,13 +5,10 @@ import { WP1_TREE } from './test_cases';
 import 'jest';
 
 describe('lookup', () => {
-  beforeEach(
-    () => {
-      mockServerAPI({
-        '/tree': [
-          { query: { 'ids[]': '1' }, response: WP1_TREE },
-        ]
-      })
+  beforeEach(() => {
+    mockServerAPI({
+      '/tree': [{ query: { 'ids[]': '1' }, response: WP1_TREE }]
+    });
   });
 
   test('valid', async () => {

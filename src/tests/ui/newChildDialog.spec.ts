@@ -13,9 +13,10 @@ describe('newChildDialog', () => {
     mockServerAPI({
       '/tree': [
         { query: { 'ids[]': '' }, response: HOME_TREE },
-        { query: { 'ids[]': '1' }, response: WP1_TREE },
-      ]})
-  })
+        { query: { 'ids[]': '1' }, response: WP1_TREE }
+      ]
+    });
+  });
 
   test('idInput', async () => {
     const tier = (await cassini.treeManager.get([])) as Required<ITreeData>;
