@@ -1,9 +1,12 @@
 import shutil
 import os
+from unittest.mock import Mock
 
 import pytest
 from cassini import env
 from cassini.utils import find_project
+
+from ..schema.models import NotebookTierInfo, FolderTierInfo, TreeResponse, Status, Status1, NewChildInfo
 
 
 CWD = os.getcwd()
@@ -22,8 +25,80 @@ def project_via_env(tmp_path):
     project = find_project()
     project.setup_files()
 
+    return project
 
-async def test_server_ready(project_via_env, jp_fetch):
+
+async def test_lookup_home(project_via_env, jp_fetch) -> None:
+    reponse = await jp_fetch("jupyter_cassini", "lookup", params={"name": "Home"})
+
+    assert reponse.code == 200
+
+    home_info = FolderTierInfo.model_validate_json(reponse.body.decode())
+    assert home_info.name == 'Home'
+
+
+async def test_lookup_WP1(project_via_env, jp_fetch) -> None:
+    project = project_via_env
+    project['WP1'].setup_files()
+
+    reponse = await jp_fetch("jupyter_cassini", "lookup", params={"name": "WP1"})
+
+    assert reponse.code == 200
+
+    info = NotebookTierInfo.model_validate_json(reponse.body.decode())
+    assert info.name == 'WP1'
+
+
+async def test_tree_home(project_via_env, jp_fetch) -> None:    
     reponse = await jp_fetch("jupyter_cassini", "tree")
 
     assert reponse.code == 200
+
+    tree = TreeResponse.model_validate_json(reponse.body.decode())
+    assert tree.name == 'Home'
+    
+
+async def test_tree_WP1(project_via_env, jp_fetch) -> None:    
+    project = project_via_env
+    project['WP1'].setup_files()
+
+    reponse = await jp_fetch("jupyter_cassini", "tree", params={'ids[]': '1'})
+
+    assert reponse.code == 200
+
+    tree = TreeResponse.model_validate_json(reponse.body.decode())
+    assert tree.name == 'WP1'
+    
+
+async def test_open_valid(project_via_env, jp_fetch) -> None:
+    project = project_via_env
+    project['Home'].open_folder = Mock()
+
+    assert not project['Home'].open_folder.called
+
+    response = await jp_fetch("jupyter_cassini", "open", params={'name': 'Home'})
+
+    assert Status.model_validate_json(response.body.decode()).status == Status1.success
+    assert project['Home'].open_folder.called
+
+
+async def test_open_invalid(project_via_env, jp_fetch) -> None:
+    response = await jp_fetch("jupyter_cassini", "open", params={'name': 'sdfdf'})
+
+    assert Status.model_validate_json(response.body.decode()).status == Status1.failure
+
+
+async def test_new_child(project_via_env, jp_fetch) -> None:
+    project = project_via_env
+    new_child_info = NewChildInfo(id='1', parent='Home', template='WorkPackage.ipynb')
+
+    assert not project['WP1'].exists()
+
+    response = await jp_fetch("jupyter_cassini", "newChild", body=new_child_info.model_dump_json(), method='POST')
+
+    assert response.code == 200
+    tree = TreeResponse.model_validate_json(response.body.decode())
+    assert tree.name == 'WP1'
+
+    assert project['WP1'].exists()
+
