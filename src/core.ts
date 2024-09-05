@@ -17,6 +17,8 @@ import {
 } from './schema/types';
 
 import { BrowserPanel } from './ui/browser';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 
 export interface ILaunchable {
   name: string;
@@ -302,6 +304,7 @@ export class Cassini {
   rendermimeRegistry: IRenderMimeRegistry;
   tierModelManager: TierModelTreeManager;
   commandRegistry: CommandRegistry;
+  ajv: Ajv;
 
   protected resolveReady: (value: void | PromiseLike<void>) => void;
 
@@ -317,6 +320,9 @@ export class Cassini {
     this.ready = new Promise((resolve, reject) => {
       this.resolveReady = resolve;
     });
+    this.ajv = new Ajv()
+    addFormats(this.ajv);
+    this.ajv.addKeyword('x-cas-field');
   }
 
   /**
@@ -442,3 +448,4 @@ export class Cassini {
  * @global cassini - the global instance of cassini
  */
 export const cassini = new Cassini();
+export const ajv = new Ajv();

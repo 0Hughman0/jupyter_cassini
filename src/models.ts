@@ -1,6 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Ajv, ValidateFunction } from 'ajv';
-import addFormats from 'ajv-formats';
+import { ValidateFunction } from 'ajv';
 
 import { ObservableList } from '@jupyterlab/observables';
 import {
@@ -15,10 +14,6 @@ import { Signal, ISignal } from '@lumino/signaling';
 
 import { cassini, ITreeChildData, ITreeData, TreeManager } from './core';
 import { MetaSchema, TierInfo, IChange } from './schema/types';
-
-const ajv = new Ajv();
-addFormats(ajv);
-ajv.addKeyword('x-cas-field');
 
 /**
  * Browser-side model of a cassini tier.
@@ -68,7 +63,7 @@ export class TierModel {
     this.notebookPath = options.notebookPath;
     this.hltsPath = options.hltsPath;
     this.metaSchema = options.metaSchema;
-    this.metaValidator = ajv.compile(this.metaSchema);
+    this.metaValidator = cassini.ajv.compile(this.metaSchema);
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.ids.toString()) {
@@ -174,6 +169,17 @@ export class TierModel {
     }
 
     return o;
+  }
+
+  validateMeta(key: string, data: any): boolean {
+    let schema = this.metaSchema?.properties &&  this.metaSchema?.properties[key]
+    if (!schema && this.metaSchema?.additionalProperties) {
+      schema = this.metaSchema?.additionalProperties
+    } else {
+      throw TypeError(`Cannot generate schema for ${key}`)
+    }
+
+    return cassini.ajv.validate(schema, data)
   }
 
   get description(): string {

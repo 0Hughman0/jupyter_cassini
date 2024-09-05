@@ -13,9 +13,12 @@ import { Dialog, Styling, InputDialog } from '@jupyterlab/apputils';
 const INPUT_DIALOG_CLASS = 'jp-Input-Dialog';
 const INPUT_BOOLEAN_DIALOG_CLASS = 'jp-Input-Boolean-Dialog';
 
+export interface IDialogueInput<T> extends Required<Dialog.IBodyWidget<T>>{}
+
+
 export abstract class InputDialogBase<T>
   extends Widget
-  implements Dialog.IBodyWidget<T>
+  implements IDialogueInput<T>
 {
   /**
    * InputDialog constructor

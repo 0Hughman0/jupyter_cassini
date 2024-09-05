@@ -79,30 +79,33 @@ components:
         - metaPath
         - metaSchema
 
+    objectDef:
+      type: object
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+        default: {}
+        format: 
+          type: string
+        x-cas-field:
+          type: string
+          enum:
+            - private
+            - core
+      additionalProperties: true
+
     metaSchema:
       type: object
       properties:
         properties:
           type: object
           additionalProperties:
-            type: object
-            properties:
-              title:
-                type: string
-              type:
-                type: string
-              default: {}
-              format: 
-                type: string
-              x-cas-field:
-                type: string
-                enum:
-                  - private
-                  - core
-          required:
-            - title
-            - type
-      additionalProperties: true
+            $ref: "#/components/schemas/objectDef"
+        additionalProperties:
+          $ref: "#/components/schemas/objectDef"
+        $defs: {}
       required:
         - properties
 
