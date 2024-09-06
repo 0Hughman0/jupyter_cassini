@@ -8,7 +8,7 @@ import {
   createColumnHelper
 } from '@tanstack/react-table';
 
-import { JSONValue } from '@lumino/coreutils';
+import { JSONObject, JSONValue } from '@lumino/coreutils';
 import { ISignal } from '@lumino/signaling';
 
 import { CodeEditorWrapper } from '@jupyterlab/codeeditor';
@@ -188,17 +188,20 @@ export function MetaTable(props: IMetaTableProps) {
  */
 export class MetaTableWidget extends ReactWidget {
   schema: MetaSchema;
+  values: JSONObject
   onMetaUpdate: (attribute: string, newValue: string) => void;
   onRemoveMeta: ((attribute: string) => void) | null;
 
   constructor(
-    attributes: MetaSchema,
+    schema: MetaSchema,
+    values: JSONObject,
     onMetaUpdate: (attribute: string, newValue: string) => void,
     onRemoveMeta: ((attribute: string) => void) | null,
     metaChanged: ISignal<TierModel, void>
   ) {
     super();
-    this.schema = attributes;
+    this.schema = schema;
+    this.values = values
     this.onMetaUpdate = onMetaUpdate;
     this.onRemoveMeta = onRemoveMeta;
 
@@ -243,7 +246,8 @@ export class MetaTableWidget extends ReactWidget {
     const metas = [];
 
     for (const [name, info] of Object.entries(this.schema.properties)) {
-      const input = createValidatedInput(info, '', undefined)
+      const currentVal = this.values[name]
+      const input = createValidatedInput(info, currentVal, undefined)
 
       metas.push({ name: name, editor: () => input?.wrappedInput });
     }

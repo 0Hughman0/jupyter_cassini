@@ -32,16 +32,16 @@ export function createMetaInput(propertySchema: ObjectDef, currentValue: any | n
   switch (propertySchema.type) {
     case "string":
       if (!propertySchema.format) {
-        return new InputTextDialog({label: label, placeholder: currentValue, title: ''})
+        return new InputTextDialog({label: label, text: currentValue, title: ''})
       }
       
       switch (propertySchema.format) {
         case "date":
-          return new InputDateDialog({label: label, placeholder: currentValue, title: ''})
+          return new InputDateDialog({label: label, value: currentValue, title: ''})
         case "date-time":
-          return new InputDatetimeDialog({label: label, placeholder: currentValue, title: ''})
+          return new InputDatetimeDialog({label: label, value: currentValue, title: ''})
         case "password": 
-          return new InputPasswordDialog({label: label, placeholder: currentValue, title: ''})
+          return new InputPasswordDialog({label: label, text: currentValue, title: ''})
       }
       
     case "number":
@@ -51,11 +51,11 @@ export function createMetaInput(propertySchema: ObjectDef, currentValue: any | n
     case "boolean":
       return new InputBooleanDialog({label: label, value: currentValue, title: ''})
     case "array":
-      return new InputTextDialog({label: label, placeholder: currentValue, title: ''})
+      return new InputTextDialog({label: label, text: currentValue, title: ''})
     case "object":
-      return new InputTextDialog({label: label, placeholder: currentValue, title: ''})
+      return new InputTextDialog({label: label, text: currentValue, title: ''})
     default:
-      return new InputTextDialog({label: label, placeholder: currentValue, title: ''})
+      return new InputTextDialog({label: label, text: currentValue, title: ''})
   }
 }
 
@@ -110,6 +110,7 @@ export class MetaEditor extends Panel {
     if (model.metaSchema) {
       const table = (this.table = new MetaTableWidget(
         model.metaSchema,
+        model.meta,
         this.onMetaUpdate.bind(this),
         this.onRemoveMeta.bind(this),
         model.changed

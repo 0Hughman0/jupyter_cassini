@@ -310,14 +310,21 @@ export class InputTextAreaDialog extends InputDialogBase<string> {
   }
 }
 
+export interface IDateOptions extends InputDialog.IOptions {
+  value: string | undefined
+}
+
 export class InputDateDialog extends InputDialogBase<string> {
 
   get inputType() {
     return 'date'
   }
 
-  constructor(options: InputDialog.ITextOptions) {
+  constructor(options: IDateOptions) {
     super(options);
+    if (options.value) {
+      this.input.value = options.value
+    }
   }
 
   getValue(): string {
@@ -330,8 +337,11 @@ export class InputDatetimeDialog extends InputDialogBase<string> {
     return 'datetime-local'
   }
 
-  constructor(options: InputDialog.ITextOptions) {
+  constructor(options: IDateOptions) {
     super(options);
+    if (options.value) {
+      this.input.value = options.value.split('.')[0]
+    }  
   }
 
   getValue(): string {
@@ -344,8 +354,6 @@ export class InputDatetimeDialog extends InputDialogBase<string> {
 Validator Wrapper.
 
 */ 
-
-
 export class ValidatingInput<T> {
   validator: (value: T) => boolean
   wrappedInput: InputDialogBase<T>
