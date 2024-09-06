@@ -12,8 +12,11 @@ manager = MetaManager()
 class MyWP(WorkPackage):
     name_part_template = 'WP{}'
     pretty_type = 'WorkPackage'
-    a = manager.meta_attr(datetime.datetime, datetime.datetime)
-    b = manager.meta_attr(Literal['bees', 'fish'], str)
+    a_date = manager.meta_attr(datetime.datetime, datetime.datetime)
+    one_of = manager.meta_attr(Literal['bees', 'fish'], str)
+    an_int = manager.meta_attr(int, int)
+    a_bool = manager.meta_attr(bool, int)
+    a_float = manager.meta_attr(float, int)
 
 project = Project([DEFAULT_TIERS[0], MyWP, *DEFAULT_TIERS[2:]], __file__)
 project = cassini_lib.extend_project(project)

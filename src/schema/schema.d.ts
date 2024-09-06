@@ -226,16 +226,18 @@ export interface components {
              */
             tierType: "notebook";
         });
-        objectDef: {
+        objectDef: ({
             title?: string;
             type?: string;
             default?: unknown;
             format?: string;
+            enum?: components["schemas"]["objectDef"]["type"][];
             /** @enum {string} */
             "x-cas-field"?: "private" | "core";
+            $ref?: string;
         } & {
             [key: string]: unknown;
-        };
+        }) & (unknown | unknown | unknown);
         metaSchema: {
             properties: {
                 [key: string]: components["schemas"]["objectDef"];

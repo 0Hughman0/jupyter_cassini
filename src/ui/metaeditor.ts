@@ -11,6 +11,60 @@ import { JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
 
 import { cassini } from '../core';
+import { InputBooleanDialog, 
+         InputItemsDialog, 
+         InputNumberDialog, 
+         InputPasswordDialog, 
+         InputTextDialog,
+         InputDateDialog,
+         InputDatetimeDialog,
+         InputDialogBase,
+         ValidatingInput } from './dialogwidgets'
+import { ObjectDef } from '../schema/types';
+
+
+export function createMetaInput(propertySchema: ObjectDef, currentValue: any | null, label: string | undefined): InputDialogBase<any> {
+  if (propertySchema.enum && propertySchema.type) {
+    const items = propertySchema.enum as (typeof propertySchema.type)[]
+    return new InputItemsDialog({label: label, current: currentValue, items: items, title: ''})
+  }
+
+  switch (propertySchema.type) {
+    case "string":
+      if (!propertySchema.format) {
+        return new InputTextDialog({label: label, placeholder: currentValue, title: ''})
+      }
+      
+      switch (propertySchema.format) {
+        case "date":
+          return new InputDateDialog({label: label, placeholder: currentValue, title: ''})
+        case "date-time":
+          return new InputDatetimeDialog({label: label, placeholder: currentValue, title: ''})
+        case "password": 
+          return new InputPasswordDialog({label: label, placeholder: currentValue, title: ''})
+      }
+      
+    case "number":
+      return new InputNumberDialog({label: label, value: currentValue, title: ''})
+    case "integer":
+        return new InputNumberDialog({label: label, value: currentValue, title: ''})
+    case "boolean":
+      return new InputBooleanDialog({label: label, value: currentValue, title: ''})
+    case "array":
+      return new InputTextDialog({label: label, placeholder: currentValue, title: ''})
+    case "object":
+      return new InputTextDialog({label: label, placeholder: currentValue, title: ''})
+    default:
+      return new InputTextDialog({label: label, placeholder: currentValue, title: ''})
+  }
+}
+
+export function createValidatedInput(propertySchema: ObjectDef, currentVal: any, label: string | undefined): ValidatingInput<any> {
+  const input = createMetaInput(propertySchema, currentVal, label)
+  const validator = new ValidatingInput(input, value => cassini.ajv.validate(propertySchema, value))
+
+  return validator
+}
 
 /**
  * Widget for modifying the meta of a TierModel.
@@ -53,14 +107,16 @@ export class MetaEditor extends Panel {
       return;
     }
 
-    const table = (this.table = new MetaTableWidget(
-      model.additionalMeta,
-      this.onMetaUpdate.bind(this),
-      this.onRemoveMeta.bind(this),
-      model.changed
-    ));
-
-    this.addWidget(table);
+    if (model.metaSchema) {
+      const table = (this.table = new MetaTableWidget(
+        model.metaSchema,
+        this.onMetaUpdate.bind(this),
+        this.onRemoveMeta.bind(this),
+        model.changed
+      ));
+  
+      this.addWidget(table);
+    }
   }
 
   onMetaUpdate(attribute: string, newValue: string): void {
@@ -110,7 +166,7 @@ export class MetaEditor extends Panel {
       meta[key] = val;
     }
 
-    this.table.attributes = meta;
+    // this.table.schema = meta;
     this.table.update();
   }
 }

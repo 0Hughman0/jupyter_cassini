@@ -11,7 +11,7 @@ import {
 import { JSONValue } from '@lumino/coreutils';
 import { ISignal } from '@lumino/signaling';
 
-import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
+import { CodeEditorWrapper } from '@jupyterlab/codeeditor';
 import { ReactWidget, InputDialog } from '@jupyterlab/apputils';
 import {
   checkIcon,
@@ -20,14 +20,17 @@ import {
   closeIcon
 } from '@jupyterlab/ui-components';
 
-import { cassini } from '../core';
 import { TierModel } from '../models';
+import { MetaSchema } from '../schema/types'
+import { IDialogueInput } from './dialogwidgets';
+import { createValidatedInput } from './metaeditor';
+
 
 export type MetaTableCallback = { name: string; editor: CodeEditorWrapper };
 
 export type MetaTableRow = {
   name: string;
-  editor: () => CodeEditorWrapper;
+  editor: () => IDialogueInput<any>;
 };
 
 export interface IMetaTableProps {
@@ -107,7 +110,7 @@ export function MetaTable(props: IMetaTableProps) {
                 onClick={() =>
                   onMetaUpdate(
                     row.name,
-                    row.editor().model.sharedModel.getSource()
+                    row.editor().getValue()
                   )
                 }
                 tooltip="Apply changes"
@@ -184,18 +187,18 @@ export function MetaTable(props: IMetaTableProps) {
  *
  */
 export class MetaTableWidget extends ReactWidget {
-  attributes: { [name: string]: JSONValue | undefined };
+  schema: MetaSchema;
   onMetaUpdate: (attribute: string, newValue: string) => void;
   onRemoveMeta: ((attribute: string) => void) | null;
 
   constructor(
-    attributes: { [name: string]: JSONValue | undefined },
+    attributes: MetaSchema,
     onMetaUpdate: (attribute: string, newValue: string) => void,
     onRemoveMeta: ((attribute: string) => void) | null,
     metaChanged: ISignal<TierModel, void>
   ) {
     super();
-    this.attributes = attributes;
+    this.schema = attributes;
     this.onMetaUpdate = onMetaUpdate;
     this.onRemoveMeta = onRemoveMeta;
 
@@ -215,12 +218,12 @@ export class MetaTableWidget extends ReactWidget {
   onMetaChanged(newMeta: { [name: string]: JSONValue }) {
     const meta: { [name: string]: JSONValue } = {};
 
-    for (const key of Object.keys(this.attributes)) {
+    for (const key of Object.keys(this.schema)) {
       const val = newMeta[key];
       meta[key] = val;
     }
 
-    this.attributes = meta;
+    // this.schema = meta;
     this.update();
   }
 
@@ -232,25 +235,17 @@ export class MetaTableWidget extends ReactWidget {
    * @param key
    */
   onNewMetaKey(key: string) {
-    this.attributes[key] = undefined;
+    // this.schema[key] = undefined;
     this.update();
   }
 
   render() {
     const metas = [];
 
-    for (const name of Object.keys(this.attributes)) {
-      const editor = new CodeEditorWrapper({
-        model: new CodeEditor.Model({ mimeType: 'application/json' }),
-        factory: cassini.contentFactory.newInlineEditor,
-        editorOptions: { config: { lineNumbers: false } }
-      });
+    for (const [name, info] of Object.entries(this.schema.properties)) {
+      const input = createValidatedInput(info, '', undefined)
 
-      const val = this.attributes[name];
-
-      editor.model.sharedModel.setSource(val ? JSON.stringify(val) : '');
-
-      metas.push({ name: name, editor: () => editor });
+      metas.push({ name: name, editor: () => input?.wrappedInput });
     }
 
     const onNewMetaKey = this.onNewMetaKey.bind(this);

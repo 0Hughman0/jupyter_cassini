@@ -6,10 +6,57 @@ import {
   InputTextDialog,
   InputItemsDialog,
   InputTextAreaDialog,
-  InputNumberDialog
+  ValidatingInput,
+  IDialogueInput
 } from './dialogwidgets';
-import { IdDialog, IValidatingInput, ValidatingInput } from './inputs';
 
+import {
+  createValidatedInput
+} from './metaeditor'
+
+/**
+ * Version of InputTextDialog that indicates is the contents of the input does not match `idRegex`
+ */
+
+export class IdDialog extends InputTextDialog {
+  idRegex: RegExp;
+  nameTemplate: string;
+  previewBox: HTMLSpanElement;
+
+  constructor(options: IIdDialogOptions) {
+    super(options);
+    this.idRegex = new RegExp(`^${options.idRegex}$`);
+    this.nameTemplate = options.nameTemplate;
+
+    this.input.addEventListener('input', this.validateInput.bind(this));
+
+    this.previewBox = document.createElement('span');
+    this.node.appendChild(this.previewBox);
+    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
+      '{}',
+      '?'
+    )}`;
+  }
+
+  validateInput(): boolean {
+    const id = this.input.value;
+
+    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
+      '{}',
+      id
+    )}`;
+
+    if (id && !this.idRegex.test(id)) {
+      this.input.classList.add('cas-invalid-id');
+
+      return false;
+    } else {
+      this.input.classList.remove('cas-invalid-id');
+
+      return true;
+    }
+  }
+}
 
 
 export interface IIdDialogOptions extends InputDialog.ITextOptions {
@@ -27,9 +74,7 @@ export class NewChildWidget extends Widget {
   descriptionInput: InputTextAreaDialog;
   templateSelector: InputItemsDialog;
 
-  metaInputs: (InputTextDialog | InputNumberDialog)[];
-
-  subInputs: { [name: string]: IValidatingInput<any> };
+  subInputs: { [name: string]: (ValidatingInput<any> | IDialogueInput<any>)};
 
   constructor(tier: Required<ITreeData>) {
     super();
@@ -72,30 +117,18 @@ export class NewChildWidget extends Widget {
       this.subInputs.description = descriptionInput;
       this.subInputs.template = templateSelector;
 
-      const metaInputs: (Dialog.IBodyWidget)[] =
-        (this.metaInputs = []);
-
       for (const [name, info] of Object.entries(
         tier.childClsInfo.metaSchema.properties
       )) {
-        let input;
-
         if (['private', 'core'].includes(info['x-cas-field'] ?? '')) {
           continue;
         }
 
-        if (typeof info.type === 'string') {
-          input = new InputTextDialog({ title: '', label: name });
-        } else {
-          input = new InputNumberDialog({ title: '', label: name });
-        }
-
-        const vinput = new ValidatingInput(input, (value: string) => cassini.ajv.validate(info, value))
-
-        metaInputs.push(vinput);
+        const vinput = createValidatedInput(info, name, undefined)
+        
         this.subInputs[name] = vinput;
 
-        layout.addWidget(input);
+        layout.addWidget(vinput.wrappedInput);
       }
     }
   }

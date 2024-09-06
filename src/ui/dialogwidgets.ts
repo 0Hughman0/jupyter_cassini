@@ -29,11 +29,21 @@ export abstract class InputDialogBase<T>
     return 'input';
   }
 
-  constructor(label?: string) {
+  get inputType(): string | null {
+    return 'text'
+  }
+
+  constructor(options: {label?: string}) {
     super();
     this.addClass(INPUT_DIALOG_CLASS);
 
+    const { label } = options
+
     this.input = document.createElement(this.elem) as HTMLInputElement;
+    if (this.inputType) {
+      this.input.type = this.inputType
+    }
+    
     this.input.classList.add('jp-mod-styled');
     this.input.id = 'jp-dialog-input-id';
 
@@ -49,7 +59,7 @@ export abstract class InputDialogBase<T>
     this.node.appendChild(this.input);
   }
 
-  abstract getValue(): any;
+  abstract getValue(): T;
   /** Input HTML node, access is not part of public API */
   input: HTMLInputElement | HTMLTextAreaElement;
 }
@@ -64,13 +74,14 @@ export class InputBooleanDialog extends InputDialogBase<boolean> {
    * @param options Constructor options
    */
   input: HTMLInputElement;
+  get inputType() {
+    return 'checkbox'
+  }
 
   constructor(options: InputDialog.IBooleanOptions) {
-    super(options.label);
+    super(options);
 
     this.addClass(INPUT_BOOLEAN_DIALOG_CLASS);
-
-    this.input.type = 'checkbox';
     this.input.checked = options.value ? true : false;
   }
 
@@ -94,10 +105,13 @@ export class InputNumberDialog extends InputDialogBase<number> {
 
   input: HTMLInputElement;
 
-  constructor(options: InputDialog.INumberOptions) {
-    super(options.label);
+  get inputType() {
+    return 'number'
+  }
 
-    this.input.type = 'number';
+  constructor(options: InputDialog.INumberOptions) {
+    super(options);
+
     this.input.value = options.value ? options.value.toString() : '0';
   }
 
@@ -119,15 +133,17 @@ export class InputNumberDialog extends InputDialogBase<number> {
 export class InputTextDialog extends InputDialogBase<string> {
   input: HTMLInputElement;
 
+  get inputType() {
+    return 'text'
+  }
+  
   /**
    * InputTextDialog constructor
    *
    * @param options Constructor options
    */
   constructor(options: InputDialog.ITextOptions) {
-    super(options.label);
-
-    this.input.type = 'text';
+    super(options);
     this.input.value = options.text ? options.text : '';
     if (options.placeholder) {
       this.input.placeholder = options.placeholder;
@@ -163,15 +179,19 @@ export class InputTextDialog extends InputDialogBase<string> {
  */
 export class InputPasswordDialog extends InputDialogBase<string> {
   input: HTMLInputElement;
+
+  get inputType() {
+    return 'password'
+  }
+  
   /**
    * InputPasswordDialog constructor
    *
    * @param options Constructor options
    */
   constructor(options: InputDialog.ITextOptions) {
-    super(options.label);
+    super(options);
 
-    this.input.type = 'password';
     this.input.value = options.text ? options.text : '';
     if (options.placeholder) {
       this.input.placeholder = options.placeholder;
@@ -202,13 +222,17 @@ export class InputPasswordDialog extends InputDialogBase<string> {
 export class InputItemsDialog extends InputDialogBase<string> {
   input: HTMLInputElement;
   list: HTMLSelectElement;
+
+  get inputType() {
+    return 'list'
+  }
   /**
    * InputItemsDialog constructor
    *
    * @param options Constructor options
    */
   constructor(options: InputDialog.IItemOptions) {
-    super(options.label);
+    super(options);
 
     this._editable = options.editable || false;
 
@@ -236,8 +260,7 @@ export class InputItemsDialog extends InputDialogBase<string> {
       const data = document.createElement('datalist');
       data.id = 'input-dialog-items';
       data.appendChild(this.list);
-
-      this.input.type = 'list';
+      
       this.input.value = current;
       this.input.setAttribute('list', data.id);
       if (options.placeholder) {
@@ -265,6 +288,8 @@ export class InputItemsDialog extends InputDialogBase<string> {
   private _editable: boolean;
 }
 
+/* Cassini defined dialogue widgets */
+
 export class InputTextAreaDialog extends InputDialogBase<string> {
   input: HTMLTextAreaElement;
 
@@ -272,11 +297,84 @@ export class InputTextAreaDialog extends InputDialogBase<string> {
     return 'textarea';
   }
 
+  get inputType(): null {
+    return null
+  }
+
   constructor(options: InputDialog.ITextOptions) {
-    super(options.label);
+    super(options);
   }
 
   getValue(): string {
     return this.input.value;
   }
 }
+
+export class InputDateDialog extends InputDialogBase<string> {
+
+  get inputType() {
+    return 'date'
+  }
+
+  constructor(options: InputDialog.ITextOptions) {
+    super(options);
+  }
+
+  getValue(): string {
+    return new Date(this.input.value).toISOString();
+  }
+}
+
+export class InputDatetimeDialog extends InputDialogBase<string> {
+  get inputType() {
+    return 'datetime-local'
+  }
+
+  constructor(options: InputDialog.ITextOptions) {
+    super(options);
+  }
+
+  getValue(): string {
+    return new Date(this.input.value + 'Z').toISOString();
+  }
+}
+
+/*
+
+Validator Wrapper.
+
+*/ 
+
+
+export class ValidatingInput<T> {
+  validator: (value: T) => boolean
+  wrappedInput: InputDialogBase<T>
+
+  constructor(inputWidget: InputDialogBase<T>, validator: (value: T) => boolean) {
+    this.wrappedInput = inputWidget
+    this.validator = validator
+    this.input.addEventListener('input', this.handleInput.bind(this));
+  }
+
+  get input () {
+    return this.wrappedInput.input
+  }
+  
+  getValue(): T{
+    return this.wrappedInput.getValue()
+  }
+
+  handleInput(): boolean {
+    const value = this.getValue();
+    
+    if (this.validator(value)) {
+      this.wrappedInput.input.classList.remove('cas-invalid-id');
+      return false;
+    } else {
+      this.wrappedInput.input.classList.add('cas-invalid-id');  
+      return true;
+    }
+  }
+}
+
+

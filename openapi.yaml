@@ -89,11 +89,21 @@ components:
         default: {}
         format: 
           type: string
+        enum:
+          type: array
+          items: 
+            $ref: "#/components/schemas/objectDef/properties/type"
         x-cas-field:
           type: string
           enum:
             - private
             - core
+        $ref:
+          type: string
+      oneOf:
+        - required: [type]
+        - required: [$ref]
+        - required: [type, enum]
       additionalProperties: true
 
     metaSchema:

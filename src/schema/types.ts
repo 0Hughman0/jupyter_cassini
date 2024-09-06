@@ -15,6 +15,7 @@ export type NewChildInfo = components['schemas']['NewChildInfo'];
 
 export type Status = components['schemas']['Status'];
 
+export type ObjectDef = components['schemas']['objectDef'];
 export type MetaSchema = components['schemas']['metaSchema'];
 
 export interface IChange<Old, New> {
