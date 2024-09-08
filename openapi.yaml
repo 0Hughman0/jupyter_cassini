@@ -118,6 +118,7 @@ components:
         $defs: {}
       required:
         - properties
+        - additionalProperties
 
     ChildClsInfo:
       type: object

@@ -242,7 +242,7 @@ export interface components {
             properties: {
                 [key: string]: components["schemas"]["objectDef"];
             };
-            additionalProperties?: components["schemas"]["objectDef"];
+            additionalProperties: components["schemas"]["objectDef"];
             $defs?: unknown;
         };
         ChildClsInfo: components["schemas"]["ChildClsFolderInfo"] | components["schemas"]["ChildClsNotebookInfo"];

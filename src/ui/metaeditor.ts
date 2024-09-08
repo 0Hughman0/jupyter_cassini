@@ -1,5 +1,4 @@
 import { Panel } from '@lumino/widgets';
-import { JSONObject } from '@lumino/coreutils';
 
 import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
 import { RenderMimeRegistry } from '@jupyterlab/rendermime';
@@ -18,6 +17,7 @@ import { InputBooleanDialog,
          InputTextDialog,
          InputDateDialog,
          InputDatetimeDialog,
+         InputJSONDialog,
          InputDialogBase,
          ValidatingInput } from './dialogwidgets'
 import { ObjectDef } from '../schema/types';
@@ -51,19 +51,28 @@ export function createMetaInput(propertySchema: ObjectDef, currentValue: any | n
     case "boolean":
       return new InputBooleanDialog({label: label, value: currentValue, title: ''})
     case "array":
-      return new InputTextDialog({label: label, text: currentValue, title: ''})
+      return new InputJSONDialog({label: label, text: currentValue, title: ''})
     case "object":
-      return new InputTextDialog({label: label, text: currentValue, title: ''})
+      return new InputJSONDialog({label: label, text: currentValue, title: ''})
     default:
-      return new InputTextDialog({label: label, text: currentValue, title: ''})
+      return new InputJSONDialog({label: label, text: currentValue, title: ''})
   }
 }
 
 export function createValidatedInput(propertySchema: ObjectDef, currentVal: any, label: string | undefined): ValidatingInput<any> {
   const input = createMetaInput(propertySchema, currentVal, label)
-  const validator = new ValidatingInput(input, value => cassini.ajv.validate(propertySchema, value))
 
-  return validator
+  let validator
+  
+  if (input instanceof InputJSONDialog) {
+    validator = (value: any) => value !== undefined
+  } else {
+    validator = (value: any) => cassini.ajv.validate(propertySchema, value)
+  }
+
+  const validatedInput = new ValidatingInput(input, validator)
+
+  return validatedInput
 }
 
 /**
@@ -99,15 +108,13 @@ export class MetaEditor extends Panel {
   }
 
   onModelChanged(model: TierModel | null): void {
-    if (this.table) {
-      this.table.dispose();
-    }
-
     if (!model) {
       return;
     }
 
     if (model.metaSchema) {
+      this.table?.dispose()
+
       const table = (this.table = new MetaTableWidget(
         model.metaSchema,
         model.meta,
@@ -143,10 +150,7 @@ export class MetaEditor extends Panel {
       return;
     }
 
-    const meta = this.model.metaFile?.model.toJSON() as JSONObject;
-    delete meta[attribute];
-
-    this.model.metaFile?.model.fromJSON(meta);
+    this.model.removeMeta(attribute)
   }
 
   render(attributes: string[]) {

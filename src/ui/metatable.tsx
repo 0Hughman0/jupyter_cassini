@@ -219,14 +219,7 @@ export class MetaTableWidget extends ReactWidget {
    * @param newMeta
    */
   onMetaChanged(newMeta: { [name: string]: JSONValue }) {
-    const meta: { [name: string]: JSONValue } = {};
-
-    for (const key of Object.keys(this.schema)) {
-      const val = newMeta[key];
-      meta[key] = val;
-    }
-
-    // this.schema = meta;
+    this.values = newMeta;
     this.update();
   }
 
@@ -238,18 +231,32 @@ export class MetaTableWidget extends ReactWidget {
    * @param key
    */
   onNewMetaKey(key: string) {
-    // this.schema[key] = undefined;
+    this.values[key] = null;
     this.update();
   }
 
   render() {
     const metas = [];
 
-    for (const [name, info] of Object.entries(this.schema.properties)) {
-      const currentVal = this.values[name]
-      const input = createValidatedInput(info, currentVal, undefined)
+    const allKeys = new Set(Object.keys(this.values))
 
+    for (const [name, info] of Object.entries(this.schema.properties)) {      
+      const value = this.values[name]
+      allKeys.delete(name)
+      const input = createValidatedInput(info, value, undefined)
       metas.push({ name: name, editor: () => input?.wrappedInput });
+    }
+
+    for (const extraKey of allKeys) {
+      const value = this.values[extraKey]
+      const additionalInfo = this.schema.additionalProperties
+
+      if (additionalInfo.$ref) {
+        additionalInfo["$defs"] = this.schema.$defs
+      }
+
+      const input = createValidatedInput(additionalInfo, value, undefined)
+      metas.push({ name: extraKey, editor: () => input?.wrappedInput }); 
     }
 
     const onNewMetaKey = this.onNewMetaKey.bind(this);

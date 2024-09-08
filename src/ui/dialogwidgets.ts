@@ -9,6 +9,7 @@ import { Message } from '@lumino/messaging';
 import { Widget } from '@lumino/widgets';
 
 import { Dialog, Styling, InputDialog } from '@jupyterlab/apputils';
+import { JSONObject } from '@lumino/coreutils';
 
 const INPUT_DIALOG_CLASS = 'jp-Input-Dialog';
 const INPUT_BOOLEAN_DIALOG_CLASS = 'jp-Input-Boolean-Dialog';
@@ -346,6 +347,28 @@ export class InputDatetimeDialog extends InputDialogBase<string> {
 
   getValue(): string {
     return new Date(this.input.value + 'Z').toISOString();
+  }
+}
+
+
+export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
+
+  constructor(options: InputDialog.ITextOptions) {
+    super(options)
+    this.input.value = JSON.stringify(options.text ? options.text : '');
+  }
+
+  /*
+
+  Returns undefined if cannot parse
+
+  */
+  getValue(): JSONObject | undefined {
+    try {
+      return JSON.parse(this.input.value)
+    } catch (SyntaxError) {
+      return undefined
+    }
   }
 }
 

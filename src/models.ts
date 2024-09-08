@@ -146,6 +146,12 @@ export class TierModel {
     }
   }
 
+  updateMeta(newMeta: JSONObject) {
+    if (this.metaValidator(newMeta)) {
+      this.metaFile?.model.fromJSON(newMeta)
+    }
+  }
+
   /**
    * Get contents of meta, excluding the CORE_META, which are the required ones.
    *
@@ -171,26 +177,19 @@ export class TierModel {
     return o;
   }
 
-  validateMeta(key: string, data: any): boolean {
-    let schema = this.metaSchema?.properties &&  this.metaSchema?.properties[key]
-    if (!schema && this.metaSchema?.additionalProperties) {
-      schema = this.metaSchema?.additionalProperties
-    } else {
-      throw TypeError(`Cannot generate schema for ${key}`)
-    }
-
-    return cassini.ajv.validate(schema, data)
+  setMetaValue<T extends JSONValue>(key: string, value: T): T {
+    const newMeta = this.meta
+    newMeta[key] = value
+    this.updateMeta(newMeta);
+    this._changed.emit()
+    return value
   }
 
-  setMetaValue<T extends JSONValue>(key: string, value: T): T {
-    const meta = Object.assign({}, this.meta)
-    meta[key] = value
-    
-    if (this.metaValidator(meta)) {
-      this.metaFile?.model.fromJSON(meta)
-    }
-
-    return value
+  removeMeta(key: string) {
+    const newMeta = this.meta
+    delete newMeta[key]
+    this.updateMeta(newMeta)
+    this._changed.emit()
   }
 
   get description(): string {
@@ -210,6 +209,7 @@ export class TierModel {
   get conclusion(): string {
     return (this.meta['conclusion'] as string) || '';
   }
+  
   set conclusion(value: string) {
     if (!this.metaFile) {
       throw 'Tier has no meta, cannot store conclusion';

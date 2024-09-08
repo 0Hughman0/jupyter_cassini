@@ -4,6 +4,7 @@ from typing import Literal
 from cassini import Project, DEFAULT_TIERS, WorkPackage
 from cassini.meta import MetaManager
 from cassini.ext import cassini_lib
+from pydantic import SecretStr
 
 manager = MetaManager()
 
@@ -17,6 +18,7 @@ class MyWP(WorkPackage):
     an_int = manager.meta_attr(int, int)
     a_bool = manager.meta_attr(bool, bool)
     a_float = manager.meta_attr(float, float)
+    a_secret = manager.meta_attr(SecretStr, str)
 
 project = Project([DEFAULT_TIERS[0], MyWP, *DEFAULT_TIERS[2:]], __file__)
 project = cassini_lib.extend_project(project)
