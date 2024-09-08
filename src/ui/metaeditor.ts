@@ -26,7 +26,7 @@ import { ObjectDef } from '../schema/types';
 export function createMetaInput(propertySchema: ObjectDef, currentValue: any | null, label: string | undefined): InputDialogBase<any> {
   if (propertySchema.enum && propertySchema.type) {
     const items = propertySchema.enum as (typeof propertySchema.type)[]
-    return new InputItemsDialog({label: label, current: currentValue, items: items, title: ''})
+    return new InputItemsDialog({label: label, current: items.indexOf(currentValue), items: items, title: '', editable: false})
   }
 
   switch (propertySchema.type) {
@@ -130,11 +130,7 @@ export class MetaEditor extends Panel {
       return;
     }
 
-    const meta = this.model.metaFile?.model.toJSON() as JSONObject;
-
-    meta[attribute] = JSON.parse(newValue);
-
-    this.model.metaFile?.model.fromJSON(meta);
+    this.model.setMetaValue(attribute, newValue)
   }
 
   onRemoveMeta(attribute: string) {

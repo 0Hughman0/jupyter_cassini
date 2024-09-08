@@ -5,7 +5,6 @@ from cassini import Project, DEFAULT_TIERS, WorkPackage
 from cassini.meta import MetaManager
 from cassini.ext import cassini_lib
 
-
 manager = MetaManager()
 
 @manager.connect_class

@@ -182,6 +182,17 @@ export class TierModel {
     return cassini.ajv.validate(schema, data)
   }
 
+  setMetaValue<T extends JSONValue>(key: string, value: T): T {
+    const meta = Object.assign({}, this.meta)
+    meta[key] = value
+    
+    if (this.metaValidator(meta)) {
+      this.metaFile?.model.fromJSON(meta)
+    }
+
+    return value
+  }
+
   get description(): string {
     return (this.meta['description'] as string) || '';
   }

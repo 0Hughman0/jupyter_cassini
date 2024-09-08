@@ -328,7 +328,7 @@ export class InputDateDialog extends InputDialogBase<string> {
   }
 
   getValue(): string {
-    return new Date(this.input.value).toISOString();
+    return this.input.value;
   }
 }
 
