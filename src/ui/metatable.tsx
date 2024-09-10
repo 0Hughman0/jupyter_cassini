@@ -103,6 +103,7 @@ export function MetaTable(props: IMetaTableProps) {
                   icon={closeIcon}
                   onClick={() => onRemoveMeta(row.name)}
                   tooltip={`Delete (${row.name})`}
+
                 />
               )}
               <ToolbarButtonComponent
@@ -206,7 +207,7 @@ export class MetaTableWidget extends ReactWidget {
     this.onRemoveMeta = onRemoveMeta;
 
     metaChanged.connect(
-      model => this.onMetaChanged(model.additionalMeta),
+      model => this.handleMetaChanged(model.additionalMeta),
       this
     );
   }
@@ -218,7 +219,7 @@ export class MetaTableWidget extends ReactWidget {
    *
    * @param newMeta
    */
-  onMetaChanged(newMeta: { [name: string]: JSONValue }) {
+  handleMetaChanged(newMeta: { [name: string]: JSONValue }) {
     this.values = newMeta;
     this.update();
   }
@@ -230,7 +231,7 @@ export class MetaTableWidget extends ReactWidget {
    *
    * @param key
    */
-  onNewMetaKey(key: string) {
+  handleNewMetaKey(key: string) {
     this.values[key] = null;
     this.update();
   }
@@ -240,7 +241,7 @@ export class MetaTableWidget extends ReactWidget {
 
     const allKeys = new Set(Object.keys(this.values))
 
-    for (const [name, info] of Object.entries(this.schema.properties)) {      
+    for (const [name, info] of Object.entries(this.schema.properties)) {
       const value = this.values[name]
       allKeys.delete(name)
       const input = createValidatedInput(info, value, undefined)
@@ -259,7 +260,7 @@ export class MetaTableWidget extends ReactWidget {
       metas.push({ name: extraKey, editor: () => input?.wrappedInput }); 
     }
 
-    const onNewMetaKey = this.onNewMetaKey.bind(this);
+    const onNewMetaKey = this.handleNewMetaKey.bind(this);
 
     return (
       <div>

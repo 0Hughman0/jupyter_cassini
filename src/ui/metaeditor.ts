@@ -112,12 +112,12 @@ export class MetaEditor extends Panel {
       return;
     }
 
-    if (model.metaSchema) {
+    if (model.publicMetaSchema) {
       this.table?.dispose()
 
       const table = (this.table = new MetaTableWidget(
-        model.metaSchema,
-        model.meta,
+        model.publicMetaSchema,
+        model.additionalMeta,
         this.onMetaUpdate.bind(this),
         this.onRemoveMeta.bind(this),
         model.changed
@@ -167,7 +167,7 @@ export class MetaEditor extends Panel {
       meta[key] = val;
     }
 
-    // this.table.schema = meta;
+    this.table.values = meta;
     this.table.update();
   }
 }

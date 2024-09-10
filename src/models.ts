@@ -43,6 +43,7 @@ export class TierModel {
   readonly notebookPath: string | undefined;
   readonly started: Date;
   readonly metaSchema: MetaSchema | undefined;
+  readonly publicMetaSchema: MetaSchema | undefined;
   readonly metaValidator: ValidateFunction<any>;
 
   readonly hltsPath: string | undefined;
@@ -63,6 +64,8 @@ export class TierModel {
     this.notebookPath = options.notebookPath;
     this.hltsPath = options.hltsPath;
     this.metaSchema = options.metaSchema;
+    this.publicMetaSchema = this.createPublicMetaSchema(this.metaSchema)
+
     this.metaValidator = cassini.ajv.compile(this.metaSchema);
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
@@ -109,6 +112,20 @@ export class TierModel {
         }, this);
       });
     }
+  }
+
+  private createPublicMetaSchema(schema: MetaSchema): MetaSchema {
+    const publicMetaSchema = Object.assign({}, schema);
+    const names = Object.keys(publicMetaSchema.properties)
+
+    for (const name of names) {
+      const info = publicMetaSchema.properties[name]
+      if (info['x-cas-field'] === 'core' || info['x-cas-field'] === 'private') {
+        delete publicMetaSchema.properties[name]
+      }
+    }
+
+    return publicMetaSchema    
   }
 
   private _changed = new Signal<TierModel, void>(this);
