@@ -1,4 +1,3 @@
-import { InputTextDialog, InputNumberDialog } from '../../ui/dialogwidgets';
 import { NewChildWidget } from '../../ui/newchilddialog';
 import { ITreeData, cassini } from '../../core';
 
@@ -92,15 +91,14 @@ describe('newChildDialog', () => {
         Fishes: {
           type: 'string'
         }
-      }
+      },
+      additionalProperties: {}
     };
 
     const widget = new NewChildWidget(tier);
 
-    const getLabelText = (input: InputTextDialog | InputNumberDialog) =>
-      input.node.childNodes[0].textContent;
-
-    expect(widget.metaInputs.map(getLabelText)).toEqual(['Crabs', 'Fishes']);
+    expect(Object.keys(widget.subInputs)).toContain('Crabs')
+    expect(Object.keys(widget.subInputs)).toContain('Fishes')
   });
 
   test('serialisation', async () => {
@@ -115,7 +113,8 @@ describe('newChildDialog', () => {
         Fishes: {
           type: 'string'
         }
-      }
+      },
+      additionalProperties: {}
     };
 
     clsInfo.templates = ['Template 1', 'Template 2'];
@@ -125,8 +124,8 @@ describe('newChildDialog', () => {
     widget.identifierInput.input.value = '1';
     widget.descriptionInput.input.value = 'Description';
     widget.templateSelector.list.selectedIndex = 1;
-    widget.metaInputs[0].input.value = 'A';
-    widget.metaInputs[1].input.value = 'B';
+    widget.subInputs['Crabs'].input.value = 'A';
+    widget.subInputs['Fishes'].input.value = 'B';
 
     expect(widget.getValue()).toMatchObject({
       id: '1',

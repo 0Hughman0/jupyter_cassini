@@ -14,7 +14,9 @@ import { JSONObject } from '@lumino/coreutils';
 const INPUT_DIALOG_CLASS = 'jp-Input-Dialog';
 const INPUT_BOOLEAN_DIALOG_CLASS = 'jp-Input-Boolean-Dialog';
 
-export interface IDialogueInput<T> extends Required<Dialog.IBodyWidget<T>>{}
+export interface IDialogueInput<T> extends Required<Dialog.IBodyWidget<T>>{
+  input: HTMLInputElement | HTMLTextAreaElement
+}
 
 
 export abstract class InputDialogBase<T>
