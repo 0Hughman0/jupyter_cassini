@@ -115,7 +115,7 @@ export class TierModel {
   }
 
   private createPublicMetaSchema(schema: MetaSchema): MetaSchema {
-    const publicMetaSchema = Object.assign({}, schema);
+    const publicMetaSchema = structuredClone(schema);
     const names = Object.keys(publicMetaSchema.properties)
 
     for (const name of names) {
