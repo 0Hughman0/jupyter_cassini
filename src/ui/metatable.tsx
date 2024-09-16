@@ -21,10 +21,9 @@ import {
 } from '@jupyterlab/ui-components';
 
 import { TierModel } from '../models';
-import { MetaSchema } from '../schema/types'
+import { MetaSchema } from '../schema/types';
 import { IDialogueInput } from './dialogwidgets';
 import { createValidatedInput } from './metaeditor';
-
 
 export type MetaTableCallback = { name: string; editor: CodeEditorWrapper };
 
@@ -103,17 +102,11 @@ export function MetaTable(props: IMetaTableProps) {
                   icon={closeIcon}
                   onClick={() => onRemoveMeta(row.name)}
                   tooltip={`Delete (${row.name})`}
-
                 />
               )}
               <ToolbarButtonComponent
                 icon={checkIcon}
-                onClick={() =>
-                  onMetaUpdate(
-                    row.name,
-                    row.editor().getValue()
-                  )
-                }
+                onClick={() => onMetaUpdate(row.name, row.editor().getValue())}
                 tooltip="Apply changes"
               />
             </span>
@@ -189,7 +182,7 @@ export function MetaTable(props: IMetaTableProps) {
  */
 export class MetaTableWidget extends ReactWidget {
   schema: MetaSchema;
-  values: JSONObject
+  values: JSONObject;
   onMetaUpdate: (attribute: string, newValue: string) => void;
   onRemoveMeta: ((attribute: string) => void) | null;
 
@@ -202,7 +195,7 @@ export class MetaTableWidget extends ReactWidget {
   ) {
     super();
     this.schema = schema;
-    this.values = values
+    this.values = values;
     this.onMetaUpdate = onMetaUpdate;
     this.onRemoveMeta = onRemoveMeta;
 
@@ -239,25 +232,25 @@ export class MetaTableWidget extends ReactWidget {
   render() {
     const metas = [];
 
-    const allKeys = new Set(Object.keys(this.values))
+    const allKeys = new Set(Object.keys(this.values));
 
     for (const [name, info] of Object.entries(this.schema.properties)) {
-      const value = this.values[name]
-      allKeys.delete(name)
-      const input = createValidatedInput(info, value, undefined)
+      const value = this.values[name];
+      allKeys.delete(name);
+      const input = createValidatedInput(info, value, undefined);
       metas.push({ name: name, editor: () => input?.wrappedInput });
     }
 
     for (const extraKey of allKeys) {
-      const value = this.values[extraKey]
-      const additionalInfo = this.schema.additionalProperties
+      const value = this.values[extraKey];
+      const additionalInfo = this.schema.additionalProperties;
 
       if (additionalInfo.$ref) {
-        additionalInfo["$defs"] = this.schema.$defs
+        additionalInfo['$defs'] = this.schema.$defs;
       }
 
-      const input = createValidatedInput(additionalInfo, value, undefined)
-      metas.push({ name: extraKey, editor: () => input?.wrappedInput }); 
+      const input = createValidatedInput(additionalInfo, value, undefined);
+      metas.push({ name: extraKey, editor: () => input?.wrappedInput });
     }
 
     const onNewMetaKey = this.handleNewMetaKey.bind(this);

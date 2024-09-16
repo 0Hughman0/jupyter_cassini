@@ -320,7 +320,7 @@ export class Cassini {
     this.ready = new Promise((resolve, reject) => {
       this.resolveReady = resolve;
     });
-    this.ajv = new Ajv()
+    this.ajv = new Ajv();
     addFormats(this.ajv);
     this.ajv.addKeyword('x-cas-field');
   }

@@ -10,69 +10,130 @@ import { JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
 
 import { cassini } from '../core';
-import { InputBooleanDialog, 
-         InputItemsDialog, 
-         InputNumberDialog, 
-         InputPasswordDialog, 
-         InputTextDialog,
-         InputDateDialog,
-         InputDatetimeDialog,
-         InputJSONDialog,
-         InputDialogBase,
-         ValidatingInput } from './dialogwidgets'
+import {
+  InputBooleanDialog,
+  InputItemsDialog,
+  InputNumberDialog,
+  InputPasswordDialog,
+  InputTextDialog,
+  InputDateDialog,
+  InputDatetimeDialog,
+  InputJSONDialog,
+  InputDialogBase,
+  ValidatingInput
+} from './dialogwidgets';
 import { ObjectDef } from '../schema/types';
 
-
-export function createMetaInput(propertySchema: ObjectDef, currentValue: any | null, label: string | undefined): InputDialogBase<any> {
+export function createMetaInput(
+  propertySchema: ObjectDef,
+  currentValue: any | null,
+  label: string | undefined
+): InputDialogBase<any> {
   if (propertySchema.enum && propertySchema.type) {
-    const items = propertySchema.enum as (typeof propertySchema.type)[]
-    return new InputItemsDialog({label: label, current: items.indexOf(currentValue), items: items, title: '', editable: false})
+    const items = propertySchema.enum as (typeof propertySchema.type)[];
+    return new InputItemsDialog({
+      label: label,
+      current: items.indexOf(currentValue),
+      items: items,
+      title: '',
+      editable: false
+    });
   }
 
   switch (propertySchema.type) {
-    case "string":
+    case 'string':
       if (!propertySchema.format) {
-        return new InputTextDialog({label: label, text: currentValue, title: ''})
+        return new InputTextDialog({
+          label: label,
+          text: currentValue,
+          title: ''
+        });
       }
-      
+
       switch (propertySchema.format) {
-        case "date":
-          return new InputDateDialog({label: label, value: currentValue, title: ''})
-        case "date-time":
-          return new InputDatetimeDialog({label: label, value: currentValue, title: ''})
-        case "password": 
-          return new InputPasswordDialog({label: label, text: currentValue, title: ''})
+        case 'date':
+          return new InputDateDialog({
+            label: label,
+            value: currentValue,
+            title: ''
+          });
+        case 'date-time':
+          return new InputDatetimeDialog({
+            label: label,
+            value: currentValue,
+            title: ''
+          });
+        case 'password':
+          return new InputPasswordDialog({
+            label: label,
+            text: currentValue,
+            title: ''
+          });
+        default:
+          return new InputTextDialog({
+            label: label,
+            text: currentValue,
+            title: ''
+          });
       }
-      
-    case "number":
-      return new InputNumberDialog({label: label, value: currentValue, title: ''})
-    case "integer":
-        return new InputNumberDialog({label: label, value: currentValue, title: ''})
-    case "boolean":
-      return new InputBooleanDialog({label: label, value: currentValue, title: ''})
-    case "array":
-      return new InputJSONDialog({label: label, text: currentValue, title: ''})
-    case "object":
-      return new InputJSONDialog({label: label, text: currentValue, title: ''})
+
+    case 'number':
+      return new InputNumberDialog({
+        label: label,
+        value: currentValue,
+        title: ''
+      });
+    case 'integer':
+      return new InputNumberDialog({
+        label: label,
+        value: currentValue,
+        title: ''
+      });
+    case 'boolean':
+      return new InputBooleanDialog({
+        label: label,
+        value: currentValue,
+        title: ''
+      });
+    case 'array':
+      return new InputJSONDialog({
+        label: label,
+        text: currentValue,
+        title: ''
+      });
+    case 'object':
+      return new InputJSONDialog({
+        label: label,
+        text: currentValue,
+        title: ''
+      });
     default:
-      return new InputJSONDialog({label: label, text: currentValue, title: ''})
+      return new InputJSONDialog({
+        label: label,
+        text: currentValue,
+        title: ''
+      });
   }
 }
 
-export function createValidatedInput(propertySchema: ObjectDef, currentVal: any, label: string | undefined): ValidatingInput<any> {
-  const input = createMetaInput(propertySchema, currentVal, label)
+export function createValidatedInput(
+  propertySchema: ObjectDef,
+  currentVal: any,
+  label: string | undefined
+): ValidatingInput<any> {
+  const input = createMetaInput(propertySchema, currentVal, label);
 
-  let validator
-  
+  let validator;
+
   if (input instanceof InputJSONDialog) {
-    validator = (value: any) => value !== undefined
+    validator = (value: any) => value !== undefined;
   } else {
-    validator = (value: any) => cassini.ajv.validate(propertySchema, value)
+    validator = (value: any) => cassini.ajv.validate(propertySchema, value);
   }
 
-  const validatedInput = new ValidatingInput(input, validator)
+  const validatedInput = new ValidatingInput(input, validator);
 
-  return validatedInput
+  return validatedInput;
 }
 
 /**
@@ -113,7 +174,7 @@ export class MetaEditor extends Panel {
     }
 
     if (model.publicMetaSchema) {
-      this.table?.dispose()
+      this.table?.dispose();
 
       const table = (this.table = new MetaTableWidget(
         model.publicMetaSchema,
@@ -122,7 +183,7 @@ export class MetaEditor extends Panel {
         this.onRemoveMeta.bind(this),
         model.changed
       ));
-  
+
       this.addWidget(table);
     }
   }
@@ -137,7 +198,7 @@ export class MetaEditor extends Panel {
       return;
     }
 
-    this.model.setMetaValue(attribute, newValue)
+    this.model.setMetaValue(attribute, newValue);
   }
 
   onRemoveMeta(attribute: string) {
@@ -150,7 +211,7 @@ export class MetaEditor extends Panel {
       return;
     }
 
-    this.model.removeMeta(attribute)
+    this.model.removeMeta(attribute);
   }
 
   render(attributes: string[]) {

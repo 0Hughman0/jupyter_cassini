@@ -93,13 +93,13 @@ describe('newChildDialog', () => {
         }
       },
       additionalProperties: {},
-      type: "object"
+      type: 'object'
     };
 
     const widget = new NewChildWidget(tier);
 
-    expect(Object.keys(widget.subInputs)).toContain('Crabs')
-    expect(Object.keys(widget.subInputs)).toContain('Fishes')
+    expect(Object.keys(widget.subInputs)).toContain('Crabs');
+    expect(Object.keys(widget.subInputs)).toContain('Fishes');
   });
 
   test('serialisation', async () => {
@@ -116,7 +116,7 @@ describe('newChildDialog', () => {
         }
       },
       additionalProperties: {},
-      type: "object"
+      type: 'object'
     };
 
     clsInfo.templates = ['Template 1', 'Template 2'];

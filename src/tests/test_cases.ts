@@ -49,7 +49,7 @@ export const HOME_TREE: TreeResponse = {
         fishes: { type: 'string' }
       },
       additionalProperties: {},
-      type: "object"
+      type: 'object'
     }
   }
 };
@@ -86,7 +86,7 @@ export const WP1_TREE: TreeResponse = {
         fishes: { type: 'string' }
       },
       additionalProperties: {},
-      type: "object"
+      type: 'object'
     }
   }
 };
@@ -120,7 +120,7 @@ export const WP1_1_TREE: TreeResponse = {
     metaSchema: {
       properties: {},
       additionalProperties: {},
-      type: "object"
+      type: 'object'
     }
   }
 };
@@ -165,7 +165,7 @@ export const WP1_INFO: NotebookTierInfo = {
     },
     $defs: { JsonValue: {} },
     additionalProperties: { $ref: '#/$defs/JsonValue' },
-    type: "object"
+    type: 'object'
   },
   tierType: 'notebook'
 };
@@ -203,7 +203,7 @@ export const WP1_1_INFO: NotebookTierInfo = {
     },
     $defs: { JsonValue: {} },
     additionalProperties: { $ref: '#/$defs/JsonValue' },
-    type: "object"
+    type: 'object'
   },
   tierType: 'notebook'
 };

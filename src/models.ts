@@ -64,7 +64,7 @@ export class TierModel {
     this.notebookPath = options.notebookPath;
     this.hltsPath = options.hltsPath;
     this.metaSchema = options.metaSchema;
-    this.publicMetaSchema = this.createPublicMetaSchema(this.metaSchema)
+    this.publicMetaSchema = this.createPublicMetaSchema(this.metaSchema);
 
     this.metaValidator = cassini.ajv.compile(this.metaSchema);
 
@@ -116,16 +116,16 @@ export class TierModel {
 
   private createPublicMetaSchema(schema: MetaSchema): MetaSchema {
     const publicMetaSchema = structuredClone(schema);
-    const names = Object.keys(publicMetaSchema.properties)
+    const names = Object.keys(publicMetaSchema.properties);
 
     for (const name of names) {
-      const info = publicMetaSchema.properties[name]
+      const info = publicMetaSchema.properties[name];
       if (info['x-cas-field'] === 'core' || info['x-cas-field'] === 'private') {
-        delete publicMetaSchema.properties[name]
+        delete publicMetaSchema.properties[name];
       }
     }
 
-    return publicMetaSchema    
+    return publicMetaSchema;
   }
 
   private _changed = new Signal<TierModel, void>(this);
@@ -165,7 +165,7 @@ export class TierModel {
 
   updateMeta(newMeta: JSONObject) {
     if (this.metaValidator(newMeta)) {
-      this.metaFile?.model.fromJSON(newMeta)
+      this.metaFile?.model.fromJSON(newMeta);
     }
   }
 
@@ -195,18 +195,18 @@ export class TierModel {
   }
 
   setMetaValue<T extends JSONValue>(key: string, value: T): T {
-    const newMeta = this.meta
-    newMeta[key] = value
+    const newMeta = this.meta;
+    newMeta[key] = value;
     this.updateMeta(newMeta);
-    this._changed.emit()
-    return value
+    this._changed.emit();
+    return value;
   }
 
   removeMeta(key: string) {
-    const newMeta = this.meta
-    delete newMeta[key]
-    this.updateMeta(newMeta)
-    this._changed.emit()
+    const newMeta = this.meta;
+    delete newMeta[key];
+    this.updateMeta(newMeta);
+    this._changed.emit();
   }
 
   get description(): string {
@@ -226,7 +226,7 @@ export class TierModel {
   get conclusion(): string {
     return (this.meta['conclusion'] as string) || '';
   }
-  
+
   set conclusion(value: string) {
     if (!this.metaFile) {
       throw 'Tier has no meta, cannot store conclusion';

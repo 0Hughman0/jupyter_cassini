@@ -14,10 +14,9 @@ import { JSONObject } from '@lumino/coreutils';
 const INPUT_DIALOG_CLASS = 'jp-Input-Dialog';
 const INPUT_BOOLEAN_DIALOG_CLASS = 'jp-Input-Boolean-Dialog';
 
-export interface IDialogueInput<T> extends Required<Dialog.IBodyWidget<T>>{
-  input: HTMLInputElement | HTMLTextAreaElement
+export interface IDialogueInput<T> extends Required<Dialog.IBodyWidget<T>> {
+  input: HTMLInputElement | HTMLTextAreaElement;
 }
-
 
 export abstract class InputDialogBase<T>
   extends Widget
@@ -33,20 +32,20 @@ export abstract class InputDialogBase<T>
   }
 
   get inputType(): string | null {
-    return 'text'
+    return 'text';
   }
 
-  constructor(options: {label?: string}) {
+  constructor(options: { label?: string }) {
     super();
     this.addClass(INPUT_DIALOG_CLASS);
 
-    const { label } = options
+    const { label } = options;
 
     this.input = document.createElement(this.elem) as HTMLInputElement;
     if (this.inputType) {
-      this.input.type = this.inputType
+      this.input.type = this.inputType;
     }
-    
+
     this.input.classList.add('jp-mod-styled');
     this.input.id = 'jp-dialog-input-id';
 
@@ -78,7 +77,7 @@ export class InputBooleanDialog extends InputDialogBase<boolean> {
    */
   input: HTMLInputElement;
   get inputType() {
-    return 'checkbox'
+    return 'checkbox';
   }
 
   constructor(options: InputDialog.IBooleanOptions) {
@@ -109,7 +108,7 @@ export class InputNumberDialog extends InputDialogBase<number> {
   input: HTMLInputElement;
 
   get inputType() {
-    return 'number'
+    return 'number';
   }
 
   constructor(options: InputDialog.INumberOptions) {
@@ -137,9 +136,9 @@ export class InputTextDialog extends InputDialogBase<string> {
   input: HTMLInputElement;
 
   get inputType() {
-    return 'text'
+    return 'text';
   }
-  
+
   /**
    * InputTextDialog constructor
    *
@@ -184,9 +183,9 @@ export class InputPasswordDialog extends InputDialogBase<string> {
   input: HTMLInputElement;
 
   get inputType() {
-    return 'password'
+    return 'password';
   }
-  
+
   /**
    * InputPasswordDialog constructor
    *
@@ -227,7 +226,7 @@ export class InputItemsDialog extends InputDialogBase<string> {
   list: HTMLSelectElement;
 
   get inputType() {
-    return 'list'
+    return 'list';
   }
   /**
    * InputItemsDialog constructor
@@ -263,7 +262,7 @@ export class InputItemsDialog extends InputDialogBase<string> {
       const data = document.createElement('datalist');
       data.id = 'input-dialog-items';
       data.appendChild(this.list);
-      
+
       this.input.value = current;
       this.input.setAttribute('list', data.id);
       if (options.placeholder) {
@@ -301,7 +300,7 @@ export class InputTextAreaDialog extends InputDialogBase<string> {
   }
 
   get inputType(): null {
-    return null
+    return null;
   }
 
   constructor(options: InputDialog.ITextOptions) {
@@ -314,19 +313,18 @@ export class InputTextAreaDialog extends InputDialogBase<string> {
 }
 
 export interface IDateOptions extends InputDialog.IOptions {
-  value: string | undefined
+  value: string | undefined;
 }
 
 export class InputDateDialog extends InputDialogBase<string> {
-
   get inputType() {
-    return 'date'
+    return 'date';
   }
 
   constructor(options: IDateOptions) {
     super(options);
     if (options.value) {
-      this.input.value = options.value
+      this.input.value = options.value;
     }
   }
 
@@ -337,14 +335,14 @@ export class InputDateDialog extends InputDialogBase<string> {
 
 export class InputDatetimeDialog extends InputDialogBase<string> {
   get inputType() {
-    return 'datetime-local'
+    return 'datetime-local';
   }
 
   constructor(options: IDateOptions) {
     super(options);
     if (options.value) {
-      this.input.value = options.value.split('.')[0]
-    }  
+      this.input.value = options.value.split('.')[0];
+    }
   }
 
   getValue(): string {
@@ -352,11 +350,9 @@ export class InputDatetimeDialog extends InputDialogBase<string> {
   }
 }
 
-
 export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
-
   constructor(options: InputDialog.ITextOptions) {
-    super(options)
+    super(options);
     this.input.value = JSON.stringify(options.text ? options.text : '');
   }
 
@@ -367,9 +363,9 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
   */
   getValue(): JSONObject | undefined {
     try {
-      return JSON.parse(this.input.value)
+      return JSON.parse(this.input.value);
     } catch (SyntaxError) {
-      return undefined
+      return undefined;
     }
   }
 }
@@ -378,36 +374,37 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
 
 Validator Wrapper.
 
-*/ 
+*/
 export class ValidatingInput<T> {
-  validator: (value: T) => boolean
-  wrappedInput: InputDialogBase<T>
+  validator: (value: T) => boolean;
+  wrappedInput: InputDialogBase<T>;
 
-  constructor(inputWidget: InputDialogBase<T>, validator: (value: T) => boolean) {
-    this.wrappedInput = inputWidget
-    this.validator = validator
+  constructor(
+    inputWidget: InputDialogBase<T>,
+    validator: (value: T) => boolean
+  ) {
+    this.wrappedInput = inputWidget;
+    this.validator = validator;
     this.input.addEventListener('input', this.handleInput.bind(this));
   }
 
-  get input () {
-    return this.wrappedInput.input
+  get input() {
+    return this.wrappedInput.input;
   }
-  
-  getValue(): T{
-    return this.wrappedInput.getValue()
+
+  getValue(): T {
+    return this.wrappedInput.getValue();
   }
 
   handleInput(): boolean {
     const value = this.getValue();
-    
+
     if (this.validator(value)) {
       this.wrappedInput.input.classList.remove('cas-invalid-id');
       return false;
     } else {
-      this.wrappedInput.input.classList.add('cas-invalid-id');  
+      this.wrappedInput.input.classList.add('cas-invalid-id');
       return true;
     }
   }
 }
-
-

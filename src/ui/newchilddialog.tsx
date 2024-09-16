@@ -10,9 +10,7 @@ import {
   IDialogueInput
 } from './dialogwidgets';
 
-import {
-  createValidatedInput
-} from './metaeditor'
+import { createValidatedInput } from './metaeditor';
 
 /**
  * Version of InputTextDialog that indicates is the contents of the input does not match `idRegex`
@@ -58,7 +56,6 @@ export class IdDialog extends InputTextDialog {
   }
 }
 
-
 export interface IIdDialogOptions extends InputDialog.ITextOptions {
   idRegex: string;
   nameTemplate: string;
@@ -74,7 +71,7 @@ export class NewChildWidget extends Widget {
   descriptionInput: InputTextAreaDialog;
   templateSelector: InputItemsDialog;
 
-  subInputs: { [name: string]: (ValidatingInput<any> | IDialogueInput<any>)};
+  subInputs: { [name: string]: ValidatingInput<any> | IDialogueInput<any> };
 
   constructor(tier: Required<ITreeData>) {
     super();
@@ -124,8 +121,8 @@ export class NewChildWidget extends Widget {
           continue;
         }
 
-        const vinput = createValidatedInput(info, name, undefined)
-        
+        const vinput = createValidatedInput(info, name, undefined);
+
         this.subInputs[name] = vinput;
 
         layout.addWidget(vinput.wrappedInput);
