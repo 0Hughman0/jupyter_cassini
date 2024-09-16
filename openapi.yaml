@@ -116,6 +116,8 @@ components:
         additionalProperties:
           $ref: "#/components/schemas/objectDef"
         $defs: {}
+        type:
+          type: string
       required:
         - properties
         - additionalProperties

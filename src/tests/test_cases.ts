@@ -48,7 +48,8 @@ export const HOME_TREE: TreeResponse = {
         crabs: { type: 'string' },
         fishes: { type: 'string' }
       },
-      additionalProperties: {}
+      additionalProperties: {},
+      type: "object"
     }
   }
 };
@@ -84,7 +85,8 @@ export const WP1_TREE: TreeResponse = {
         crabs: { type: 'string' },
         fishes: { type: 'string' }
       },
-      additionalProperties: {}
+      additionalProperties: {},
+      type: "object"
     }
   }
 };
@@ -117,7 +119,8 @@ export const WP1_1_TREE: TreeResponse = {
     namePartTemplate: '{}',
     metaSchema: {
       properties: {},
-      additionalProperties: {}
+      additionalProperties: {},
+      type: "object"
     }
   }
 };
@@ -161,7 +164,8 @@ export const WP1_INFO: NotebookTierInfo = {
       }
     },
     $defs: { JsonValue: {} },
-    additionalProperties: { $ref: '#/$defs/JsonValue' }
+    additionalProperties: { $ref: '#/$defs/JsonValue' },
+    type: "object"
   },
   tierType: 'notebook'
 };
@@ -198,7 +202,8 @@ export const WP1_1_INFO: NotebookTierInfo = {
       }
     },
     $defs: { JsonValue: {} },
-    additionalProperties: { $ref: '#/$defs/JsonValue' }
+    additionalProperties: { $ref: '#/$defs/JsonValue' },
+    type: "object"
   },
   tierType: 'notebook'
 };

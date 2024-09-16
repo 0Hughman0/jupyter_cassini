@@ -244,6 +244,7 @@ export interface components {
             };
             additionalProperties: components["schemas"]["objectDef"];
             $defs?: unknown;
+            type?: string;
         };
         ChildClsInfo: components["schemas"]["ChildClsFolderInfo"] | components["schemas"]["ChildClsNotebookInfo"];
         CommonChildClsInfo: {

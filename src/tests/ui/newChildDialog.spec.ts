@@ -92,7 +92,8 @@ describe('newChildDialog', () => {
           type: 'string'
         }
       },
-      additionalProperties: {}
+      additionalProperties: {},
+      type: "object"
     };
 
     const widget = new NewChildWidget(tier);
@@ -114,7 +115,8 @@ describe('newChildDialog', () => {
           type: 'string'
         }
       },
-      additionalProperties: {}
+      additionalProperties: {},
+      type: "object"
     };
 
     clsInfo.templates = ['Template 1', 'Template 2'];
