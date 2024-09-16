@@ -13,6 +13,12 @@ const esModules = [
 ].join('|');
 
 const baseConfig = jestJupyterLab(__dirname);
+const { setupFiles } = baseConfig
+
+// structuredClone isn't available in the jsdom, but is in regular dom, this patch fixes this.
+setupFiles.push(
+  '<rootDir>/src/tests/structuredclonepatch.js'
+)
 
 module.exports = {
   ...baseConfig,
@@ -24,5 +30,6 @@ module.exports = {
   ],
   coverageReporters: ['lcov', 'text'],
   testRegex: 'src/.*/.*.spec.ts[x]?$',
-  transformIgnorePatterns: [`/node_modules/(?!${esModules}).+`]
+  transformIgnorePatterns: [`/node_modules/(?!${esModules}).+`],
+  setupFiles: setupFiles
 };
