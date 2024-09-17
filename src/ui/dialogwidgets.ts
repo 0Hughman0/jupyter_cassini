@@ -354,7 +354,7 @@ export class InputDatetimeDialog extends InputDialogBase<Date> {
 }
 
 export interface IJSONOptions extends InputDialog.IOptions {
-  value: JSONObject;
+  value?: JSONObject;
 }
 
 export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {

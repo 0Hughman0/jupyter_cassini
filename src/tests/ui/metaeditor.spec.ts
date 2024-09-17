@@ -1,6 +1,7 @@
 import {
   InputBooleanDialog,
   InputDateDialog,
+  InputDatetimeDialog,
   InputJSONDialog,
   InputNumberDialog,
   InputPasswordDialog,
@@ -30,11 +31,11 @@ describe('createMetaInput', () => {
   test('date-time MetaInput', () => {
     const initial = new Date('2000-12-25').toISOString();
     const input = createMetaInput(
-      { type: 'string', format: 'date' },
+      { type: 'string', format: 'date-time' },
       initial,
       ''
     );
-    expect(input).toBeInstanceOf(InputDateDialog);
+    expect(input).toBeInstanceOf(InputDatetimeDialog);
     expect(input.getValue()).toEqual(new Date(initial));
   });
 

@@ -11,7 +11,6 @@ import {
   InputDatetimeDialog,
   InputJSONDialog,
   ValidatingInput
-  /* ValidatingInput*/
 } from '../../ui/dialogwidgets';
 
 test('InputBooleanDialog', () => {
