@@ -1,6 +1,6 @@
 /* 
 
-Taken from https://github.com/jupyterlab/jupyterlab/blob/master/packages/apputils/src/inputdialog.ts
+Adapted from https://github.com/jupyterlab/jupyterlab/blob/master/packages/apputils/src/inputdialog.ts
 
 Because these classes are not exported, we have to copy them!
 
@@ -305,6 +305,9 @@ export class InputTextAreaDialog extends InputDialogBase<string> {
 
   constructor(options: InputDialog.ITextOptions) {
     super(options);
+    if (options.text) {
+      this.input.value = options.text
+    }
   }
 
   getValue(): string {
@@ -313,10 +316,10 @@ export class InputTextAreaDialog extends InputDialogBase<string> {
 }
 
 export interface IDateOptions extends InputDialog.IOptions {
-  value: string | undefined;
+  value: Date | undefined;
 }
 
-export class InputDateDialog extends InputDialogBase<string> {
+export class InputDateDialog extends InputDialogBase<Date> {
   get inputType() {
     return 'date';
   }
@@ -324,16 +327,17 @@ export class InputDateDialog extends InputDialogBase<string> {
   constructor(options: IDateOptions) {
     super(options);
     if (options.value) {
-      this.input.value = options.value;
+      this.input.value = options.value.toISOString().slice(0, 10);
     }
   }
 
-  getValue(): string {
-    return this.input.value;
+  getValue(): Date {
+    return new Date(this.input.value);
   }
 }
 
-export class InputDatetimeDialog extends InputDialogBase<string> {
+
+export class InputDatetimeDialog extends InputDialogBase<Date> {
   get inputType() {
     return 'datetime-local';
   }
@@ -341,19 +345,23 @@ export class InputDatetimeDialog extends InputDialogBase<string> {
   constructor(options: IDateOptions) {
     super(options);
     if (options.value) {
-      this.input.value = options.value.split('.')[0];
+      this.input.value = options.value.toISOString().split('.')[0]
     }
   }
 
-  getValue(): string {
-    return new Date(this.input.value + 'Z').toISOString();
+  getValue(): Date {
+    return new Date(this.input.value + 'Z');
   }
 }
 
+export interface IJSONOptions extends InputDialog.IOptions {
+  value: JSONObject
+}
+
 export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
-  constructor(options: InputDialog.ITextOptions) {
+  constructor(options: IJSONOptions) {
     super(options);
-    this.input.value = JSON.stringify(options.text ? options.text : '');
+    this.input.value = JSON.stringify(options.value) ?? '';
   }
 
   /*
@@ -375,16 +383,19 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
 Validator Wrapper.
 
 */
-export class ValidatingInput<T> {
-  validator: (value: T) => boolean;
-  wrappedInput: InputDialogBase<T>;
+export class ValidatingInput<R, T = R> {
+  validator: (value:R) => boolean;
+  postProcessor: ((value: T extends R ? R : T) => R) | null;
+  wrappedInput: InputDialogBase<T extends R ? R : T>
 
   constructor(
-    inputWidget: InputDialogBase<T>,
-    validator: (value: T) => boolean
+    inputWidget: InputDialogBase<T extends R ? R : T>,
+    validator: (value: R) => boolean,
+    postProcessor?: (value: T extends R ? R : T) => R
   ) {
     this.wrappedInput = inputWidget;
     this.validator = validator;
+    this.postProcessor = postProcessor ?? null;
     this.input.addEventListener('input', this.handleInput.bind(this));
   }
 
@@ -392,19 +403,24 @@ export class ValidatingInput<T> {
     return this.wrappedInput.input;
   }
 
-  getValue(): T {
-    return this.wrappedInput.getValue();
+  getValue(): R {
+    if (this.postProcessor) {
+      return this.postProcessor(this.wrappedInput.getValue())
+    } else {
+      return this.wrappedInput.getValue() as R
+    }
   }
 
   handleInput(): boolean {
     const value = this.getValue();
+    const valid = this.validator(value)
 
-    if (this.validator(value)) {
+    if (valid) {
       this.wrappedInput.input.classList.remove('cas-invalid-id');
-      return false;
+      return valid;
     } else {
       this.wrappedInput.input.classList.add('cas-invalid-id');
-      return true;
+      return valid;
     }
   }
 }

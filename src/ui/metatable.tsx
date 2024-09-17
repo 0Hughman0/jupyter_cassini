@@ -22,14 +22,14 @@ import {
 
 import { TierModel } from '../models';
 import { MetaSchema } from '../schema/types';
-import { IDialogueInput } from './dialogwidgets';
+import { ValidatingInput } from './dialogwidgets';
 import { createValidatedInput } from './metaeditor';
 
 export type MetaTableCallback = { name: string; editor: CodeEditorWrapper };
 
 export type MetaTableRow = {
   name: string;
-  editor: () => IDialogueInput<any>;
+  editor: () => ValidatingInput<any, any>;
 };
 
 export interface IMetaTableProps {
@@ -74,7 +74,8 @@ export function MetaTable(props: IMetaTableProps) {
       }),
       columnHelper.accessor('editor', {
         cell: props => {
-          const widget = props.getValue()();
+          const validator = props.getValue()();
+          const widget = validator.wrappedInput;
           // I have no idea what this means or how it works: https://stackoverflow.com/questions/69185915/how-to-cast-an-htmlelement-to-a-react-element
           return (
             <span
@@ -238,7 +239,7 @@ export class MetaTableWidget extends ReactWidget {
       const value = this.values[name];
       allKeys.delete(name);
       const input = createValidatedInput(info, value, undefined);
-      metas.push({ name: name, editor: () => input?.wrappedInput });
+      metas.push({ name: name, editor: () => input });
     }
 
     for (const extraKey of allKeys) {
@@ -250,7 +251,7 @@ export class MetaTableWidget extends ReactWidget {
       }
 
       const input = createValidatedInput(additionalInfo, value, undefined);
-      metas.push({ name: extraKey, editor: () => input?.wrappedInput });
+      metas.push({ name: extraKey, editor: () => input });
     }
 
     const onNewMetaKey = this.handleNewMetaKey.bind(this);

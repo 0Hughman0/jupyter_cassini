@@ -6,7 +6,7 @@ import { PathExt } from '@jupyterlab/coreutils';
 
 import { TierModel } from '../models';
 import { MetaTableWidget } from './metatable';
-import { JSONValue } from '@lumino/coreutils';
+import { JSONObject, JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
 
 import { cassini } from '../core';
@@ -45,7 +45,7 @@ export function createMetaInput(
       if (!propertySchema.format) {
         return new InputTextDialog({
           label: label,
-          text: currentValue,
+          text: currentValue as string,
           title: ''
         });
       }
@@ -54,25 +54,25 @@ export function createMetaInput(
         case 'date':
           return new InputDateDialog({
             label: label,
-            value: currentValue,
+            value: new Date(currentValue as string),
             title: ''
           });
         case 'date-time':
           return new InputDatetimeDialog({
             label: label,
-            value: currentValue,
+            value: new Date(currentValue as string),
             title: ''
           });
         case 'password':
           return new InputPasswordDialog({
             label: label,
-            text: currentValue,
+            text: currentValue as string,
             title: ''
           });
         default:
           return new InputTextDialog({
             label: label,
-            text: currentValue,
+            text: currentValue as string,
             title: ''
           });
       }
@@ -80,37 +80,37 @@ export function createMetaInput(
     case 'number':
       return new InputNumberDialog({
         label: label,
-        value: currentValue,
+        value: currentValue as number,
         title: ''
       });
     case 'integer':
       return new InputNumberDialog({
         label: label,
-        value: currentValue,
+        value: currentValue as number,
         title: ''
       });
     case 'boolean':
       return new InputBooleanDialog({
         label: label,
-        value: currentValue,
+        value: currentValue as boolean,
         title: ''
       });
     case 'array':
       return new InputJSONDialog({
         label: label,
-        text: currentValue,
+        value: currentValue as JSONObject,
         title: ''
       });
     case 'object':
       return new InputJSONDialog({
         label: label,
-        text: currentValue,
+        value: currentValue as JSONObject,
         title: ''
       });
     default:
       return new InputJSONDialog({
         label: label,
-        text: currentValue,
+        value: currentValue as JSONObject,
         title: ''
       });
   }
@@ -123,15 +123,36 @@ export function createValidatedInput(
 ): ValidatingInput<any> {
   const input = createMetaInput(propertySchema, currentVal, label);
 
-  let validator;
+  let validator: (value: any) => boolean;
+  let postProcessor;
 
   if (input instanceof InputJSONDialog) {
-    validator = (value: any) => value !== undefined;
+    validator = (value: JSONObject) => value !== undefined;
   } else {
     validator = (value: any) => cassini.ajv.validate(propertySchema, value);
   }
 
-  const validatedInput = new ValidatingInput(input, validator);
+  if (input instanceof InputDateDialog) {
+    postProcessor = (value: Date) => {
+      if (isNaN(value.getTime())) {
+        return 'an invalid date'
+      } else {
+        return value.toISOString().slice(0, 10)
+      }
+    }
+  } else if (input instanceof InputDatetimeDialog) {
+    postProcessor = (value: Date) => {
+      if (isNaN(value.getTime())) {
+        return 'an invalid date'
+      } else {
+        return value.toISOString()
+      }
+    }
+  } else {
+    postProcessor = undefined
+  }
+
+  const validatedInput = new ValidatingInput(input, validator, postProcessor);
 
   return validatedInput;
 }
