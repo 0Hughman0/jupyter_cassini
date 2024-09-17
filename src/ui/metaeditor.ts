@@ -135,21 +135,21 @@ export function createValidatedInput(
   if (input instanceof InputDateDialog) {
     postProcessor = (value: Date) => {
       if (isNaN(value.getTime())) {
-        return 'an invalid date'
+        return 'an invalid date';
       } else {
-        return value.toISOString().slice(0, 10)
+        return value.toISOString().slice(0, 10);
       }
-    }
+    };
   } else if (input instanceof InputDatetimeDialog) {
     postProcessor = (value: Date) => {
       if (isNaN(value.getTime())) {
-        return 'an invalid date'
+        return 'an invalid date';
       } else {
-        return value.toISOString()
+        return value.toISOString();
       }
-    }
+    };
   } else {
-    postProcessor = undefined
+    postProcessor = undefined;
   }
 
   const validatedInput = new ValidatingInput(input, validator, postProcessor);

@@ -306,7 +306,7 @@ export class InputTextAreaDialog extends InputDialogBase<string> {
   constructor(options: InputDialog.ITextOptions) {
     super(options);
     if (options.text) {
-      this.input.value = options.text
+      this.input.value = options.text;
     }
   }
 
@@ -336,7 +336,6 @@ export class InputDateDialog extends InputDialogBase<Date> {
   }
 }
 
-
 export class InputDatetimeDialog extends InputDialogBase<Date> {
   get inputType() {
     return 'datetime-local';
@@ -345,7 +344,7 @@ export class InputDatetimeDialog extends InputDialogBase<Date> {
   constructor(options: IDateOptions) {
     super(options);
     if (options.value) {
-      this.input.value = options.value.toISOString().split('.')[0]
+      this.input.value = options.value.toISOString().split('.')[0];
     }
   }
 
@@ -355,7 +354,7 @@ export class InputDatetimeDialog extends InputDialogBase<Date> {
 }
 
 export interface IJSONOptions extends InputDialog.IOptions {
-  value: JSONObject
+  value: JSONObject;
 }
 
 export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
@@ -384,9 +383,9 @@ Validator Wrapper.
 
 */
 export class ValidatingInput<R, T = R> {
-  validator: (value:R) => boolean;
+  validator: (value: R) => boolean;
   postProcessor: ((value: T extends R ? R : T) => R) | null;
-  wrappedInput: InputDialogBase<T extends R ? R : T>
+  wrappedInput: InputDialogBase<T extends R ? R : T>;
 
   constructor(
     inputWidget: InputDialogBase<T extends R ? R : T>,
@@ -405,15 +404,15 @@ export class ValidatingInput<R, T = R> {
 
   getValue(): R {
     if (this.postProcessor) {
-      return this.postProcessor(this.wrappedInput.getValue())
+      return this.postProcessor(this.wrappedInput.getValue());
     } else {
-      return this.wrappedInput.getValue() as R
+      return this.wrappedInput.getValue() as R;
     }
   }
 
   handleInput(): boolean {
     const value = this.getValue();
-    const valid = this.validator(value)
+    const valid = this.validator(value);
 
     if (valid) {
       this.wrappedInput.input.classList.remove('cas-invalid-id');
