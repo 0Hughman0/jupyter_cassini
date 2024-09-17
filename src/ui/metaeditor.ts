@@ -42,8 +42,8 @@ export function createMetaInput(
 
   switch (propertySchema.type) {
     case 'string':
-      const currentValueString = currentValue as string | undefined
-      
+      const currentValueString = currentValue as string | undefined;
+
       if (!propertySchema.format) {
         return new InputTextDialog({
           label: label,
@@ -56,13 +56,17 @@ export function createMetaInput(
         case 'date':
           return new InputDateDialog({
             label: label,
-            value: currentValueString ? new Date(currentValueString) : undefined,
+            value: currentValueString
+              ? new Date(currentValueString)
+              : undefined,
             title: ''
           });
         case 'date-time':
           return new InputDatetimeDialog({
             label: label,
-            value: currentValueString ? new Date(currentValueString) : undefined,
+            value: currentValueString
+              ? new Date(currentValueString)
+              : undefined,
             title: ''
           });
         case 'password':
@@ -80,22 +84,22 @@ export function createMetaInput(
       }
 
     case 'number':
-      const currentValueNumber = currentValue as number | undefined
-      
+      const currentValueNumber = currentValue as number | undefined;
+
       return new InputNumberDialog({
         label: label,
         value: currentValueNumber,
         title: ''
       });
     case 'integer':
-      const currentValueInteger = currentValue as number | undefined
+      const currentValueInteger = currentValue as number | undefined;
       return new InputNumberDialog({
         label: label,
         value: currentValueInteger,
         title: ''
       });
     case 'boolean':
-      const currentValueBool = currentValue as boolean | undefined
+      const currentValueBool = currentValue as boolean | undefined;
 
       return new InputBooleanDialog({
         label: label,
@@ -103,23 +107,23 @@ export function createMetaInput(
         title: ''
       });
     case 'array':
-      const currentValueArray = currentValue as JSONObject | undefined
-      
+      const currentValueArray = currentValue as JSONObject | undefined;
+
       return new InputJSONDialog({
         label: label,
         value: currentValueArray,
         title: ''
       });
     case 'object':
-      const currentValueObject = currentValue as JSONObject | undefined
-      
+      const currentValueObject = currentValue as JSONObject | undefined;
+
       return new InputJSONDialog({
         label: label,
         value: currentValueObject,
         title: ''
       });
     default:
-      const currentValueUnknown = currentValue as any
+      const currentValueUnknown = currentValue as any;
 
       return new InputJSONDialog({
         label: label,
