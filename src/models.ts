@@ -11,6 +11,7 @@ import { IOutput } from '@jupyterlab/nbformat';
 
 import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
+import { Notification } from '@jupyterlab/apputils';
 
 import { cassini, ITreeChildData, ITreeData, TreeManager } from './core';
 import { MetaSchema, TierInfo, IChange } from './schema/types';
@@ -166,6 +167,16 @@ export class TierModel {
   updateMeta(newMeta: JSONObject) {
     if (this.metaValidator(newMeta)) {
       this.metaFile?.model.fromJSON(newMeta);
+    } else {
+      const error = this.metaValidator.errors && this.metaValidator.errors[0]
+      
+      if (!error) {
+        return
+      }
+
+      const name = error.instancePath.split('/')[1]
+      const value = newMeta[name]
+      Notification.warning(`Cassini Error - ${error.message} for ${name}=${value}`)
     }
   }
 
