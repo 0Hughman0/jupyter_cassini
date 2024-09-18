@@ -1,15 +1,28 @@
 import functools
+from http.client import responses
 import urllib.parse
 from typing import Callable, Dict, List, Literal, Type, Union, TypeVar, cast, Any
+import json
 
 from pydantic import BaseModel, ValidationError
 from jupyter_server.base.handlers import APIHandler
 
+from .schema.models import CassiniServerError
 from cassini import env
+
+
+class CassiniHandler(APIHandler):
+
+    def write_error(self, status_code: int = 500, reason: str = '', **kwargs) -> None:
+        self.set_status(status_code)
+        error = CassiniServerError(message=responses.get(status_code, 'Unknown Error'),
+                                   reason=reason)
+        self.finish(error.model_dump_json())
+
 
 Q = TypeVar("Q", bound=BaseModel)
 R = TypeVar("R", bound=BaseModel)
-S = TypeVar("S", bound=APIHandler)
+S = TypeVar("S", bound=CassiniHandler)
 
 RawQueryType = Dict[str, Union[str, List[str]]]
 
@@ -54,21 +67,21 @@ def with_types(
             
             try:
                 validated_query = query_model.model_validate(query)
-            except ValidationError:
-                return self.send_error(400, message=f'Invalid Query {query}')
+            except ValidationError as e:
+                return self.write_error(400, reason=f'Invalid Query {query}, {e}')
             
             try:
                 response = func(self, validated_query)
-            except ValidationError:
-                return self.send_error(500, message='Invalid Response')
-            except ValueError:
-                return self.send_error(404)
+            except ValidationError as e:
+                return self.write_error(500, reason=f'Invalid Response, {e}')
+            except ValueError as e:
+                return self.write_error(404, reason=f'Value error from query {query}, {e}')
             
             try:
                 validated_response = response_model.model_validate(response)
-            except ValidationError:
+            except ValidationError as e:
                 # this will actually never happen...
-                return self.send_error(500, message=f'Invalid Response {response}')
+                return self.write_error(500, reason=f'Invalid Response {response}, {e}')
             
             self.finish(validated_response.model_dump_json(by_alias=True, exclude_defaults=True))
             return

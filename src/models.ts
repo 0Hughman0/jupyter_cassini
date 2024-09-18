@@ -176,7 +176,7 @@ export class TierModel {
 
       const name = error.instancePath.split('/')[1]
       const value = newMeta[name]
-      Notification.warning(`Cassini Error - ${error.message} for ${name}=${value}`)
+      Notification.error(`Cassini Error - ${name} ${error.message}, got: ${JSON.stringify(value)}`)
     }
   }
 
