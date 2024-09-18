@@ -1,5 +1,7 @@
 import { components } from './schema';
 
+export type CassiniServerError = components['schemas']['CassiniServerError']
+
 export type ChildClsInfo = components['schemas']['ChildClsInfo'];
 export type ChildClsNotebookInfo =
   components['schemas']['ChildClsNotebookInfo'];
