@@ -44,7 +44,7 @@ export class TierModel {
   readonly started: Date;
   readonly metaSchema: MetaSchema | undefined;
   readonly publicMetaSchema: MetaSchema | undefined;
-  readonly metaValidator: ValidateFunction<any>;
+  readonly metaValidator: ValidateFunction<MetaSchema>;
 
   readonly hltsPath: string | undefined;
 
@@ -65,8 +65,8 @@ export class TierModel {
     this.hltsPath = options.hltsPath;
     this.metaSchema = options.metaSchema;
     this.publicMetaSchema = this.createPublicMetaSchema(this.metaSchema);
-
-    this.metaValidator = cassini.ajv.compile(this.metaSchema);
+    
+    this.metaValidator = cassini.ajv.compile<MetaSchema>(this.metaSchema)
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.ids.toString()) {
