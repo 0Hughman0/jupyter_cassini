@@ -2,16 +2,16 @@ from typing import TypeVar, Callable, Union
 import datetime
 
 from jupyter_server.utils import url_path_join
+from jupyter_server.base.handlers import APIHandler
 
 import tornado
 
 from cassini import env
 from cassini.core import NotebookTierBase
 
-from jupyter_cassini_server.safety import CassiniHandler, needs_project, with_types
+from jupyter_cassini_server.safety import needs_project, with_types
 from jupyter_cassini_server.serialisation import serialize_branch, encode_path
-
-from .schema.models import (
+from jupyter_cassini_server.schema.models import (
     NewChildInfo,
     TreeResponse,
     TierInfo,
@@ -26,7 +26,7 @@ from .schema.models import (
 )
 
 
-class LookupHandler(CassiniHandler):
+class LookupHandler(APIHandler):
     # The following decorator should be present on all verb methods (head, get, post,
     # patch, put, delete, options) to ensure only authorized user can request the
     # Jupyter server
@@ -72,7 +72,7 @@ class LookupHandler(CassiniHandler):
             ))
 
 
-class OpenHandler(CassiniHandler):
+class OpenHandler(APIHandler):
     # The following decorator should be present on all verb methods (head, get, post,
     # patch, put, delete, options) to ensure only authorized user can request the
     # Jupyter server
@@ -92,7 +92,7 @@ class OpenHandler(CassiniHandler):
             return Status(status=Status1.failure)
 
 
-class NewChildHandler(CassiniHandler):
+class NewChildHandler(APIHandler):
 
     @tornado.web.authenticated
     @needs_project
@@ -126,7 +126,7 @@ class NewChildHandler(CassiniHandler):
         return serialize_branch(child)
 
 
-class TreeHandler(CassiniHandler):
+class TreeHandler(APIHandler):
 
     @tornado.web.authenticated
     @needs_project

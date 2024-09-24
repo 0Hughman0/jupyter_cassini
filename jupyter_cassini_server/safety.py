@@ -2,27 +2,17 @@ import functools
 from http.client import responses
 import urllib.parse
 from typing import Callable, Dict, List, Literal, Type, Union, TypeVar, cast, Any
-import json
 
 from pydantic import BaseModel, ValidationError
 from jupyter_server.base.handlers import APIHandler
+from tornado.web import HTTPError
 
-from .schema.models import CassiniServerError
 from cassini import env
-
-
-class CassiniHandler(APIHandler):
-
-    def write_error(self, status_code: int = 500, reason: str = '', **kwargs) -> None:
-        self.set_status(status_code)
-        error = CassiniServerError(message=responses.get(status_code, 'Unknown Error'),
-                                   reason=reason)
-        self.finish(error.model_dump_json())
 
 
 Q = TypeVar("Q", bound=BaseModel)
 R = TypeVar("R", bound=BaseModel)
-S = TypeVar("S", bound=CassiniHandler)
+S = TypeVar("S", bound=APIHandler)
 
 RawQueryType = Dict[str, Union[str, List[str]]]
 
@@ -63,25 +53,25 @@ def with_types(
             elif method == "POST":
                 query = self.get_json_body()
             else:
-                raise NotImplementedError
+                raise HTTPError(405)
             
             try:
                 validated_query = query_model.model_validate(query)
             except ValidationError as e:
-                return self.write_error(400, reason=f'Invalid Query {query}, {e}')
+                raise HTTPError(400, reason=e.__class__.__name__, log_message=f'Invalid Query {query}, {e}')
             
             try:
                 response = func(self, validated_query)
             except ValidationError as e:
-                return self.write_error(500, reason=f'Invalid Response, {e}')
+                raise HTTPError(500, reason=e.__class__.__name__, log_message=f'Invalid Response, {e}')
             except ValueError as e:
-                return self.write_error(404, reason=f'Value error from query {query}, {e}')
+                raise HTTPError(404, reason=e.__class__.__name__, log_message=f'Value error from query {query}, {e}')
             
             try:
                 validated_response = response_model.model_validate(response)
             except ValidationError as e:
                 # this will actually never happen...
-                return self.write_error(500, reason=f'Invalid Response {response}, {e}')
+                raise HTTPError(500, reason=e.__class__.__name__, log_message=f'Invalid Response {response}, {e}')
             
             self.finish(validated_response.model_dump_json(by_alias=True, exclude_defaults=True))
             return

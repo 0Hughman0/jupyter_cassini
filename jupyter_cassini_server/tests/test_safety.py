@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 
 import pytest
 from pydantic import BaseModel, ValidationError
+from tornado.web import HTTPError
 
 from ..safety import with_types, parse_get_query
 
@@ -28,6 +29,8 @@ class MockServer():
         self.body: dict = body
         self.finished: str | None = None
         self.error: int | None = None
+        self.message: str | None = None
+        self.reason: str | None = None
         self.query: BaseModel | None = None
 
     def get_json_body(self):
@@ -36,9 +39,10 @@ class MockServer():
     def finish(self, message):
         self.finished = message
     
-    def send_error(self, error, message=None):
+    def send_error(self, error, message=None, reason=None):
         self.error = error
         self.message = message
+        self.reason = reason
 
 
 def test_get_query_parser_regular():
@@ -75,9 +79,11 @@ def test_get_invalid_query():
             return valid_response
 
     s = Server(query=urlencode({'invalid': 'yaya'}))
-    s.endpoint()
 
-    assert s.error == 400
+    with pytest.raises(HTTPError) as e:
+        s.endpoint()
+    
+    assert e.value.status_code == 400
 
 
 def test_get_invalid_response():
@@ -89,9 +95,11 @@ def test_get_invalid_response():
             return Response(invalid='wassup')
 
     s = Server(query=urlencode(dict(valid_query)))
-    s.endpoint()
 
-    assert s.error == 500
+    with pytest.raises(HTTPError) as e:
+        s.endpoint()
+
+    assert e.value.status_code == 500
 
 
 def test_get_not_found():
@@ -104,9 +112,11 @@ def test_get_not_found():
             return valid_response
 
     s = Server(query=urlencode(dict(valid_query)))
-    s.endpoint()
 
-    assert s.error == 404
+    with pytest.raises(HTTPError) as e:
+        s.endpoint()
+
+    assert e.value.status_code == 404
 
 
 def test_post_all_valid():
