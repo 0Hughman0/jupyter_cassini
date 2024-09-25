@@ -41,7 +41,7 @@ export function createMetaInput(
   }
 
   switch (propertySchema.type) {
-    case 'string':
+    case 'string': {
       const currentValueString = currentValue as string | undefined;
 
       if (!propertySchema.format) {
@@ -82,8 +82,9 @@ export function createMetaInput(
             title: ''
           });
       }
+    }
 
-    case 'number':
+    case 'number': {
       const currentValueNumber = currentValue as number | undefined;
 
       return new InputNumberDialog({
@@ -91,14 +92,18 @@ export function createMetaInput(
         value: currentValueNumber,
         title: ''
       });
-    case 'integer':
+    }
+
+    case 'integer': {
       const currentValueInteger = currentValue as number | undefined;
       return new InputNumberDialog({
         label: label,
         value: currentValueInteger,
         title: ''
       });
-    case 'boolean':
+    }
+
+    case 'boolean': {
       const currentValueBool = currentValue as boolean | undefined;
 
       return new InputBooleanDialog({
@@ -106,7 +111,9 @@ export function createMetaInput(
         value: currentValueBool,
         title: ''
       });
-    case 'array':
+    }
+
+    case 'array': {
       const currentValueArray = currentValue as JSONObject | undefined;
 
       return new InputJSONDialog({
@@ -114,7 +121,9 @@ export function createMetaInput(
         value: currentValueArray,
         title: ''
       });
-    case 'object':
+    }
+
+    case 'object': {
       const currentValueObject = currentValue as JSONObject | undefined;
 
       return new InputJSONDialog({
@@ -122,7 +131,9 @@ export function createMetaInput(
         value: currentValueObject,
         title: ''
       });
-    default:
+    }
+
+    default: {
       const currentValueUnknown = currentValue as any;
 
       return new InputJSONDialog({
@@ -130,6 +141,7 @@ export function createMetaInput(
         value: currentValueUnknown,
         title: ''
       });
+    }
   }
 }
 

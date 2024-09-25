@@ -133,7 +133,7 @@ export namespace CassiniServer {
         }
       })
       .then(val => {
-        if (val.response.status == 200 && val.data) {
+        if (val.response.status === 200 && val.data) {
           return val.data;
         } else {
           Notification.error(
