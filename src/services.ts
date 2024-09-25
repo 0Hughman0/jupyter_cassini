@@ -6,8 +6,13 @@ import { Notification } from '@jupyterlab/apputils';
 
 import { ServerConnection } from '@jupyterlab/services';
 import { paths } from './schema/schema';
-import { TierInfo, TreeResponse, NewChildInfo, Status, CassiniServerError } from './schema/types';
-
+import {
+  TierInfo,
+  TreeResponse,
+  NewChildInfo,
+  Status,
+  CassiniServerError
+} from './schema/types';
 
 const JLfetch = async (info: Request) => {
   const url = info.url;
@@ -35,13 +40,14 @@ export const client = createClient<paths>({
   fetch: JLfetch
 });
 
-
-function handleServerError(response: Response, error: CassiniServerError): string {
-  const { pathname, search } = URLExt.parse(response.url)
-  Notification.error(`${pathname}${search}, returned ${error?.reason}`)
-  return error.reason
+function handleServerError(
+  response: Response,
+  error: CassiniServerError
+): string {
+  const { pathname, search } = URLExt.parse(response.url);
+  Notification.error(`${pathname}${search}, returned ${error?.reason}`);
+  return error.reason;
 }
-
 
 /**
  * Wrapper for the requestAPI.
@@ -61,13 +67,13 @@ export namespace CassiniServer {
         }
       })
       .then(val => {
-        const { data, error, response } = val
+        const { data, error, response } = val;
         if (data) {
           return val.data;
         } else {
-          const reason = handleServerError(response, error)
-          throw Error(reason)
-        } 
+          const reason = handleServerError(response, error);
+          throw Error(reason);
+        }
       });
   }
 
@@ -85,15 +91,16 @@ export namespace CassiniServer {
           query: { 'ids[]': ids }
         },
         querySerializer: { array: { explode: false, style: 'form' } } // don't like that this is necessary!
-      }).then(val => {
-        const { data, error, response } = val
+      })
+      .then(val => {
+        const { data, error, response } = val;
         if (data) {
           return val.data;
         } else {
-          const reason = handleServerError(response, error)
-          throw Error(reason)
-        } 
-      })
+          const reason = handleServerError(response, error);
+          throw Error(reason);
+        }
+      });
   }
 
   /**
@@ -106,14 +113,15 @@ export namespace CassiniServer {
     return client
       .POST('/newChild', {
         body: info
-      }).then(val => {
-        const { data, error, response } = val
+      })
+      .then(val => {
+        const { data, error, response } = val;
         if (data) {
           return val.data;
         } else {
-          const reason = handleServerError(response, error)
-          throw Error(reason)
-        } 
+          const reason = handleServerError(response, error);
+          throw Error(reason);
+        }
       });
   }
 
@@ -123,12 +131,17 @@ export namespace CassiniServer {
         params: {
           query: { name: name }
         }
-      }).then(val => {
+      })
+      .then(val => {
         if (val.response.status == 200 && val.data) {
           return val.data;
         } else {
-          Notification.error(`Cassini Error - Problem accessing ${URLExt.parse(val.response.url).pathname}, ${val.error?.reason}, check server logs for more details`)
-          throw Error(val.error?.reason)
+          Notification.error(
+            `Cassini Error - Problem accessing ${
+              URLExt.parse(val.response.url).pathname
+            }, ${val.error?.reason}, check server logs for more details`
+          );
+          throw Error(val.error?.reason);
         }
       });
   }
