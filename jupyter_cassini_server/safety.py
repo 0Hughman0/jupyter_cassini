@@ -8,6 +8,7 @@ from jupyter_server.base.handlers import APIHandler
 from tornado.web import HTTPError
 
 from cassini import env
+from cassini.meta import MetaValidationError
 
 
 Q = TypeVar("Q", bound=BaseModel)
@@ -57,19 +58,19 @@ def with_types(
             
             try:
                 validated_query = query_model.model_validate(query)
-            except ValidationError as e:
+            except (MetaValidationError, ValidationError) as e:
                 raise HTTPError(400, reason=e.__class__.__name__, log_message=f'Invalid Query {query}, {e}')
             
             try:
                 response = func(self, validated_query)
-            except ValidationError as e:
+            except (MetaValidationError, ValidationError) as e:
                 raise HTTPError(500, reason=e.__class__.__name__, log_message=f'Invalid Response, {e}')
             except ValueError as e:
                 raise HTTPError(404, reason=e.__class__.__name__, log_message=f'Value error from query {query}, {e}')
             
             try:
                 validated_response = response_model.model_validate(response)
-            except ValidationError as e:
+            except (MetaValidationError, ValidationError) as e:
                 # this will actually never happen...
                 raise HTTPError(500, reason=e.__class__.__name__, log_message=f'Invalid Response {response}, {e}')
             
