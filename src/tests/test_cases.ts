@@ -211,7 +211,7 @@ export const WP1_1_INFO: NotebookTierInfo = {
 export const TEST_META_CONTENT = {
   description: 'this is a test',
   conclusion: 'concluded',
-  started: '01/22/2023',
+  started: '2024-08-31T18:36:58.587310Z',
   temperature: 273
 };
 

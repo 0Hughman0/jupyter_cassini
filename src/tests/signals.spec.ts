@@ -63,7 +63,7 @@ describe('tier-model', () => {
     tier.description = 'new value';
     expect(tier.dirty).toBe(true);
 
-    expect(sentinal).toBeCalledTimes(calls + 2); // once for meta contents and once for making dirty
+    expect(sentinal).toBeCalledTimes(calls + 3); // once for meta contents and once for making dirty
 
     calls = sentinal.mock.calls.length;
 

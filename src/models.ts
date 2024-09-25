@@ -164,14 +164,15 @@ export class TierModel {
     }
   }
 
-  updateMeta(newMeta: JSONObject) {
+  updateMeta(newMeta: JSONObject): boolean {
     if (this.metaValidator(newMeta)) {
       this.metaFile?.model.fromJSON(newMeta);
+      return true;
     } else {
       const error = this.metaValidator.errors && this.metaValidator.errors[0];
 
       if (!error) {
-        return;
+        return false;
       }
 
       const name = error.instancePath.split('/')[1];
@@ -181,6 +182,8 @@ export class TierModel {
           value
         )}`
       );
+
+      return false;
     }
   }
 
@@ -209,12 +212,12 @@ export class TierModel {
     return o;
   }
 
-  setMetaValue<T extends JSONValue>(key: string, value: T): T {
+  setMetaValue<T extends JSONValue>(key: string, value: T): boolean {
     const newMeta = this.meta;
     newMeta[key] = value;
-    this.updateMeta(newMeta);
+    const outcome = this.updateMeta(newMeta);
     this._changed.emit();
-    return value;
+    return outcome;
   }
 
   removeMeta(key: string) {
@@ -233,9 +236,7 @@ export class TierModel {
       throw 'Tier has no meta, cannot store description';
     }
 
-    const oldMeta = this.meta;
-    oldMeta['description'] = value;
-    this.metaFile.model.fromJSON(oldMeta);
+    this.setMetaValue('description', value);
   }
 
   get conclusion(): string {
@@ -247,9 +248,7 @@ export class TierModel {
       throw 'Tier has no meta, cannot store conclusion';
     }
 
-    const oldMeta = this.meta;
-    oldMeta['conclusion'] = value;
-    this.metaFile.model.fromJSON(oldMeta);
+    this.setMetaValue('conclusion', value);
   }
 
   get dirty(): boolean {
