@@ -218,6 +218,17 @@ components:
       required:
         - id
         - parent
+    
+    CassiniServerError:
+      type: object
+      properties:
+        reason:
+          type: string
+        message:
+          type: string
+      required:
+        - reason
+        - message        
 
 paths: 
   /lookup:
@@ -240,6 +251,10 @@ paths:
                   $ref: "#/components/schemas/TierInfo"
           "404":
             description: "Not Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/CassiniServerError"
   /tree:
     get:
       summary: View the tier tree
@@ -261,7 +276,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/TreeResponse"
         "404":
-          description: "Not Found"
+            description: "Not Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/CassiniServerError"
   /open:
     get:
       summary: Open a tier in file explorer
@@ -280,7 +299,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/Status"
         "404":
-          description: Not Found
+            description: "Not Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/CassiniServerError"
   /newChild:
     post:
       summary: Create a new child

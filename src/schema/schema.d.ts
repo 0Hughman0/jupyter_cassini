@@ -40,7 +40,9 @@ export interface paths {
           headers: {
             [name: string]: unknown;
           };
-          content?: never;
+          content: {
+            'application/json': components['schemas']['CassiniServerError'];
+          };
         };
       };
     };
@@ -88,7 +90,9 @@ export interface paths {
           headers: {
             [name: string]: unknown;
           };
-          content?: never;
+          content: {
+            'application/json': components['schemas']['CassiniServerError'];
+          };
         };
       };
     };
@@ -136,7 +140,9 @@ export interface paths {
           headers: {
             [name: string]: unknown;
           };
-          content?: never;
+          content: {
+            'application/json': components['schemas']['CassiniServerError'];
+          };
         };
       };
     };
@@ -300,6 +306,10 @@ export interface components {
       template?: string;
     } & {
       [key: string]: unknown;
+    };
+    CassiniServerError: {
+      reason: string;
+      message: string;
     };
   };
   responses: never;

@@ -11,6 +11,7 @@ import { IOutput } from '@jupyterlab/nbformat';
 
 import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
+import { Notification } from '@jupyterlab/apputils';
 
 import { cassini, ITreeChildData, ITreeData, TreeManager } from './core';
 import { MetaSchema, TierInfo, IChange } from './schema/types';
@@ -44,7 +45,7 @@ export class TierModel {
   readonly started: Date;
   readonly metaSchema: MetaSchema | undefined;
   readonly publicMetaSchema: MetaSchema | undefined;
-  readonly metaValidator: ValidateFunction<any>;
+  readonly metaValidator: ValidateFunction<MetaSchema>;
 
   readonly hltsPath: string | undefined;
 
@@ -66,7 +67,7 @@ export class TierModel {
     this.metaSchema = options.metaSchema;
     this.publicMetaSchema = this.createPublicMetaSchema(this.metaSchema);
 
-    this.metaValidator = cassini.ajv.compile(this.metaSchema);
+    this.metaValidator = cassini.ajv.compile<MetaSchema>(this.metaSchema);
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.ids.toString()) {
@@ -163,9 +164,26 @@ export class TierModel {
     }
   }
 
-  updateMeta(newMeta: JSONObject) {
+  updateMeta(newMeta: JSONObject): boolean {
     if (this.metaValidator(newMeta)) {
       this.metaFile?.model.fromJSON(newMeta);
+      return true;
+    } else {
+      const error = this.metaValidator.errors && this.metaValidator.errors[0];
+
+      if (!error) {
+        return false;
+      }
+
+      const name = error.instancePath.split('/')[1];
+      const value = newMeta[name];
+      Notification.error(
+        `Cassini Error - ${name} ${error.message}, got: ${JSON.stringify(
+          value
+        )}`
+      );
+
+      return false;
     }
   }
 
@@ -194,12 +212,12 @@ export class TierModel {
     return o;
   }
 
-  setMetaValue<T extends JSONValue>(key: string, value: T): T {
+  setMetaValue<T extends JSONValue>(key: string, value: T): boolean {
     const newMeta = this.meta;
     newMeta[key] = value;
-    this.updateMeta(newMeta);
+    const outcome = this.updateMeta(newMeta);
     this._changed.emit();
-    return value;
+    return outcome;
   }
 
   removeMeta(key: string) {
@@ -218,9 +236,7 @@ export class TierModel {
       throw 'Tier has no meta, cannot store description';
     }
 
-    const oldMeta = this.meta;
-    oldMeta['description'] = value;
-    this.metaFile.model.fromJSON(oldMeta);
+    this.setMetaValue('description', value);
   }
 
   get conclusion(): string {
@@ -232,9 +248,7 @@ export class TierModel {
       throw 'Tier has no meta, cannot store conclusion';
     }
 
-    const oldMeta = this.meta;
-    oldMeta['conclusion'] = value;
-    this.metaFile.model.fromJSON(oldMeta);
+    this.setMetaValue('conclusion', value);
   }
 
   get dirty(): boolean {

@@ -10,6 +10,7 @@ import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
 
 import { cassini } from '../core';
 import { paths } from '../schema/schema';
+import { CassiniServerError } from '../schema/types';
 
 export interface IFile {
   path: string;
@@ -41,8 +42,10 @@ export async function createTierFiles(files: IFile[]): Promise<{
 }
 
 export interface MockAPICall {
-  query: { [key: string]: string };
-  response: any;
+  query?: { [key: string]: string };
+  body?: any;
+  response: CassiniServerError | any;
+  status?: number;
 }
 
 export type MockAPICalls = { [endpoint in keyof paths]?: MockAPICall[] };
@@ -51,24 +54,41 @@ export function mockServerAPI(calls: MockAPICalls): void {
   ServerConnection.makeRequest = jest.fn((url, init, settings) => {
     const { pathname, search } = URLExt.parse(url);
 
-    const query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
-
     const mockResponses = calls[
       pathname.replace('/jupyter_cassini', '') as keyof MockAPICalls
     ] as MockAPICall[] | undefined;
 
     if (!mockResponses) {
-      throw TypeError(`Could not find endpoint ${pathname}`);
+      throw TypeError('No mocked responses found for this endpoint');
     }
 
-    for (const response of mockResponses) {
-      if (JSON.stringify(response.query) == JSON.stringify(query)) {
-        return Promise.resolve(new Response(JSON.stringify(response.response)));
+    if (init.method == 'GET') {
+      let query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
+
+      for (const response of mockResponses) {
+        if (JSON.stringify(response.query) == JSON.stringify(query)) {
+          return Promise.resolve(
+            new Response(JSON.stringify(response.response), {
+              status: response.status ?? 200
+            })
+          );
+        }
+      }
+    } else if (init.method == 'POST' && init.body) {
+      for (const response of mockResponses) {
+        if (
+          JSON.stringify(response.body) ==
+          new TextDecoder().decode(init.body as any)
+        ) {
+          return Promise.resolve(
+            new Response(JSON.stringify(response.response), {
+              status: response.status ?? 200
+            })
+          );
+        }
       }
     }
 
-    throw TypeError(
-      `Couldn't find matching mock response to query ${JSON.stringify(query)}`
-    );
+    throw TypeError('No mocked responses found for this query');
   }) as jest.Mocked<typeof ServerConnection.makeRequest>;
 }

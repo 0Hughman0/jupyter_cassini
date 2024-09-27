@@ -1,7 +1,8 @@
 import {
   TreeResponse,
   FolderTierInfo,
-  NotebookTierInfo
+  NotebookTierInfo,
+  NewChildInfo
 } from '../schema/types';
 
 export const HOME_TREE: TreeResponse = {
@@ -14,7 +15,7 @@ export const HOME_TREE: TreeResponse = {
       metaPath: 'WorkPackages/.wps/WP1.json',
       additionalMeta: { Fishes: 17, Crabs: 100 },
       info: 'dfhdg dfgdfg',
-      started: '2023-07-29T00:00:00',
+      started: '2023-07-29T00:00:00Z',
       hltsPath: 'WorkPackages/.wps/WP1.hlts',
       notebookPath: 'WorkPackages/WP1.ipynb'
     },
@@ -23,7 +24,7 @@ export const HOME_TREE: TreeResponse = {
       metaPath: 'WorkPackages/.wps/WP2.json',
       additionalMeta: { Crabs: '', Fishes: '' },
       info: 'fdsas',
-      started: '2023-07-29T00:00:00',
+      started: '2023-07-29T00:00:00Z',
       hltsPath: 'WorkPackages/.wps/WP2.hlts',
       notebookPath: 'WorkPackages/WP2.ipynb'
     },
@@ -32,7 +33,7 @@ export const HOME_TREE: TreeResponse = {
       metaPath: 'WorkPackages/.wps/WP3.json',
       additionalMeta: { Fishes: '', Crabs: '' },
       info: 'Demonstration',
-      started: '2023-07-31T00:00:00',
+      started: '2023-07-31T00:00:00Z',
       hltsPath: 'WorkPackages/.wps/WP3.hlts',
       notebookPath: 'WorkPackages/WP3.ipynb'
     }
@@ -60,7 +61,7 @@ export const WP1_TREE: TreeResponse = {
   metaPath: 'WorkPackages/.wps/WP1.json',
   additionalMeta: { Fishes: 17, Crabs: 100 },
   info: 'dfhdg dfgdfg',
-  started: '2023-07-29T00:00:00',
+  started: '2023-07-29T00:00:00Z',
   hltsPath: 'WorkPackages/.wps/WP1.hlts',
   notebookPath: 'WorkPackages/WP1.ipynb',
   children: {
@@ -69,7 +70,7 @@ export const WP1_TREE: TreeResponse = {
       metaPath: 'WorkPackages/WP1/.exps/WP1.1.json',
       additionalMeta: {},
       info: 'Asdfdf dfgf',
-      started: '2023-07-30T00:00:00',
+      started: '2023-07-30T00:00:00Z',
       hltsPath: 'WorkPackages/WP1/.exps/WP1.1.hlts',
       notebookPath: 'WorkPackages/WP1/WP1.1.ipynb'
     }
@@ -97,7 +98,7 @@ export const WP1_1_TREE: TreeResponse = {
   metaPath: 'WorkPackages/WP1/.exps/WP1.1.json',
   additionalMeta: {},
   info: 'Asdfdf dfgf',
-  started: '2023-07-30T00:00:00',
+  started: '2023-07-30T00:00:00Z',
   hltsPath: 'WorkPackages/WP1/.exps/WP1.1.hlts',
   notebookPath: 'WorkPackages/WP1/WP1.1.ipynb',
   children: {
@@ -106,7 +107,7 @@ export const WP1_1_TREE: TreeResponse = {
       metaPath: 'WorkPackages/WP1/WP1.1/.smpls/WP1.1a.json',
       additionalMeta: {},
       info: "It's a",
-      started: '2023-08-01T00:00:00',
+      started: '2023-08-01T00:00:00Z',
       hltsPath: 'WorkPackages/WP1/WP1.1/.smpls/WP1.1a.hlts',
       notebookPath: 'WorkPackages/WP1/WP1.1/WP1.1a.ipynb'
     }
@@ -208,10 +209,16 @@ export const WP1_1_INFO: NotebookTierInfo = {
   tierType: 'notebook'
 };
 
+export const TEST_NEW_CHILD_INFO: NewChildInfo = {
+  id: '1',
+  parent: 'WP1',
+  template: 'my template'
+};
+
 export const TEST_META_CONTENT = {
   description: 'this is a test',
   conclusion: 'concluded',
-  started: '01/22/2023',
+  started: '2024-08-31T18:36:58.587310Z',
   temperature: 273
 };
 
