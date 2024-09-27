@@ -1,5 +1,6 @@
 from unittest.mock import Mock
 from urllib.parse import urlencode
+from http import HTTPStatus
 
 import pytest
 from pydantic import BaseModel, ValidationError
@@ -70,6 +71,22 @@ def test_get_all_valid():
     assert Response.model_validate_json(s.finished) == valid_response
 
 
+def test_invalid_request_method():
+    class Server(MockServer):
+
+        @with_types(Query, Response, 'DELETE')  # type: ignore[type-var]
+        def endpoint(self, query: Query) -> Response:
+            self.query = query
+            return valid_response
+        
+    s = Server(query=urlencode(dict(valid_query)))
+
+    with pytest.raises(HTTPError) as e:
+        s.endpoint()
+    
+    assert e.value.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+
+
 def test_get_invalid_query():
     class Server(MockServer):
 
@@ -83,7 +100,7 @@ def test_get_invalid_query():
     with pytest.raises(HTTPError) as e:
         s.endpoint()
     
-    assert e.value.status_code == 400
+    assert e.value.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_get_invalid_response():
@@ -99,7 +116,7 @@ def test_get_invalid_response():
     with pytest.raises(HTTPError) as e:
         s.endpoint()
 
-    assert e.value.status_code == 500
+    assert e.value.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 def test_get_not_found():
@@ -116,7 +133,7 @@ def test_get_not_found():
     with pytest.raises(HTTPError) as e:
         s.endpoint()
 
-    assert e.value.status_code == 404
+    assert e.value.status_code == HTTPStatus.NOT_FOUND
 
 
 def test_post_all_valid():
@@ -132,5 +149,4 @@ def test_post_all_valid():
     
     assert s.body == dict(valid_query)
     assert s.query == valid_query
-    assert Response.model_validate_json(s.finished) == valid_response
-
+    assert Response.model_validate_json(s.finished) == valid_response 
