@@ -222,13 +222,13 @@ components:
     CassiniServerError:
       type: object
       properties:
-        message:
-          type: string
         reason:
           type: string
+        message:
+          type: string
       required:
-        - message
         - reason
+        - message        
 
 paths: 
   /lookup:

@@ -10,6 +10,8 @@ import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
 
 import { cassini } from '../core';
 import { paths } from '../schema/schema';
+import { CassiniServerError } from '../schema/types';
+
 
 export interface IFile {
   path: string;
@@ -42,7 +44,8 @@ export async function createTierFiles(files: IFile[]): Promise<{
 
 export interface MockAPICall {
   query: { [key: string]: string };
-  response: any;
+  response: CassiniServerError | any;
+  status?: number;
 }
 
 export type MockAPICalls = { [endpoint in keyof paths]?: MockAPICall[] };
@@ -58,17 +61,16 @@ export function mockServerAPI(calls: MockAPICalls): void {
     ] as MockAPICall[] | undefined;
 
     if (!mockResponses) {
-      throw TypeError(`Could not find endpoint ${pathname}`);
+      throw TypeError("Not mocked responses found for this endpoint")
     }
 
     for (const response of mockResponses) {
       if (JSON.stringify(response.query) == JSON.stringify(query)) {
-        return Promise.resolve(new Response(JSON.stringify(response.response)));
+        return Promise.resolve(new Response(JSON.stringify(response.response), {status: response.status ?? 200}));
       }
     }
 
-    throw TypeError(
-      `Couldn't find matching mock response to query ${JSON.stringify(query)}`
-    );
+    throw TypeError("Not mocked responses found for this query")
+
   }) as jest.Mocked<typeof ServerConnection.makeRequest>;
 }
