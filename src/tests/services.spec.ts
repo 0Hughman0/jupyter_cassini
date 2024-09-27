@@ -11,7 +11,7 @@ describe('Error logging', () => {
   let errorLog: jest.Mock<typeof console.log>;
 
   beforeEach(() => {
-    errorLog = console.error = jest.fn() as jest.Mock<typeof console.log>;
+    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
   });
 
   test('error content', async () => {
@@ -41,7 +41,7 @@ describe('tree', () => {
   let errorLog: jest.Mock<typeof console.log>;
 
   beforeEach(() => {
-    errorLog = console.error = jest.fn() as jest.Mock<typeof console.log>;
+    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
 
     mockServerAPI({
       '/tree': [
@@ -93,7 +93,7 @@ describe('lookup', () => {
   let errorLog: jest.Mock<typeof console.log>;
 
   beforeEach(() => {
-    errorLog = console.error = jest.fn() as jest.Mock<typeof console.log>;
+    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
 
     mockServerAPI({
       '/lookup': [
@@ -130,7 +130,7 @@ describe('newChild', () => {
   let errorLog: jest.Mock<typeof console.log>;
 
   beforeEach(() => {
-    errorLog = console.error = jest.fn() as jest.Mock<typeof console.log>;
+    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
 
     mockServerAPI({
       '/newChild': [
@@ -167,7 +167,7 @@ describe('open', () => {
   let errorLog: jest.Mock<typeof console.log>;
 
   beforeEach(() => {
-    errorLog = console.error = jest.fn() as jest.Mock<typeof console.log>;
+    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
 
     mockServerAPI({
       '/open': [
