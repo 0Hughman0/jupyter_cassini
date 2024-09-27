@@ -1,7 +1,8 @@
 import {
   TreeResponse,
   FolderTierInfo,
-  NotebookTierInfo
+  NotebookTierInfo,
+  NewChildInfo
 } from '../schema/types';
 
 export const HOME_TREE: TreeResponse = {
@@ -208,6 +209,12 @@ export const WP1_1_INFO: NotebookTierInfo = {
   tierType: 'notebook'
 };
 
+export const TEST_NEW_CHILD_INFO: NewChildInfo = { 
+  id: "1",
+  parent: "WP1",
+  template: "my template"
+}
+
 export const TEST_META_CONTENT = {
   description: 'this is a test',
   conclusion: 'concluded',
@@ -218,3 +225,4 @@ export const TEST_META_CONTENT = {
 export const TEST_HLT_CONTENT = {
   cos: [{ data: { 'text/markdown': '## cos' }, metadata: {}, transient: {} }]
 };
+

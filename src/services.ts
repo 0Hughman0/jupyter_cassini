@@ -134,15 +134,12 @@ export namespace CassiniServer {
         }
       })
       .then(val => {
-        if (val.response.status === 200 && val.data) {
+        const { data, error, response } = val;
+        if (data) {
           return val.data;
         } else {
-          Notification.error(
-            `Cassini Error - Problem accessing ${
-              URLExt.parse(val.response.url).pathname
-            }, ${val.error?.reason}, check server logs for more details`
-          );
-          throw Error(val.error?.reason);
+          const reason = handleServerError(response, error);
+          throw Error(reason);
         }
       });
   }

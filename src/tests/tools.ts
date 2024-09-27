@@ -43,7 +43,8 @@ export async function createTierFiles(files: IFile[]): Promise<{
 }
 
 export interface MockAPICall {
-  query: { [key: string]: string };
+  query?: { [key: string]: string };
+  body?: any;
   response: CassiniServerError | any;
   status?: number;
 }
@@ -54,8 +55,6 @@ export function mockServerAPI(calls: MockAPICalls): void {
   ServerConnection.makeRequest = jest.fn((url, init, settings) => {
     const { pathname, search } = URLExt.parse(url);
 
-    const query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
-
     const mockResponses = calls[
       pathname.replace('/jupyter_cassini', '') as keyof MockAPICalls
     ] as MockAPICall[] | undefined;
@@ -64,9 +63,19 @@ export function mockServerAPI(calls: MockAPICalls): void {
       throw TypeError("No mocked responses found for this endpoint")
     }
 
-    for (const response of mockResponses) {
-      if (JSON.stringify(response.query) == JSON.stringify(query)) {
-        return Promise.resolve(new Response(JSON.stringify(response.response), {status: response.status ?? 200}));
+    if (init.method == 'GET') {
+      let query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
+
+      for (const response of mockResponses) {
+        if (JSON.stringify(response.query) == JSON.stringify(query)) {
+          return Promise.resolve(new Response(JSON.stringify(response.response), {status: response.status ?? 200}));
+        }
+      }  
+    } else if (init.method == 'POST' && init.body) {
+      for (const response of mockResponses) {
+        if (JSON.stringify(response.body) == new TextDecoder().decode(init.body as any)) {
+          return Promise.resolve(new Response(JSON.stringify(response.response), {status: response.status ?? 200}));
+        }
       }
     }
 
