@@ -15,8 +15,8 @@ describe('createMetaInput', () => {
     const input = createMetaInput({ type: 'string' }, initial, '');
     expect(input).toBeInstanceOf(InputTextDialog);
     expect(input.getValue()).toEqual(initial);
-    
-    const noValue = createMetaInput({ type: 'string' }, undefined, '')
+
+    const noValue = createMetaInput({ type: 'string' }, undefined, '');
     expect(noValue.getValue()).toEqual('');
   });
 
@@ -30,8 +30,12 @@ describe('createMetaInput', () => {
     expect(input).toBeInstanceOf(InputDateDialog);
     expect(input.getValue()).toEqual(new Date(initial));
 
-    const noValue = createMetaInput({ type: 'string', format: 'date' }, undefined, '')
-    expect(noValue.getValue().getTime()).toBeNaN()
+    const noValue = createMetaInput(
+      { type: 'string', format: 'date' },
+      undefined,
+      ''
+    );
+    expect(noValue.getValue().getTime()).toBeNaN();
   });
 
   test('date-time MetaInput', () => {
@@ -44,8 +48,12 @@ describe('createMetaInput', () => {
     expect(input).toBeInstanceOf(InputDatetimeDialog);
     expect(input.getValue()).toEqual(new Date(initial));
 
-    const noValue = createMetaInput({ type: 'string', format: 'date-time' }, undefined, '')
-    expect(noValue.getValue().getTime()).toBeNaN()
+    const noValue = createMetaInput(
+      { type: 'string', format: 'date-time' },
+      undefined,
+      ''
+    );
+    expect(noValue.getValue().getTime()).toBeNaN();
   });
 
   test('password MetaInput', () => {
@@ -58,7 +66,11 @@ describe('createMetaInput', () => {
     expect(input).toBeInstanceOf(InputPasswordDialog);
     expect(input.getValue()).toEqual(initial);
 
-    const noValue = createMetaInput({ type: 'string', format: 'password' }, undefined, '')
+    const noValue = createMetaInput(
+      { type: 'string', format: 'password' },
+      undefined,
+      ''
+    );
     expect(noValue.getValue()).toEqual('');
   });
 
@@ -68,7 +80,7 @@ describe('createMetaInput', () => {
     expect(input).toBeInstanceOf(InputNumberDialog);
     expect(input.getValue()).toEqual(initial);
 
-    const noValue = createMetaInput({ type: 'number' }, undefined, '')
+    const noValue = createMetaInput({ type: 'number' }, undefined, '');
     expect(noValue.getValue()).toEqual(0);
   });
 
@@ -78,7 +90,7 @@ describe('createMetaInput', () => {
     expect(input).toBeInstanceOf(InputNumberDialog);
     expect(input.getValue()).toEqual(initial);
 
-    const noValue = createMetaInput({ type: 'number' }, undefined, '')
+    const noValue = createMetaInput({ type: 'number' }, undefined, '');
     expect(noValue.getValue()).toEqual(0);
   });
 
@@ -88,7 +100,7 @@ describe('createMetaInput', () => {
     expect(input).toBeInstanceOf(InputBooleanDialog);
     expect(input.getValue()).toEqual(initial);
 
-    const noValue = createMetaInput({ type: 'boolean' }, undefined, '')
+    const noValue = createMetaInput({ type: 'boolean' }, undefined, '');
     expect(noValue.getValue()).toEqual(false);
   });
 
@@ -98,7 +110,7 @@ describe('createMetaInput', () => {
     expect(input).toBeInstanceOf(InputJSONDialog);
     expect(input.getValue()).toEqual(initial);
 
-    const noValue = createMetaInput({ type: 'array' }, undefined, '')
+    const noValue = createMetaInput({ type: 'array' }, undefined, '');
     expect(noValue.getValue()).toEqual(undefined);
   });
 
@@ -108,7 +120,7 @@ describe('createMetaInput', () => {
     expect(input).toBeInstanceOf(InputJSONDialog);
     expect(input.getValue()).toEqual(initial);
 
-    const noValue = createMetaInput({ type: 'object' }, undefined, '')
+    const noValue = createMetaInput({ type: 'object' }, undefined, '');
     expect(noValue.getValue()).toEqual(undefined);
   });
 
