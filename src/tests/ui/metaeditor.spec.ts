@@ -151,6 +151,24 @@ describe('createValidatedInput', () => {
     expect(validated.handleInput()).toEqual(false);
   });
 
+  test('date-time postProcessing', () => {
+    const intial = '2000-12-25T00:00:00.000Z';
+    const validated = createValidatedInput(
+      { type: 'string', format: 'date-time' },
+      intial,
+      ''
+    );
+
+    expect(validated.wrappedInput).toBeInstanceOf(InputDatetimeDialog);
+    expect(validated.getValue()).toEqual(intial);
+    expect(validated.handleInput()).toEqual(true);
+
+    validated.input.value = '2000-12-50T00:00'; // december doesn't have 50 days
+
+    expect(validated.getValue()).toEqual('an invalid date');
+    expect(validated.handleInput()).toEqual(false);
+  });
+
   test('additional schema validation', () => {
     const intial = 5;
     const validated = createValidatedInput(
