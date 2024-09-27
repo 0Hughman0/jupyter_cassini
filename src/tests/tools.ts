@@ -61,7 +61,7 @@ export function mockServerAPI(calls: MockAPICalls): void {
     ] as MockAPICall[] | undefined;
 
     if (!mockResponses) {
-      throw TypeError("Not mocked responses found for this endpoint")
+      throw TypeError("No mocked responses found for this endpoint")
     }
 
     for (const response of mockResponses) {
@@ -70,7 +70,7 @@ export function mockServerAPI(calls: MockAPICalls): void {
       }
     }
 
-    throw TypeError("Not mocked responses found for this query")
+    throw TypeError("No mocked responses found for this query")
 
   }) as jest.Mocked<typeof ServerConnection.makeRequest>;
 }
