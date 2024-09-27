@@ -326,7 +326,7 @@ export class InputDateDialog extends InputDialogBase<Date> {
 
   constructor(options: IDateOptions) {
     super(options);
-    if (options.value) {
+    if (options.value && !isNaN(options.value.getTime())) {
       this.input.value = options.value.toISOString().slice(0, 10);
     }
   }
@@ -343,7 +343,7 @@ export class InputDatetimeDialog extends InputDialogBase<Date> {
 
   constructor(options: IDateOptions) {
     super(options);
-    if (options.value) {
+    if (options.value && !isNaN(options.value.getTime())) {
       this.input.value = options.value.toISOString().split('.')[0];
     }
   }
