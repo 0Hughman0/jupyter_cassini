@@ -12,7 +12,6 @@ import { cassini } from '../core';
 import { paths } from '../schema/schema';
 import { CassiniServerError } from '../schema/types';
 
-
 export interface IFile {
   path: string;
   content: JSONObject;
@@ -60,7 +59,7 @@ export function mockServerAPI(calls: MockAPICalls): void {
     ] as MockAPICall[] | undefined;
 
     if (!mockResponses) {
-      throw TypeError("No mocked responses found for this endpoint")
+      throw TypeError('No mocked responses found for this endpoint');
     }
 
     if (init.method == 'GET') {
@@ -68,18 +67,28 @@ export function mockServerAPI(calls: MockAPICalls): void {
 
       for (const response of mockResponses) {
         if (JSON.stringify(response.query) == JSON.stringify(query)) {
-          return Promise.resolve(new Response(JSON.stringify(response.response), {status: response.status ?? 200}));
+          return Promise.resolve(
+            new Response(JSON.stringify(response.response), {
+              status: response.status ?? 200
+            })
+          );
         }
-      }  
+      }
     } else if (init.method == 'POST' && init.body) {
       for (const response of mockResponses) {
-        if (JSON.stringify(response.body) == new TextDecoder().decode(init.body as any)) {
-          return Promise.resolve(new Response(JSON.stringify(response.response), {status: response.status ?? 200}));
+        if (
+          JSON.stringify(response.body) ==
+          new TextDecoder().decode(init.body as any)
+        ) {
+          return Promise.resolve(
+            new Response(JSON.stringify(response.response), {
+              status: response.status ?? 200
+            })
+          );
         }
       }
     }
 
-    throw TypeError("No mocked responses found for this query")
-
+    throw TypeError('No mocked responses found for this query');
   }) as jest.Mocked<typeof ServerConnection.makeRequest>;
 }

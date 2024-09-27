@@ -45,8 +45,12 @@ export function handleServerError(
   error: CassiniServerError
 ): string {
   const { pathname, search } = URLExt.parse(response.url);
-  Notification.error(`${pathname}${search}, returned ${error?.reason}, check out browser and server log for more details.`);
-  console.error(`Cassini server error ${error.reason} at ${pathname}${search}, caused by: \n\n ${error.message}`)
+  Notification.error(
+    `${pathname}${search}, returned ${error?.reason}, check out browser and server log for more details.`
+  );
+  console.error(
+    `Cassini server error ${error.reason} at ${pathname}${search}, caused by: \n\n ${error.message}`
+  );
   return error.reason;
 }
 
