@@ -1,65 +1,16 @@
 import { Widget, PanelLayout } from '@lumino/widgets';
-import { InputDialog, Dialog } from '@jupyterlab/apputils';
+import { Dialog } from '@jupyterlab/apputils';
 
 import { ITreeData, cassini } from '../core';
 import {
-  InputTextDialog,
+  IdDialog,
+  IDialogueInput,
   InputItemsDialog,
   InputTextAreaDialog,
-  ValidatingInput,
-  IDialogueInput
+  ValidatingInput
 } from './dialogwidgets';
 
 import { createValidatedInput } from './metaeditor';
-
-/**
- * Version of InputTextDialog that indicates is the contents of the input does not match `idRegex`
- */
-
-export class IdDialog extends InputTextDialog {
-  idRegex: RegExp;
-  nameTemplate: string;
-  previewBox: HTMLSpanElement;
-
-  constructor(options: IIdDialogOptions) {
-    super(options);
-    this.idRegex = new RegExp(`^${options.idRegex}$`);
-    this.nameTemplate = options.nameTemplate;
-
-    this.input.addEventListener('input', this.validateInput.bind(this));
-
-    this.previewBox = document.createElement('span');
-    this.node.appendChild(this.previewBox);
-    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
-      '{}',
-      '?'
-    )}`;
-  }
-
-  validateInput(): boolean {
-    const id = this.input.value;
-
-    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
-      '{}',
-      id
-    )}`;
-
-    if (id && !this.idRegex.test(id)) {
-      this.input.classList.add('cas-invalid-id');
-
-      return false;
-    } else {
-      this.input.classList.remove('cas-invalid-id');
-
-      return true;
-    }
-  }
-}
-
-export interface IIdDialogOptions extends InputDialog.ITextOptions {
-  idRegex: string;
-  nameTemplate: string;
-}
 
 /**
  * A widget that creates a dialog for creating a new tier child.
@@ -121,7 +72,7 @@ export class NewChildWidget extends Widget {
           continue;
         }
 
-        const vinput = createValidatedInput(info, name, undefined);
+        const vinput = createValidatedInput(info, undefined, name);
 
         this.subInputs[name] = vinput;
 

@@ -10,12 +10,16 @@ import { Widget } from '@lumino/widgets';
 
 import { Dialog, Styling, InputDialog } from '@jupyterlab/apputils';
 import { JSONObject } from '@lumino/coreutils';
+import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
+import { CodeMirrorEditorFactory } from '@jupyterlab/codemirror';
+
+import { cassini } from '../core';
 
 const INPUT_DIALOG_CLASS = 'jp-Input-Dialog';
 const INPUT_BOOLEAN_DIALOG_CLASS = 'jp-Input-Boolean-Dialog';
 
 export interface IDialogueInput<T> extends Required<Dialog.IBodyWidget<T>> {
-  input: HTMLInputElement | HTMLTextAreaElement;
+  input: HTMLInputElement | HTMLTextAreaElement | HTMLDivElement;
 }
 
 export abstract class InputDialogBase<T>
@@ -42,7 +46,8 @@ export abstract class InputDialogBase<T>
     const { label } = options;
 
     this.input = document.createElement(this.elem) as HTMLInputElement;
-    if (this.inputType) {
+
+    if (this.input instanceof HTMLInputElement && this.inputType) {
       this.input.type = this.inputType;
     }
 
@@ -63,7 +68,7 @@ export abstract class InputDialogBase<T>
 
   abstract getValue(): T;
   /** Input HTML node, access is not part of public API */
-  input: HTMLInputElement | HTMLTextAreaElement;
+  input: HTMLInputElement | HTMLTextAreaElement | HTMLDivElement;
 }
 
 /**
@@ -320,6 +325,8 @@ export interface IDateOptions extends InputDialog.IOptions {
 }
 
 export class InputDateDialog extends InputDialogBase<Date> {
+  input: HTMLInputElement;
+
   get inputType() {
     return 'date';
   }
@@ -337,6 +344,8 @@ export class InputDateDialog extends InputDialogBase<Date> {
 }
 
 export class InputDatetimeDialog extends InputDialogBase<Date> {
+  input: HTMLInputElement;
+
   get inputType() {
     return 'datetime-local';
   }
@@ -358,19 +367,36 @@ export interface IJSONOptions extends InputDialog.IOptions {
 }
 
 export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
+  editor: CodeEditorWrapper;
+  input: HTMLDivElement;
+
   constructor(options: IJSONOptions) {
-    super(options);
-    this.input.value = JSON.stringify(options.value) ?? '';
+    super({});
+    const editor = (this.editor = new CodeEditorWrapper({
+      model: new CodeEditor.Model({ mimeType: 'application/json' }),
+      factory:
+        cassini.contentFactory?.newInlineEditor ||
+        new CodeMirrorEditorFactory().newInlineEditor,
+      editorOptions: { config: { lineNumbers: false }, inline: true }
+    }));
+
+    this.input.remove();
+    this.input = editor.node as HTMLInputElement; // this is bad
+    this.node.append(editor.node);
+
+    editor.model.sharedModel.setSource(JSON.stringify(options.value) ?? '');
+
+    this.editor.model.sharedModel.changed.connect((sender, change) => {
+      this.input.dispatchEvent(new Event('input')); // act like an input element
+    });
   }
 
   /*
-
   Returns undefined if cannot parse
-
   */
   getValue(): JSONObject | undefined {
     try {
-      return JSON.parse(this.input.value);
+      return JSON.parse(this.editor.model.sharedModel.getSource());
     } catch (SyntaxError) {
       return undefined;
     }
@@ -395,7 +421,7 @@ export class ValidatingInput<R, T = R> {
     this.wrappedInput = inputWidget;
     this.validator = validator;
     this.postProcessor = postProcessor ?? null;
-    this.input.addEventListener('input', this.handleInput.bind(this));
+    this.input.addEventListener('input', this);
   }
 
   get input() {
@@ -410,7 +436,7 @@ export class ValidatingInput<R, T = R> {
     }
   }
 
-  handleInput(): boolean {
+  validate(): boolean {
     const value = this.getValue();
     const valid = this.validator(value);
 
@@ -422,4 +448,60 @@ export class ValidatingInput<R, T = R> {
       return valid;
     }
   }
+
+  handleEvent(event: Event): void {
+    switch (event.type) {
+      case 'input': {
+        this.validate();
+      }
+    }
+  }
+}
+
+/**
+ * Version of InputTextDialog that indicates is the contents of the input does not match `idRegex`
+ */
+export class IdDialog extends InputTextDialog {
+  idRegex: RegExp;
+  nameTemplate: string;
+  previewBox: HTMLSpanElement;
+
+  constructor(options: IIdDialogOptions) {
+    super(options);
+    this.idRegex = new RegExp(`^${options.idRegex}$`);
+    this.nameTemplate = options.nameTemplate;
+
+    this.input.addEventListener('input', this.validateInput.bind(this));
+
+    this.previewBox = document.createElement('span');
+    this.node.appendChild(this.previewBox);
+    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
+      '{}',
+      '?'
+    )}`;
+  }
+
+  validateInput(): boolean {
+    const id = this.input.value;
+
+    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
+      '{}',
+      id
+    )}`;
+
+    if (id && !this.idRegex.test(id)) {
+      this.input.classList.add('cas-invalid-id');
+
+      return false;
+    } else {
+      this.input.classList.remove('cas-invalid-id');
+
+      return true;
+    }
+  }
+}
+
+export interface IIdDialogOptions extends InputDialog.ITextOptions {
+  idRegex: string;
+  nameTemplate: string;
 }
