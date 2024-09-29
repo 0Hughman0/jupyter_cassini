@@ -147,6 +147,16 @@ components:
         - templates
         - metaSchema
 
+    TreePathQuery:
+      type: object
+      properties:
+        path:
+          type: array
+          items:
+            type: string  
+      required:
+        - path
+
     TreeChildResponse:
       type: object
       properties:
@@ -224,19 +234,16 @@ paths:
                   $ref: "#/components/schemas/TierInfo"
           "404":
             description: "Not Found"
-  /tree:
+  /tree/{ids}:
     get:
       summary: View the tier tree
       description: Get the children of a particular tier (or home)
       parameters:
-      - name: ids[]
-        in: query
+      - name: ids
+        in: path
         schema:
-          type: array
-          items:
-            type: string
-        style: form
-        explode: false
+          type: string
+        required: true
       responses:
         "200":
           description: Found tree

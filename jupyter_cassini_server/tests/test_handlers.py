@@ -4,6 +4,7 @@ from unittest.mock import Mock
 import sys
 
 import pytest
+from tornado.httpclient import HTTPClientError
 from cassini import env
 from cassini.utils import find_project
 
@@ -67,12 +68,33 @@ async def test_tree_WP1(project_via_env, jp_fetch) -> None:
     project = project_via_env
     project['WP1'].setup_files()
 
-    reponse = await jp_fetch("jupyter_cassini", "tree", params={'ids[]': '1'})
+    reponse = await jp_fetch("jupyter_cassini", "tree/1")
 
     assert reponse.code == 200
 
     tree = TreeResponse.model_validate_json(reponse.body.decode())
     assert tree.name == 'WP1'
+
+
+async def test_tree_WP1_1(project_via_env, jp_fetch) -> None:    
+    project = project_via_env
+    project['WP1'].setup_files()
+    project['WP1.1'].setup_files()
+
+    reponse = await jp_fetch("jupyter_cassini", "tree/1/1")
+
+    assert reponse.code == 200
+
+    tree = TreeResponse.model_validate_json(reponse.body.decode())
+    assert tree.name == 'WP1.1'
+
+
+async def test_tree_old_query(project_via_env, jp_fetch) -> None:    
+    project = project_via_env
+    project['WP1'].setup_files()
+
+    with pytest.raises(HTTPClientError):
+        reponse = await jp_fetch("jupyter_cassini", "tree", params={"ids[]": ["1", "2"]})
     
 
 async def test_open_valid(project_via_env, jp_fetch) -> None:
