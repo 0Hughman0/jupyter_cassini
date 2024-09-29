@@ -124,8 +124,9 @@ export class NewChildWidget extends Widget {
         const vinput = createValidatedInput(info, name, undefined);
 
         this.subInputs[name] = vinput;
-
-        layout.addWidget(vinput.wrappedInput);
+        
+        // I don't understand why this it's not happy about this...?!
+        layout.addWidget(vinput.wrappedInput as any as Widget);
       }
     }
   }

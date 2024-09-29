@@ -10,6 +10,9 @@ import { Widget } from '@lumino/widgets';
 
 import { Dialog, Styling, InputDialog } from '@jupyterlab/apputils';
 import { JSONObject } from '@lumino/coreutils';
+import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
+
+import { cassini } from '../core';
 
 const INPUT_DIALOG_CLASS = 'jp-Input-Dialog';
 const INPUT_BOOLEAN_DIALOG_CLASS = 'jp-Input-Boolean-Dialog';
@@ -357,10 +360,21 @@ export interface IJSONOptions extends InputDialog.IOptions {
   value?: JSONObject;
 }
 
-export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
+export class InputJSONDialog extends Widget implements IDialogueInput<JSONObject | undefined> {
+  editor: CodeEditorWrapper
+  input: HTMLInputElement
+
   constructor(options: IJSONOptions) {
-    super(options);
-    this.input.value = JSON.stringify(options.value) ?? '';
+    super({})
+    const editor = this.editor = new CodeEditorWrapper({
+      model: new CodeEditor.Model({ mimeType: 'application/json' }),
+      factory: cassini.contentFactory.newInlineEditor,
+      editorOptions: { config: { lineNumbers: false }, inline: true }
+    });
+
+    editor.model.sharedModel.setSource(JSON.stringify(options.value ?? ''))
+    this.node.append(editor.node)
+    this.input = this.editor.editor.host as HTMLInputElement
   }
 
   /*
@@ -370,7 +384,7 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
   */
   getValue(): JSONObject | undefined {
     try {
-      return JSON.parse(this.input.value);
+      return JSON.parse(this.editor.model.sharedModel.getSource());
     } catch (SyntaxError) {
       return undefined;
     }
@@ -385,17 +399,17 @@ Validator Wrapper.
 export class ValidatingInput<R, T = R> {
   validator: (value: R) => boolean;
   postProcessor: ((value: T extends R ? R : T) => R) | null;
-  wrappedInput: InputDialogBase<T extends R ? R : T>;
+  wrappedInput: IDialogueInput<T extends R ? R : T>;
 
   constructor(
-    inputWidget: InputDialogBase<T extends R ? R : T>,
+    inputWidget: IDialogueInput<T extends R ? R : T>,
     validator: (value: R) => boolean,
     postProcessor?: (value: T extends R ? R : T) => R
   ) {
     this.wrappedInput = inputWidget;
     this.validator = validator;
     this.postProcessor = postProcessor ?? null;
-    this.input.addEventListener('input', this.handleInput.bind(this));
+    this.input.addEventListener('keyup', this);
   }
 
   get input() {
@@ -410,7 +424,7 @@ export class ValidatingInput<R, T = R> {
     }
   }
 
-  handleInput(): boolean {
+  validate(): boolean {
     const value = this.getValue();
     const valid = this.validator(value);
 
@@ -420,6 +434,14 @@ export class ValidatingInput<R, T = R> {
     } else {
       this.wrappedInput.input.classList.add('cas-invalid-id');
       return valid;
+    }
+  }
+
+  handleEvent(event: Event): void {
+    switch (event.type) {
+      case "keyup": {
+        this.validate()
+      }
     }
   }
 }

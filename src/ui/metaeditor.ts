@@ -19,7 +19,7 @@ import {
   InputDateDialog,
   InputDatetimeDialog,
   InputJSONDialog,
-  InputDialogBase,
+  IDialogueInput,
   ValidatingInput
 } from './dialogwidgets';
 import { ObjectDef } from '../schema/types';
@@ -28,7 +28,7 @@ export function createMetaInput(
   propertySchema: ObjectDef,
   currentValue: any | null,
   label: string | undefined
-): InputDialogBase<any> {
+): IDialogueInput<any> {
   if (propertySchema.enum && propertySchema.type) {
     const items = propertySchema.enum as (typeof propertySchema.type)[];
     return new InputItemsDialog({

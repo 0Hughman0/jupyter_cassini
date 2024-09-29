@@ -78,6 +78,10 @@ h2 {
   background-color: var(--jp-error-color3) !important;
 }
 
+.cas-invalid-id * {
+  background-color: var(--jp-error-color3) !important;
+}
+
 .cas-ChildrenTable-table {
   width: 100%;
   table-layout: auto;
