@@ -3,7 +3,9 @@ import { Dialog } from '@jupyterlab/apputils';
 
 import { ITreeData, cassini } from '../core';
 import {
-  IdDialog, IDialogueInput, InputItemsDialog,
+  IdDialog,
+  IDialogueInput,
+  InputItemsDialog,
   InputTextAreaDialog,
   ValidatingInput
 } from './dialogwidgets';
@@ -73,7 +75,7 @@ export class NewChildWidget extends Widget {
         const vinput = createValidatedInput(info, undefined, name);
 
         this.subInputs[name] = vinput;
-        
+
         layout.addWidget(vinput.wrappedInput);
       }
     }

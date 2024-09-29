@@ -158,7 +158,7 @@ describe('ValidatedInput', () => {
   test('construction no postprocess', () => {
     const initial = 'initial';
     const input = new InputTextDialog({ text: initial, title: '' });
-    
+
     const validated = new ValidatingInput(input, value => value == 'valid');
 
     expect(validated.getValue()).toEqual(initial);

@@ -141,7 +141,7 @@ describe('createValidatedInput', () => {
     expect(validated.getValue()).toEqual(intial);
     expect(validated.validate()).toEqual(true);
 
-    const input = validated.wrappedInput.input as HTMLInputElement
+    const input = validated.wrappedInput.input as HTMLInputElement;
 
     input.value = '1.5';
 
@@ -157,7 +157,7 @@ describe('createValidatedInput', () => {
     expect(validated.getValue()).toEqual(intial);
     expect(validated.validate()).toEqual(true);
 
-    const input = validated.wrappedInput as InputJSONDialog
+    const input = validated.wrappedInput as InputJSONDialog;
 
     input.editor.model.sharedModel.setSource('{"a": 1, "b": 2'); // no closing }
 
@@ -177,7 +177,7 @@ describe('createValidatedInput', () => {
     expect(validated.getValue()).toEqual(intial);
     expect(validated.validate()).toEqual(true);
 
-    const input = validated.wrappedInput.input as HTMLInputElement
+    const input = validated.wrappedInput.input as HTMLInputElement;
 
     input.value = '2000-12-50'; // december doesn't have 50 days
 
@@ -197,7 +197,7 @@ describe('createValidatedInput', () => {
     expect(validated.getValue()).toEqual(intial);
     expect(validated.validate()).toEqual(true);
 
-    const input = validated.wrappedInput.input as HTMLInputElement
+    const input = validated.wrappedInput.input as HTMLInputElement;
 
     input.value = '2000-12-50T00:00'; // december doesn't have 50 days
 

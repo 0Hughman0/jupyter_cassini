@@ -46,7 +46,7 @@ export abstract class InputDialogBase<T>
     const { label } = options;
 
     this.input = document.createElement(this.elem) as HTMLInputElement;
-    
+
     if (this.input instanceof HTMLInputElement && this.inputType) {
       this.input.type = this.inputType;
     }
@@ -367,26 +367,28 @@ export interface IJSONOptions extends InputDialog.IOptions {
 }
 
 export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
-  editor: CodeEditorWrapper
-  input: HTMLDivElement
+  editor: CodeEditorWrapper;
+  input: HTMLDivElement;
 
   constructor(options: IJSONOptions) {
-    super({})
-    const editor = this.editor = new CodeEditorWrapper({
+    super({});
+    const editor = (this.editor = new CodeEditorWrapper({
       model: new CodeEditor.Model({ mimeType: 'application/json' }),
-      factory: cassini.contentFactory?.newInlineEditor || new CodeMirrorEditorFactory().newInlineEditor,
+      factory:
+        cassini.contentFactory?.newInlineEditor ||
+        new CodeMirrorEditorFactory().newInlineEditor,
       editorOptions: { config: { lineNumbers: false }, inline: true }
-    });
+    }));
 
-    this.input.remove()
-    this.input = editor.node as HTMLInputElement // this is bad
-    this.node.append(editor.node)
+    this.input.remove();
+    this.input = editor.node as HTMLInputElement; // this is bad
+    this.node.append(editor.node);
 
-    editor.model.sharedModel.setSource(JSON.stringify(options.value) ?? '')
-    
+    editor.model.sharedModel.setSource(JSON.stringify(options.value) ?? '');
+
     this.editor.model.sharedModel.changed.connect((sender, change) => {
-     this.input.dispatchEvent(new Event('input'))  // act like an input element
-    })
+      this.input.dispatchEvent(new Event('input')); // act like an input element
+    });
   }
 
   /*
@@ -449,8 +451,8 @@ export class ValidatingInput<R, T = R> {
 
   handleEvent(event: Event): void {
     switch (event.type) {
-      case "input": {
-        this.validate()
+      case 'input': {
+        this.validate();
       }
     }
   }
@@ -503,4 +505,3 @@ export interface IIdDialogOptions extends InputDialog.ITextOptions {
   idRegex: string;
   nameTemplate: string;
 }
-
