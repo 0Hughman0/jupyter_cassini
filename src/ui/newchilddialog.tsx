@@ -121,7 +121,7 @@ export class NewChildWidget extends Widget {
           continue;
         }
 
-        const vinput = createValidatedInput(info, name, undefined);
+        const vinput = createValidatedInput(info, undefined, name);
 
         this.subInputs[name] = vinput;
         
