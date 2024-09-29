@@ -140,15 +140,14 @@ test('InputDatetimeDialog', () => {
 test('InputJSONDialog', () => {
   const initial = { 'a list': [] };
   let dialog = new InputJSONDialog({ title: '', value: initial });
-  expect(dialog.input.type).toEqual('text');
   expect(dialog.getValue()).toEqual(initial);
 
   const newValue = { 'new list': ['content'] };
 
-  dialog.input.value = JSON.stringify(newValue);
+  dialog.editor.model.sharedModel.setSource(JSON.stringify(newValue));
   expect(dialog.getValue()).toEqual(newValue);
 
-  dialog.input.value = 'invalid json';
+  dialog.editor.model.sharedModel.setSource('invalid json');
   expect(dialog.getValue()).toEqual(undefined);
 
   dialog = new InputJSONDialog({ title: '', value: newValue });
@@ -159,15 +158,16 @@ describe('ValidatedInput', () => {
   test('construction no postprocess', () => {
     const initial = 'initial';
     const input = new InputTextDialog({ text: initial, title: '' });
+    
     const validated = new ValidatingInput(input, value => value == 'valid');
 
     expect(validated.getValue()).toEqual(initial);
-    expect(validated.handleInput()).toEqual(false);
+    expect(validated.validate()).toEqual(false);
     expect(validated.input.classList).toContain('cas-invalid-id');
 
-    validated.input.value = 'valid';
+    input.input.value = 'valid';
 
-    expect(validated.handleInput()).toEqual(true);
+    expect(validated.validate()).toEqual(true);
     expect(validated.input.classList).not.toContain('cas-invalid-id');
   });
 
@@ -181,12 +181,12 @@ describe('ValidatedInput', () => {
     );
 
     expect(validated.getValue()).toEqual(initial + 'lid');
-    expect(validated.handleInput()).toEqual(false);
+    expect(validated.validate()).toEqual(false);
     expect(validated.input.classList).toContain('cas-invalid-id');
 
-    validated.input.value = 'va';
+    input.input.value = 'va';
 
-    expect(validated.handleInput()).toEqual(true);
+    expect(validated.validate()).toEqual(true);
     expect(validated.input.classList).not.toContain('cas-invalid-id');
   });
 });

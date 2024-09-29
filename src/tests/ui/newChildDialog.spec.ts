@@ -126,8 +126,8 @@ describe('newChildDialog', () => {
     widget.identifierInput.input.value = '1';
     widget.descriptionInput.input.value = 'Description';
     widget.templateSelector.list.selectedIndex = 1;
-    widget.subInputs['Crabs'].input.value = 'A';
-    widget.subInputs['Fishes'].input.value = 'B';
+    (widget.subInputs['Crabs'].input as HTMLInputElement).value = 'A';
+    (widget.subInputs['Fishes'].input as HTMLInputElement).value = 'B';
 
     expect(widget.getValue()).toMatchObject({
       id: '1',
