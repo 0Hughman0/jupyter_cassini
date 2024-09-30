@@ -45,7 +45,7 @@ describe('newChildDialog', () => {
     expect((widget.subInputs['Fishes'] as ValidatingInput<number>).wrappedInput).toBeInstanceOf(InputNumberDialog);
   });
 
-  test('serialisation', async () => {
+  test('full-serialisation', async () => {
     const tier = (await cassini.treeManager.get([])) as Required<ITreeData>;
     const clsInfo = tier.childClsInfo as ChildClsNotebookInfo;
 
@@ -80,5 +80,39 @@ describe('newChildDialog', () => {
       Crabs: 'A',
       Fishes: 10
     });
+  });
+
+  test('partial-serialisation', async () => {
+    const tier = (await cassini.treeManager.get([])) as Required<ITreeData>;
+    const clsInfo = tier.childClsInfo as ChildClsNotebookInfo;
+
+    clsInfo.metaSchema = {
+      properties: {
+        Crabs: {
+          type: 'string'
+        },
+        Fishes: {
+          type: 'integer'
+        }
+      },
+      additionalProperties: {},
+      type: 'object'
+    };
+
+    clsInfo.templates = ['Template 1', 'Template 2'];
+
+    const widget = new NewChildWidget(tier);
+
+    widget.identifierInput.wrappedInput._setValue('1');
+    widget.descriptionInput._setValue('Description');
+
+    expect(widget.getValue()).toMatchObject({
+      id: '1',
+      description: 'Description'
+    });
+
+    expect(Object.keys(widget.getValue())).not.toContain('Crabs')
+    expect(Object.keys(widget.getValue())).not.toContain('template')
+    expect(Object.keys(widget.getValue())).not.toContain('Fishes')
   });
 });

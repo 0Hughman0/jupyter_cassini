@@ -11,6 +11,7 @@ import {
 } from './dialogwidgets';
 
 import { createValidatedInput } from './metaeditor';
+import { JSONValue } from '@lumino/coreutils';
 
 /**
  * A widget that creates a dialog for creating a new tier child.
@@ -87,9 +88,12 @@ export class NewChildWidget extends Widget {
    * @returns
    */
   getValue() {
-    const values: { [name: string]: any } = {};
+    const values: { [name: string]: JSONValue } = {};
     for (const name in this.subInputs) {
-      values[name] = this.subInputs[name].getValue();
+      const value = this.subInputs[name].getValue();
+      if (value !== undefined) {
+        values[name] = value
+      }
     }
     values['parent'] = this.parentName;
     return values;

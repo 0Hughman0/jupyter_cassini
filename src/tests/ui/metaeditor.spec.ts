@@ -127,6 +127,7 @@ describe('createValidatedInput', () => {
       intial,
       ''
     );
+    expect(validated.getValue()).toEqual(undefined);
     validated.input.dispatchEvent(new Event('input'))
 
     expect(validated.wrappedInput).toBeInstanceOf(InputDateDialog);
@@ -137,7 +138,7 @@ describe('createValidatedInput', () => {
 
     input.value = '2000-12-50'; // december doesn't have 50 days
 
-    expect(validated.getValue()).toEqual('an invalid date');
+    expect(validated.getValue()).toEqual(undefined);
     expect(validated.validate()).toEqual(false);
   });
 
@@ -148,9 +149,12 @@ describe('createValidatedInput', () => {
       intial,
       ''
     );
+    expect(validated.wrappedInput).toBeInstanceOf(InputDatetimeDialog);
+    expect(validated.getValue()).toEqual(undefined);
+
     validated.input.dispatchEvent(new Event('input'))
 
-    expect(validated.wrappedInput).toBeInstanceOf(InputDatetimeDialog);
+    
     expect(validated.getValue()).toEqual(intial);
     expect(validated.validate()).toEqual(true);
 
@@ -158,7 +162,7 @@ describe('createValidatedInput', () => {
 
     input.value = '2000-12-50T00:00'; // december doesn't have 50 days
 
-    expect(validated.getValue()).toEqual('an invalid date');
+    expect(validated.getValue()).toEqual(undefined);
     expect(validated.validate()).toEqual(false);
   });
 
