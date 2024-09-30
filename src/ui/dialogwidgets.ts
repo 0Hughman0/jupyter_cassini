@@ -493,16 +493,12 @@ export class ValidatingInput<R, T = R> {
  * Version of InputTextDialog that indicates is the contents of the input does not match `idRegex`
  */
 export class IdDialog extends InputTextDialog {
-  idRegex: RegExp;
   nameTemplate: string;
   previewBox: HTMLSpanElement;
 
   constructor(options: IIdDialogOptions) {
     super(options);
-    this.idRegex = new RegExp(`^${options.idRegex}$`);
     this.nameTemplate = options.nameTemplate;
-
-    this.input.addEventListener('input', this.validateInput.bind(this));
 
     this.previewBox = document.createElement('span');
     this.node.appendChild(this.previewBox);
@@ -512,27 +508,21 @@ export class IdDialog extends InputTextDialog {
     )}`;
   }
 
-  validateInput(): boolean {
-    const id = this.input.value;
-
-    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
-      '{}',
-      id
-    )}`;
-
-    if (id && !this.idRegex.test(id)) {
-      this.input.classList.add('cas-invalid-id');
-
-      return false;
-    } else {
-      this.input.classList.remove('cas-invalid-id');
-
-      return true;
+  handleEvent(event: Event): void {
+    super.handleEvent(event)
+    
+    switch (event.type) {
+      case 'input': {
+        const id = this.input.value;
+        this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
+          '{}',
+        id
+        )}`;
+      }
     }
   }
 }
 
 export interface IIdDialogOptions extends InputDialog.ITextOptions {
-  idRegex: string;
   nameTemplate: string;
 }

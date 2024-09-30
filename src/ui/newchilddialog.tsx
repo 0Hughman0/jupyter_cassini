@@ -18,7 +18,7 @@ import { createValidatedInput } from './metaeditor';
 export class NewChildWidget extends Widget {
   parentName: string;
 
-  identifierInput: IdDialog;
+  identifierInput: ValidatingInput<string | undefined, string>;
   descriptionInput: InputTextAreaDialog;
   templateSelector: InputItemsDialog;
 
@@ -30,19 +30,20 @@ export class NewChildWidget extends Widget {
 
     const layout = (this.layout = new PanelLayout());
     const namePrefix = tier.ids.length ? tier.name : '';
+    const idRegex = new RegExp(`^${tier.childClsInfo.idRegex}$`);
+
     const nameTemplate = namePrefix + tier.childClsInfo.namePartTemplate;
-    const identifierInput = (this.identifierInput = new IdDialog({
+    const identifierInput = (this.identifierInput = new ValidatingInput(new IdDialog({
       title: 'Identitifier',
       label: 'Identifier',
-      idRegex: tier.childClsInfo.idRegex as string,
       nameTemplate: nameTemplate
-    }));
+    }), (value: string | undefined) => idRegex.test(value ?? '')));
 
     this.subInputs = {
       id: identifierInput
     };
 
-    layout.addWidget(identifierInput);
+    layout.addWidget(identifierInput.wrappedInput);
 
     if (tier.childClsInfo.tierType === 'notebook') {
       const descriptionInput = (this.descriptionInput = new InputTextAreaDialog(
