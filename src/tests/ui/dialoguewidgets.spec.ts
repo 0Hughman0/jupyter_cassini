@@ -79,12 +79,42 @@ test('InputItemsDialog', () => {
   expect(dialog.list.type).toEqual('select-one');
   expect(dialog.input.value).toEqual('two');
   expect(dialog.getValue()).toEqual(undefined);
+  expect(dialog.dirty).toBeFalsy();
 
-  dialog._setValue('one');
+  dialog.input.value = 'one';
+  dialog.input.dispatchEvent(new Event('input'));
+
+  expect(dialog.dirty).toBeTruthy();
 
   expect(dialog.getValue()).toEqual('one');
 
-  dialog._setValue('two');
+  dialog.input.value = 'two';
+  dialog.input.dispatchEvent(new Event('input'));
+
+  expect(dialog.getValue()).toEqual('two');
+
+  dialog = new InputItemsDialog({
+    title: '',
+    items: ['one', 'two'],
+    current: 1,
+    editable: false  // logic quite different for non-editable vs editable.
+  });
+
+  expect(dialog.input.type).toEqual('text');
+  expect(dialog.list.type).toEqual('select-one');
+  expect(dialog.list.value).toEqual('two');
+  expect(dialog.getValue()).toEqual(undefined);
+  expect(dialog.dirty).toBeFalsy()
+
+  dialog.list.value = 'one';
+  dialog.list.dispatchEvent(new Event('input'));
+
+  expect(dialog.dirty).toBeTruthy();
+
+  expect(dialog.getValue()).toEqual('one');
+
+  dialog.list.value = 'two';
+  dialog.list.dispatchEvent(new Event('input'));
 
   expect(dialog.getValue()).toEqual('two');
 });

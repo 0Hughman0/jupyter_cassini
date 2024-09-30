@@ -238,13 +238,17 @@ export class MetaEditor extends Panel {
     }
   }
 
-  onMetaUpdate(attribute: string, newValue: string): void {
+  onMetaUpdate(attribute: string, newValue: JSONValue | undefined): void {
     /**
      * TODO this is badly named and maybe not the best implementation
      *
      * inserts updated meta into model.
      */
     if (!this.model) {
+      return;
+    }
+
+    if (newValue === undefined) {
       return;
     }
 

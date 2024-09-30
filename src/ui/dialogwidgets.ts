@@ -302,6 +302,7 @@ export class InputItemsDialog extends InputDialogBase<string> {
     }
 
     this.list = document.createElement('select');
+
     options.items.forEach((item, index) => {
       const option = document.createElement('option');
       if (index === defaultIndex) {
@@ -330,6 +331,8 @@ export class InputItemsDialog extends InputDialogBase<string> {
       this.input.remove();
       this.node.appendChild(Styling.wrapSelect(this.list));
     }
+
+    this.list.addEventListener('input', this)
   }
 
   /**
