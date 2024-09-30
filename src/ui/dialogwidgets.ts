@@ -8,7 +8,7 @@ Because these classes are not exported, we have to copy them!
 import { Message } from '@lumino/messaging';
 import { Widget } from '@lumino/widgets';
 
-import { Dialog, Styling, InputDialog } from '@jupyterlab/apputils';
+import { Styling, InputDialog } from '@jupyterlab/apputils';
 import { JSONObject } from '@lumino/coreutils';
 import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
 import { CodeMirrorEditorFactory } from '@jupyterlab/codemirror';
@@ -18,8 +18,9 @@ import { cassini } from '../core';
 const INPUT_DIALOG_CLASS = 'jp-Input-Dialog';
 const INPUT_BOOLEAN_DIALOG_CLASS = 'jp-Input-Boolean-Dialog';
 
-export interface IDialogueInput<T> extends Required<Dialog.IBodyWidget<T>> {
+export interface IDialogueInput<T> extends Widget {
   input: HTMLInputElement | HTMLTextAreaElement | HTMLDivElement;
+  getValue(): T | undefined;
 }
 
 export abstract class InputDialogBase<T>
@@ -31,6 +32,9 @@ export abstract class InputDialogBase<T>
    *
    * @param label Input field label
    */
+
+  protected _dirty: boolean;
+
   get elem(): string {
     return 'input';
   }
@@ -39,8 +43,13 @@ export abstract class InputDialogBase<T>
     return 'text';
   }
 
+  get dirty(): boolean {
+    return this._dirty;
+  }
+
   constructor(options: { label?: string }) {
     super();
+    this._dirty = false;
     this.addClass(INPUT_DIALOG_CLASS);
 
     const { label } = options;
@@ -64,9 +73,31 @@ export abstract class InputDialogBase<T>
     }
 
     this.node.appendChild(this.input);
+
+    this.input.addEventListener('input', this);
   }
 
-  abstract getValue(): T;
+  handleEvent(event: Event): void {
+    switch (event.type) {
+      case 'input': {
+        this._dirty = true;
+      }
+    }
+  }
+
+  protected undefinedIfClean(value: T): T | undefined {
+    if (this.dirty) {
+      return value;
+    } else {
+      return undefined;
+    }
+  }
+
+  abstract getValue(): T | undefined;
+
+  /** For internal testing */
+  abstract _setValue(value: string | boolean): void;
+
   /** Input HTML node, access is not part of public API */
   input: HTMLInputElement | HTMLTextAreaElement | HTMLDivElement;
 }
@@ -95,8 +126,13 @@ export class InputBooleanDialog extends InputDialogBase<boolean> {
   /**
    * Get the text specified by the user
    */
-  getValue(): boolean {
-    return this.input.checked;
+  getValue(): boolean | undefined {
+    return this.undefinedIfClean(this.input.checked);
+  }
+
+  _setValue(value: boolean): void {
+    this.input.checked = value;
+    this.input.dispatchEvent(new Event('input'));
   }
 }
 
@@ -125,12 +161,17 @@ export class InputNumberDialog extends InputDialogBase<number> {
   /**
    * Get the number specified by the user.
    */
-  getValue(): number {
+  getValue(): number | undefined {
     if (this.input.value) {
-      return Number(this.input.value);
+      return this.undefinedIfClean(Number(this.input.value));
     } else {
-      return Number.NaN;
+      return this.undefinedIfClean(Number.NaN);
     }
+  }
+
+  _setValue(value: string): void {
+    this.input.value = value;
+    this.input.dispatchEvent(new Event('input'));
   }
 }
 
@@ -174,8 +215,13 @@ export class InputTextDialog extends InputDialogBase<string> {
   /**
    * Get the text specified by the user
    */
-  getValue(): string {
-    return this.input.value;
+  getValue(): string | undefined {
+    return this.undefinedIfClean(this.input.value);
+  }
+
+  _setValue(value: string): void {
+    this.input.value = value;
+    this.input.dispatchEvent(new Event('input'));
   }
 
   private _initialSelectionRange: number;
@@ -218,8 +264,13 @@ export class InputPasswordDialog extends InputDialogBase<string> {
   /**
    * Get the text specified by the user
    */
-  getValue(): string {
-    return this.input.value;
+  getValue(): string | undefined {
+    return this.undefinedIfClean(this.input.value);
+  }
+
+  _setValue(value: string): void {
+    this.input.value = value;
+    this.input.dispatchEvent(new Event('input'));
   }
 }
 
@@ -251,6 +302,7 @@ export class InputItemsDialog extends InputDialogBase<string> {
     }
 
     this.list = document.createElement('select');
+
     options.items.forEach((item, index) => {
       const option = document.createElement('option');
       if (index === defaultIndex) {
@@ -279,17 +331,29 @@ export class InputItemsDialog extends InputDialogBase<string> {
       this.input.remove();
       this.node.appendChild(Styling.wrapSelect(this.list));
     }
+
+    this.list.addEventListener('input', this);
   }
 
   /**
    * Get the user choice
    */
-  getValue(): string {
+  getValue(): string | undefined {
     if (this._editable) {
-      return this.input.value;
+      return this.undefinedIfClean(this.input.value);
     } else {
-      return this.list.value;
+      return this.undefinedIfClean(this.list.value);
     }
+  }
+
+  _setValue(value: string): void {
+    if (this._editable) {
+      this.input.value = value;
+    } else {
+      this.list.value = value;
+    }
+
+    this.input.dispatchEvent(new Event('input'));
   }
 
   private _editable: boolean;
@@ -315,8 +379,13 @@ export class InputTextAreaDialog extends InputDialogBase<string> {
     }
   }
 
-  getValue(): string {
-    return this.input.value;
+  getValue(): string | undefined {
+    return this.undefinedIfClean(this.input.value);
+  }
+
+  _setValue(value: string): void {
+    this.input.value = value;
+    this.input.dispatchEvent(new Event('input'));
   }
 }
 
@@ -338,8 +407,13 @@ export class InputDateDialog extends InputDialogBase<Date> {
     }
   }
 
-  getValue(): Date {
-    return new Date(this.input.value);
+  getValue(): Date | undefined {
+    return this.undefinedIfClean(new Date(this.input.value));
+  }
+
+  _setValue(value: string): void {
+    this.input.value = value;
+    this.input.dispatchEvent(new Event('input'));
   }
 }
 
@@ -357,8 +431,13 @@ export class InputDatetimeDialog extends InputDialogBase<Date> {
     }
   }
 
-  getValue(): Date {
-    return new Date(this.input.value + 'Z');
+  getValue(): Date | undefined {
+    return this.undefinedIfClean(new Date(this.input.value + 'Z'));
+  }
+
+  _setValue(value: string): void {
+    this.input.value = value;
+    this.input.dispatchEvent(new Event('input'));
   }
 }
 
@@ -370,6 +449,10 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
   editor: CodeEditorWrapper;
   input: HTMLDivElement;
 
+  get elem(): string {
+    return 'div';
+  }
+
   constructor(options: IJSONOptions) {
     super({});
     const editor = (this.editor = new CodeEditorWrapper({
@@ -380,9 +463,9 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
       editorOptions: { config: { lineNumbers: false }, inline: true }
     }));
 
-    this.input.remove();
-    this.input = editor.node as HTMLInputElement; // this is bad
-    this.node.append(editor.node);
+    //this.input.remove();
+    this.input.appendChild(editor.node);
+    // this.node.append(editor.node);
 
     editor.model.sharedModel.setSource(JSON.stringify(options.value) ?? '');
 
@@ -396,9 +479,53 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
   */
   getValue(): JSONObject | undefined {
     try {
-      return JSON.parse(this.editor.model.sharedModel.getSource());
+      return this.undefinedIfClean(
+        JSON.parse(this.editor.model.sharedModel.getSource())
+      );
     } catch (SyntaxError) {
       return undefined;
+    }
+  }
+
+  _setValue(value: string): void {
+    this.editor.model.sharedModel.setSource(value);
+  }
+}
+
+export interface IInputIdDialogueOptions extends InputDialog.ITextOptions {
+  nameTemplate: string;
+}
+
+/**
+ * Version of InputTextDialog that indicates is the contents of the input does not match `idRegex`
+ */
+export class InputIdDialogue extends InputTextDialog {
+  nameTemplate: string;
+  previewBox: HTMLSpanElement;
+
+  constructor(options: IInputIdDialogueOptions) {
+    super(options);
+    this.nameTemplate = options.nameTemplate;
+
+    this.previewBox = document.createElement('span');
+    this.node.appendChild(this.previewBox);
+    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
+      '{}',
+      '?'
+    )}`;
+  }
+
+  handleEvent(event: Event): void {
+    super.handleEvent(event);
+
+    switch (event.type) {
+      case 'input': {
+        const id = this.input.value;
+        this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
+          '{}',
+          id
+        )}`;
+      }
     }
   }
 }
@@ -407,16 +534,20 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
 
 Validator Wrapper.
 
+Be wary that DialogueWidgets can return undefined e.g. when they haven't been updated. This will always be invalid, regardless of how you
+set your postprocessor
 */
 export class ValidatingInput<R, T = R> {
   validator: (value: R) => boolean;
-  postProcessor: ((value: T extends R ? R : T) => R) | null;
+  postProcessor:
+    | ((value: (T extends R ? R : T) | undefined) => R | undefined)
+    | null;
   wrappedInput: InputDialogBase<T extends R ? R : T>;
 
   constructor(
     inputWidget: InputDialogBase<T extends R ? R : T>,
     validator: (value: R) => boolean,
-    postProcessor?: (value: T extends R ? R : T) => R
+    postProcessor?: (value: (T extends R ? R : T) | undefined) => R | undefined
   ) {
     this.wrappedInput = inputWidget;
     this.validator = validator;
@@ -428,7 +559,11 @@ export class ValidatingInput<R, T = R> {
     return this.wrappedInput.input;
   }
 
-  getValue(): R {
+  /* 
+  Get processed value of the Validated Input.
+  This value can be processed by this.postProcessor
+  */
+  getValue(): R | undefined {
     if (this.postProcessor) {
       return this.postProcessor(this.wrappedInput.getValue());
     } else {
@@ -436,9 +571,22 @@ export class ValidatingInput<R, T = R> {
     }
   }
 
+  /*
+  Validate the getValue() of the widget.
+
+  Note that undefined is _never_ valid.
+
+  */
   validate(): boolean {
     const value = this.getValue();
-    const valid = this.validator(value);
+
+    let valid: boolean;
+
+    if (value === undefined) {
+      valid = false;
+    } else {
+      valid = this.validator(value);
+    }
 
     if (valid) {
       this.wrappedInput.input.classList.remove('cas-invalid-id');
@@ -456,52 +604,4 @@ export class ValidatingInput<R, T = R> {
       }
     }
   }
-}
-
-/**
- * Version of InputTextDialog that indicates is the contents of the input does not match `idRegex`
- */
-export class IdDialog extends InputTextDialog {
-  idRegex: RegExp;
-  nameTemplate: string;
-  previewBox: HTMLSpanElement;
-
-  constructor(options: IIdDialogOptions) {
-    super(options);
-    this.idRegex = new RegExp(`^${options.idRegex}$`);
-    this.nameTemplate = options.nameTemplate;
-
-    this.input.addEventListener('input', this.validateInput.bind(this));
-
-    this.previewBox = document.createElement('span');
-    this.node.appendChild(this.previewBox);
-    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
-      '{}',
-      '?'
-    )}`;
-  }
-
-  validateInput(): boolean {
-    const id = this.input.value;
-
-    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
-      '{}',
-      id
-    )}`;
-
-    if (id && !this.idRegex.test(id)) {
-      this.input.classList.add('cas-invalid-id');
-
-      return false;
-    } else {
-      this.input.classList.remove('cas-invalid-id');
-
-      return true;
-    }
-  }
-}
-
-export interface IIdDialogOptions extends InputDialog.ITextOptions {
-  idRegex: string;
-  nameTemplate: string;
 }

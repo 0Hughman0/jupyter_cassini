@@ -164,7 +164,7 @@ export class TierModel {
     }
   }
 
-  updateMeta(newMeta: JSONObject): boolean {
+  protected updateMeta(newMeta: JSONObject): boolean {
     if (this.metaValidator(newMeta)) {
       this.metaFile?.model.fromJSON(newMeta);
       return true;

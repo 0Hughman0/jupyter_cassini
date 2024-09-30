@@ -142,6 +142,10 @@ components:
           type: string
         namePartTemplate:
           type: string
+      required:
+        - name
+        - idRegex
+        - namePartTemplate
 
     ChildClsFolderInfo:
       type: object

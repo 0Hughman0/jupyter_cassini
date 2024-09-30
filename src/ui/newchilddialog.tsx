@@ -3,7 +3,7 @@ import { Dialog } from '@jupyterlab/apputils';
 
 import { ITreeData, cassini } from '../core';
 import {
-  IdDialog,
+  InputIdDialogue,
   IDialogueInput,
   InputItemsDialog,
   InputTextAreaDialog,
@@ -11,6 +11,7 @@ import {
 } from './dialogwidgets';
 
 import { createValidatedInput } from './metaeditor';
+import { JSONValue } from '@lumino/coreutils';
 
 /**
  * A widget that creates a dialog for creating a new tier child.
@@ -18,7 +19,7 @@ import { createValidatedInput } from './metaeditor';
 export class NewChildWidget extends Widget {
   parentName: string;
 
-  identifierInput: IdDialog;
+  identifierInput: ValidatingInput<string | undefined, string>;
   descriptionInput: InputTextAreaDialog;
   templateSelector: InputItemsDialog;
 
@@ -30,19 +31,23 @@ export class NewChildWidget extends Widget {
 
     const layout = (this.layout = new PanelLayout());
     const namePrefix = tier.ids.length ? tier.name : '';
+    const idRegex = new RegExp(`^${tier.childClsInfo.idRegex}$`);
+
     const nameTemplate = namePrefix + tier.childClsInfo.namePartTemplate;
-    const identifierInput = (this.identifierInput = new IdDialog({
-      title: 'Identitifier',
-      label: 'Identifier',
-      idRegex: tier.childClsInfo.idRegex as string,
-      nameTemplate: nameTemplate
-    }));
+    const identifierInput = (this.identifierInput = new ValidatingInput(
+      new InputIdDialogue({
+        title: 'Identitifier',
+        label: 'Identifier',
+        nameTemplate: nameTemplate
+      }),
+      (value: string | undefined) => idRegex.test(value ?? '')
+    ));
 
     this.subInputs = {
       id: identifierInput
     };
 
-    layout.addWidget(identifierInput);
+    layout.addWidget(identifierInput.wrappedInput);
 
     if (tier.childClsInfo.tierType === 'notebook') {
       const descriptionInput = (this.descriptionInput = new InputTextAreaDialog(
@@ -86,9 +91,12 @@ export class NewChildWidget extends Widget {
    * @returns
    */
   getValue() {
-    const values: { [name: string]: any } = {};
+    const values: { [name: string]: JSONValue } = {};
     for (const name in this.subInputs) {
-      values[name] = this.subInputs[name].getValue();
+      const value = this.subInputs[name].getValue();
+      if (value !== undefined) {
+        values[name] = value;
+      }
     }
     values['parent'] = this.parentName;
     return values;

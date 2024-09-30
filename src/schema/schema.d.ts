@@ -259,9 +259,9 @@ export interface components {
       | components['schemas']['ChildClsFolderInfo']
       | components['schemas']['ChildClsNotebookInfo'];
     CommonChildClsInfo: {
-      name?: string;
-      idRegex?: string;
-      namePartTemplate?: string;
+      name: string;
+      idRegex: string;
+      namePartTemplate: string;
     };
     ChildClsFolderInfo: components['schemas']['CommonChildClsInfo'] & {
       /**

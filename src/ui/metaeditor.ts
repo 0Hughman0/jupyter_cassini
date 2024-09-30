@@ -162,17 +162,17 @@ export function createValidatedInput(
   }
 
   if (input instanceof InputDateDialog) {
-    postProcessor = (value: Date) => {
-      if (isNaN(value.getTime())) {
-        return 'an invalid date';
+    postProcessor = (value: Date | undefined) => {
+      if (value === undefined || isNaN(value.getTime())) {
+        return undefined;
       } else {
         return value.toISOString().slice(0, 10);
       }
     };
   } else if (input instanceof InputDatetimeDialog) {
-    postProcessor = (value: Date) => {
-      if (isNaN(value.getTime())) {
-        return 'an invalid date';
+    postProcessor = (value: Date | undefined) => {
+      if (value === undefined || isNaN(value.getTime())) {
+        return undefined;
       } else {
         return value.toISOString();
       }
@@ -238,13 +238,17 @@ export class MetaEditor extends Panel {
     }
   }
 
-  onMetaUpdate(attribute: string, newValue: string): void {
+  onMetaUpdate(attribute: string, newValue: JSONValue | undefined): void {
     /**
      * TODO this is badly named and maybe not the best implementation
      *
      * inserts updated meta into model.
      */
     if (!this.model) {
+      return;
+    }
+
+    if (newValue === undefined) {
       return;
     }
 
