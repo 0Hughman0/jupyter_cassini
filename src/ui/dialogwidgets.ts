@@ -332,7 +332,7 @@ export class InputItemsDialog extends InputDialogBase<string> {
       this.node.appendChild(Styling.wrapSelect(this.list));
     }
 
-    this.list.addEventListener('input', this)
+    this.list.addEventListener('input', this);
   }
 
   /**

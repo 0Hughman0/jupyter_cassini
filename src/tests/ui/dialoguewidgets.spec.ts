@@ -97,14 +97,14 @@ test('InputItemsDialog', () => {
     title: '',
     items: ['one', 'two'],
     current: 1,
-    editable: false  // logic quite different for non-editable vs editable.
+    editable: false // logic quite different for non-editable vs editable.
   });
 
   expect(dialog.input.type).toEqual('text');
   expect(dialog.list.type).toEqual('select-one');
   expect(dialog.list.value).toEqual('two');
   expect(dialog.getValue()).toEqual(undefined);
-  expect(dialog.dirty).toBeFalsy()
+  expect(dialog.dirty).toBeFalsy();
 
   dialog.list.value = 'one';
   dialog.list.dispatchEvent(new Event('input'));
