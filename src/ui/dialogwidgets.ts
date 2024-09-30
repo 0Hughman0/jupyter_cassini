@@ -94,6 +94,10 @@ export abstract class InputDialogBase<T>
   }
 
   abstract getValue(): T | undefined;
+  
+  /** For internal testing */
+  abstract _setValue(value: string | boolean): void;
+  
   /** Input HTML node, access is not part of public API */
   input: HTMLInputElement | HTMLTextAreaElement | HTMLDivElement;
 }
@@ -124,6 +128,11 @@ export class InputBooleanDialog extends InputDialogBase<boolean> {
    */
   getValue(): boolean | undefined {
     return this.undefinedIfClean(this.input.checked);
+  }
+
+  _setValue(value: boolean): void {
+    this.input.checked = value;
+    this.input.dispatchEvent(new Event('input'));
   }
 }
 
@@ -158,6 +167,11 @@ export class InputNumberDialog extends InputDialogBase<number> {
     } else {
       return this.undefinedIfClean(Number.NaN);
     }
+  }
+
+  _setValue(value: string): void {
+    this.input.value = value;
+    this.input.dispatchEvent(new Event('input'));
   }
 }
 
@@ -205,6 +219,11 @@ export class InputTextDialog extends InputDialogBase<string> {
     return this.undefinedIfClean(this.input.value);
   }
 
+  _setValue(value: string): void {
+    this.input.value = value;
+    this.input.dispatchEvent(new Event('input'));
+  }
+
   private _initialSelectionRange: number;
 }
 
@@ -247,6 +266,11 @@ export class InputPasswordDialog extends InputDialogBase<string> {
    */
   getValue(): string | undefined {
     return this.undefinedIfClean(this.input.value);
+  }
+
+  _setValue(value: string): void {
+    this.input.value = value;
+    this.input.dispatchEvent(new Event('input'));
   }
 }
 
@@ -319,6 +343,16 @@ export class InputItemsDialog extends InputDialogBase<string> {
     }
   }
 
+  _setValue(value: string): void {
+    if (this._editable) {
+      this.input.value = value;
+    } else {
+      this.list.value = value
+    }
+
+    this.input.dispatchEvent(new Event('input'));
+  }
+
   private _editable: boolean;
 }
 
@@ -345,6 +379,11 @@ export class InputTextAreaDialog extends InputDialogBase<string> {
   getValue(): string | undefined {
     return this.undefinedIfClean(this.input.value);
   }
+
+  _setValue(value: string): void {
+    this.input.value = value;
+    this.input.dispatchEvent(new Event('input'));
+  }
 }
 
 export interface IDateOptions extends InputDialog.IOptions {
@@ -368,6 +407,11 @@ export class InputDateDialog extends InputDialogBase<Date> {
   getValue(): Date | undefined {
     return this.undefinedIfClean(new Date(this.input.value));
   }
+
+  _setValue(value: string): void {
+    this.input.value = value;
+    this.input.dispatchEvent(new Event('input'));
+  }
 }
 
 export class InputDatetimeDialog extends InputDialogBase<Date> {
@@ -386,6 +430,11 @@ export class InputDatetimeDialog extends InputDialogBase<Date> {
 
   getValue(): Date | undefined {
     return this.undefinedIfClean(new Date(this.input.value + 'Z'));
+  }
+
+  _setValue(value: string): void {
+    this.input.value = value;
+    this.input.dispatchEvent(new Event('input'));
   }
 }
 
@@ -432,71 +481,26 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
       return undefined;
     }
   }
-}
 
-/*
-
-Validator Wrapper.
-
-*/
-export class ValidatingInput<R, T = R> {
-  validator: (value: R) => boolean;
-  postProcessor: ((value: (T extends R ? R : T) | undefined) => R) | null;
-  wrappedInput: InputDialogBase<T extends R ? R : T>;
-
-  constructor(
-    inputWidget: InputDialogBase<T extends R ? R : T>,
-    validator: (value: R) => boolean,
-    postProcessor?: (value: (T extends R ? R : T) | undefined) => R
-  ) {
-    this.wrappedInput = inputWidget;
-    this.validator = validator;
-    this.postProcessor = postProcessor ?? null;
-    this.input.addEventListener('input', this);
-  }
-
-  get input() {
-    return this.wrappedInput.input;
-  }
-
-  getValue(): R {
-    if (this.postProcessor) {
-      return this.postProcessor(this.wrappedInput.getValue());
-    } else {
-      return this.wrappedInput.getValue() as R;
-    }
-  }
-
-  validate(): boolean {
-    const value = this.getValue();
-    const valid = this.validator(value);
-
-    if (valid) {
-      this.wrappedInput.input.classList.remove('cas-invalid-id');
-      return valid;
-    } else {
-      this.wrappedInput.input.classList.add('cas-invalid-id');
-      return valid;
-    }
-  }
-
-  handleEvent(event: Event): void {
-    switch (event.type) {
-      case 'input': {
-        this.validate();
-      }
-    }
+  _setValue(value: string): void {
+    this.editor.model.sharedModel.setSource(value);
   }
 }
+
+
+export interface InputIdDialogueOptions extends InputDialog.ITextOptions {
+  nameTemplate: string;
+}
+
 
 /**
  * Version of InputTextDialog that indicates is the contents of the input does not match `idRegex`
  */
-export class IdDialog extends InputTextDialog {
+export class InputIdDialogue extends InputTextDialog {
   nameTemplate: string;
   previewBox: HTMLSpanElement;
 
-  constructor(options: IIdDialogOptions) {
+  constructor(options: InputIdDialogueOptions) {
     super(options);
     this.nameTemplate = options.nameTemplate;
 
@@ -523,6 +527,77 @@ export class IdDialog extends InputTextDialog {
   }
 }
 
-export interface IIdDialogOptions extends InputDialog.ITextOptions {
-  nameTemplate: string;
+
+/*
+
+Validator Wrapper.
+
+Be wary that DialogueWidgets can return undefined e.g. when they haven't been updated. This will always be invalid, regardless of how you
+set your postprocessor
+*/
+export class ValidatingInput<R, T = R> {
+  validator: (value: R) => boolean;
+  postProcessor: ((value: (T extends R ? R : T) | undefined) => R | undefined) | null;
+  wrappedInput: InputDialogBase<T extends R ? R : T>;
+
+  constructor(
+    inputWidget: InputDialogBase<T extends R ? R : T>,
+    validator: (value: R) => boolean,
+    postProcessor?: (value: (T extends R ? R : T) | undefined) => (R | undefined)
+  ) {
+    this.wrappedInput = inputWidget;
+    this.validator = validator;
+    this.postProcessor = postProcessor ?? null;
+    this.input.addEventListener('input', this);
+  }
+
+  get input() {
+    return this.wrappedInput.input;
+  }
+
+  /* 
+  Get processed value of the Validated Input.
+  This value can be processed by this.postProcessor
+  */
+  getValue(): R | undefined {
+    if (this.postProcessor) {
+      return this.postProcessor(this.wrappedInput.getValue());
+    } else {
+      return this.wrappedInput.getValue() as R;
+    }
+  }
+
+  /*
+  Validate the getValue() of the widget.
+
+  Note that undefined is _never_ valid.
+
+  */
+  validate(): boolean {
+    const value = this.getValue();
+
+    let valid: boolean;
+
+    if (value === undefined) {
+      valid = false
+    } else {
+      valid = this.validator(value);
+    }
+    
+    if (valid) {
+      this.wrappedInput.input.classList.remove('cas-invalid-id');
+      return valid;
+    } else {
+      this.wrappedInput.input.classList.add('cas-invalid-id');
+      return valid;
+    }
+  }
+
+  handleEvent(event: Event): void {
+    switch (event.type) {
+      case 'input': {
+        this.validate();
+      }
+    }
+  }
 }

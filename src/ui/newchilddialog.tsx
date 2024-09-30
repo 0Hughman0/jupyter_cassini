@@ -3,7 +3,7 @@ import { Dialog } from '@jupyterlab/apputils';
 
 import { ITreeData, cassini } from '../core';
 import {
-  IdDialog,
+  InputIdDialogue,
   IDialogueInput,
   InputItemsDialog,
   InputTextAreaDialog,
@@ -33,7 +33,7 @@ export class NewChildWidget extends Widget {
     const idRegex = new RegExp(`^${tier.childClsInfo.idRegex}$`);
 
     const nameTemplate = namePrefix + tier.childClsInfo.namePartTemplate;
-    const identifierInput = (this.identifierInput = new ValidatingInput(new IdDialog({
+    const identifierInput = (this.identifierInput = new ValidatingInput(new InputIdDialogue({
       title: 'Identitifier',
       label: 'Identifier',
       nameTemplate: nameTemplate
