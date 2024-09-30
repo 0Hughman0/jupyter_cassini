@@ -17,30 +17,29 @@ import {
 test('InputBooleanDialog', () => {
   let dialog = new InputBooleanDialog({ title: '', value: false });
   expect(dialog.input.type).toEqual('checkbox');
-  expect(dialog.input.checked).toEqual(false)
+  expect(dialog.input.checked).toEqual(false);
   expect(dialog.getValue()).toEqual(undefined);
-  expect(dialog.dirty).toBeFalsy()
-  
+  expect(dialog.dirty).toBeFalsy();
+
   dialog.input.checked = true;
-  dialog.input.dispatchEvent(new Event('input'))
-  expect(dialog.dirty).toBeTruthy()
+  dialog.input.dispatchEvent(new Event('input'));
+  expect(dialog.dirty).toBeTruthy();
 
   expect(dialog.getValue()).toEqual(true);
 
   dialog = new InputBooleanDialog({ title: '', value: true });
-  expect(dialog.input.checked).toEqual(true)  
-  expect(dialog.getValue()).toBeUndefined()
+  expect(dialog.input.checked).toEqual(true);
+  expect(dialog.getValue()).toBeUndefined();
 });
-
 
 test('InputNumberDialogue', () => {
   let dialog = new InputNumberDialog({ title: '', value: 1.5 });
   expect(dialog.input.type).toEqual('number');
-  expect(dialog.input.value).toEqual("1.5")
+  expect(dialog.input.value).toEqual('1.5');
   expect(dialog.getValue()).toEqual(undefined);
 
   dialog.input.value = '2.5';
-  dialog.input.dispatchEvent(new Event('input'))
+  dialog.input.dispatchEvent(new Event('input'));
 
   expect(dialog.getValue()).toEqual(2.5);
 });
@@ -64,7 +63,7 @@ test('InputPasswordDialog', () => {
   expect(dialog.getValue()).toEqual(undefined);
 
   dialog.input.value = 'new';
-  dialog.input.dispatchEvent(new Event('input'))
+  dialog.input.dispatchEvent(new Event('input'));
 
   expect(dialog.getValue()).toEqual('new');
 });
@@ -81,11 +80,11 @@ test('InputItemsDialog', () => {
   expect(dialog.input.value).toEqual('two');
   expect(dialog.getValue()).toEqual(undefined);
 
-  dialog._setValue('one')
+  dialog._setValue('one');
 
   expect(dialog.getValue()).toEqual('one');
 
-  dialog._setValue('two') 
+  dialog._setValue('two');
 
   expect(dialog.getValue()).toEqual('two');
 });
@@ -96,7 +95,7 @@ test('InputTextAreaDialog', () => {
   expect(dialog.input.value).toEqual('initial');
   expect(dialog.getValue()).toEqual(undefined);
 
-  dialog._setValue('new')
+  dialog._setValue('new');
 
   expect(dialog.getValue()).toEqual('new');
 });
@@ -114,7 +113,7 @@ test('InputDateDialog', () => {
   newValue.setMonth(1);
 
   dialog._setValue(dateToDateString(newValue));
-  
+
   expect(dialog.getValue()).toEqual(newValue);
 });
 
@@ -123,7 +122,7 @@ test('InputDatetimeDialog', () => {
 
   let dialog = new InputDatetimeDialog({ title: '', value: initial });
   expect(dialog.input.type).toEqual('datetime-local');
-  expect(new Date(dialog.input.value)).toEqual(initial)
+  expect(new Date(dialog.input.value)).toEqual(initial);
   expect(dialog.getValue()).toEqual(undefined);
 
   const newValue = new Date(initial);
@@ -137,29 +136,33 @@ test('InputDatetimeDialog', () => {
 test('InputJSONDialog', () => {
   const initial = { 'a list': [] };
   let dialog = new InputJSONDialog({ title: '', value: initial });
-  expect(dialog.editor.model.sharedModel.getSource()).toEqual(JSON.stringify(initial));
-  expect(dialog.dirty).toBeFalsy()
+  expect(dialog.editor.model.sharedModel.getSource()).toEqual(
+    JSON.stringify(initial)
+  );
+  expect(dialog.dirty).toBeFalsy();
   expect(dialog.getValue()).toEqual(undefined);
 
   const newValue = { 'new list': ['content'] };
 
   dialog._setValue(JSON.stringify(newValue));
-  expect(dialog.dirty).toBeTruthy()
+  expect(dialog.dirty).toBeTruthy();
   expect(dialog.getValue()).toEqual(newValue);
 
   dialog.editor.model.sharedModel.setSource('invalid json');
   expect(dialog.getValue()).toEqual(undefined);
 });
 
-
 test('IdInput', () => {
-  let dialog = new InputIdDialogue({ title: '', text: undefined, nameTemplate: 'WP1.{}' });
+  let dialog = new InputIdDialogue({
+    title: '',
+    text: undefined,
+    nameTemplate: 'WP1.{}'
+  });
 
-  dialog._setValue('15')
-  
+  dialog._setValue('15');
+
   expect(dialog.previewBox.textContent).toEqual('Preview: WP1.15');
 });
-
 
 describe('ValidatedInput', () => {
   test('construction no postprocess', () => {
@@ -172,7 +175,7 @@ describe('ValidatedInput', () => {
     expect(validated.validate()).toEqual(false);
     expect(validated.input.classList).toContain('cas-invalid-id');
 
-    input._setValue('invalid')
+    input._setValue('invalid');
 
     expect(validated.getValue()).toEqual('invalid');
     expect(validated.validate()).toEqual(false);

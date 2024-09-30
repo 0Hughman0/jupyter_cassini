@@ -34,11 +34,14 @@ export class NewChildWidget extends Widget {
     const idRegex = new RegExp(`^${tier.childClsInfo.idRegex}$`);
 
     const nameTemplate = namePrefix + tier.childClsInfo.namePartTemplate;
-    const identifierInput = (this.identifierInput = new ValidatingInput(new InputIdDialogue({
-      title: 'Identitifier',
-      label: 'Identifier',
-      nameTemplate: nameTemplate
-    }), (value: string | undefined) => idRegex.test(value ?? '')));
+    const identifierInput = (this.identifierInput = new ValidatingInput(
+      new InputIdDialogue({
+        title: 'Identitifier',
+        label: 'Identifier',
+        nameTemplate: nameTemplate
+      }),
+      (value: string | undefined) => idRegex.test(value ?? '')
+    ));
 
     this.subInputs = {
       id: identifierInput
@@ -92,7 +95,7 @@ export class NewChildWidget extends Widget {
     for (const name in this.subInputs) {
       const value = this.subInputs[name].getValue();
       if (value !== undefined) {
-        values[name] = value
+        values[name] = value;
       }
     }
     values['parent'] = this.parentName;

@@ -44,7 +44,7 @@ export abstract class InputDialogBase<T>
   }
 
   get dirty(): boolean {
-    return this._dirty
+    return this._dirty;
   }
 
   constructor(options: { label?: string }) {
@@ -73,7 +73,7 @@ export abstract class InputDialogBase<T>
     }
 
     this.node.appendChild(this.input);
-    
+
     this.input.addEventListener('input', this);
   }
 
@@ -87,17 +87,17 @@ export abstract class InputDialogBase<T>
 
   protected undefinedIfClean(value: T): T | undefined {
     if (this.dirty) {
-      return value
+      return value;
     } else {
-      return undefined
+      return undefined;
     }
   }
 
   abstract getValue(): T | undefined;
-  
+
   /** For internal testing */
   abstract _setValue(value: string | boolean): void;
-  
+
   /** Input HTML node, access is not part of public API */
   input: HTMLInputElement | HTMLTextAreaElement | HTMLDivElement;
 }
@@ -347,7 +347,7 @@ export class InputItemsDialog extends InputDialogBase<string> {
     if (this._editable) {
       this.input.value = value;
     } else {
-      this.list.value = value
+      this.list.value = value;
     }
 
     this.input.dispatchEvent(new Event('input'));
@@ -447,7 +447,7 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
   input: HTMLDivElement;
 
   get elem(): string {
-    return 'div'
+    return 'div';
   }
 
   constructor(options: IJSONOptions) {
@@ -461,7 +461,7 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
     }));
 
     //this.input.remove();
-    this.input.appendChild(editor.node)
+    this.input.appendChild(editor.node);
     // this.node.append(editor.node);
 
     editor.model.sharedModel.setSource(JSON.stringify(options.value) ?? '');
@@ -476,7 +476,9 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
   */
   getValue(): JSONObject | undefined {
     try {
-      return this.undefinedIfClean(JSON.parse(this.editor.model.sharedModel.getSource()));
+      return this.undefinedIfClean(
+        JSON.parse(this.editor.model.sharedModel.getSource())
+      );
     } catch (SyntaxError) {
       return undefined;
     }
@@ -487,11 +489,9 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
   }
 }
 
-
 export interface InputIdDialogueOptions extends InputDialog.ITextOptions {
   nameTemplate: string;
 }
-
 
 /**
  * Version of InputTextDialog that indicates is the contents of the input does not match `idRegex`
@@ -513,20 +513,19 @@ export class InputIdDialogue extends InputTextDialog {
   }
 
   handleEvent(event: Event): void {
-    super.handleEvent(event)
-    
+    super.handleEvent(event);
+
     switch (event.type) {
       case 'input': {
         const id = this.input.value;
         this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
           '{}',
-        id
+          id
         )}`;
       }
     }
   }
 }
-
 
 /*
 
@@ -537,13 +536,15 @@ set your postprocessor
 */
 export class ValidatingInput<R, T = R> {
   validator: (value: R) => boolean;
-  postProcessor: ((value: (T extends R ? R : T) | undefined) => R | undefined) | null;
+  postProcessor:
+    | ((value: (T extends R ? R : T) | undefined) => R | undefined)
+    | null;
   wrappedInput: InputDialogBase<T extends R ? R : T>;
 
   constructor(
     inputWidget: InputDialogBase<T extends R ? R : T>,
     validator: (value: R) => boolean,
-    postProcessor?: (value: (T extends R ? R : T) | undefined) => (R | undefined)
+    postProcessor?: (value: (T extends R ? R : T) | undefined) => R | undefined
   ) {
     this.wrappedInput = inputWidget;
     this.validator = validator;
@@ -579,11 +580,11 @@ export class ValidatingInput<R, T = R> {
     let valid: boolean;
 
     if (value === undefined) {
-      valid = false
+      valid = false;
     } else {
       valid = this.validator(value);
     }
-    
+
     if (valid) {
       this.wrappedInput.input.classList.remove('cas-invalid-id');
       return valid;

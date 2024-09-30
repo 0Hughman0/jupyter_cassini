@@ -87,17 +87,17 @@ describe('createValidatedInput', () => {
   test('basic schema validation', () => {
     const intial = 1;
     const validated = createValidatedInput({ type: 'integer' }, intial, '');
-    validated.input.dispatchEvent(new Event('input'))
+    validated.input.dispatchEvent(new Event('input'));
 
     expect(validated.wrappedInput).toBeInstanceOf(InputNumberDialog);
-    
+
     expect(validated.getValue()).toEqual(intial);
     expect(validated.validate()).toEqual(true);
 
     const input = validated.wrappedInput.input as HTMLInputElement;
 
     input.value = '1.5';
-    
+
     expect(validated.getValue()).toEqual(1.5);
     expect(validated.validate()).toEqual(false);
   });
@@ -105,10 +105,10 @@ describe('createValidatedInput', () => {
   test('json validation', () => {
     const intial = { a: 1, b: 2 };
     const validated = createValidatedInput({ type: 'object' }, intial, '');
-    validated.input.dispatchEvent(new Event('input'))
+    validated.input.dispatchEvent(new Event('input'));
 
     expect(validated.wrappedInput).toBeInstanceOf(InputJSONDialog);
-    
+
     expect(validated.getValue()).toEqual(intial);
     expect(validated.validate()).toEqual(true);
 
@@ -128,7 +128,7 @@ describe('createValidatedInput', () => {
       ''
     );
     expect(validated.getValue()).toEqual(undefined);
-    validated.input.dispatchEvent(new Event('input'))
+    validated.input.dispatchEvent(new Event('input'));
 
     expect(validated.wrappedInput).toBeInstanceOf(InputDateDialog);
     expect(validated.getValue()).toEqual(intial);
@@ -152,9 +152,8 @@ describe('createValidatedInput', () => {
     expect(validated.wrappedInput).toBeInstanceOf(InputDatetimeDialog);
     expect(validated.getValue()).toEqual(undefined);
 
-    validated.input.dispatchEvent(new Event('input'))
+    validated.input.dispatchEvent(new Event('input'));
 
-    
     expect(validated.getValue()).toEqual(intial);
     expect(validated.validate()).toEqual(true);
 
@@ -173,7 +172,7 @@ describe('createValidatedInput', () => {
       intial,
       ''
     );
-    validated.input.dispatchEvent(new Event('input'))
+    validated.input.dispatchEvent(new Event('input'));
 
     expect(validated.wrappedInput).toBeInstanceOf(InputNumberDialog);
     expect(validated.getValue()).toEqual(intial);

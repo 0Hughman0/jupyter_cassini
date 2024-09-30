@@ -6,7 +6,13 @@ import { HOME_TREE, WP1_TREE } from '../test_cases';
 
 import 'jest';
 import { ChildClsNotebookInfo } from '../../schema/types';
-import { InputItemsDialog, InputNumberDialog, InputTextAreaDialog, InputTextDialog, ValidatingInput } from '../../ui/dialogwidgets';
+import {
+  InputItemsDialog,
+  InputNumberDialog,
+  InputTextAreaDialog,
+  InputTextDialog,
+  ValidatingInput
+} from '../../ui/dialogwidgets';
 
 describe('newChildDialog', () => {
   beforeEach(() => {
@@ -37,12 +43,24 @@ describe('newChildDialog', () => {
 
     const widget = new NewChildWidget(tier);
 
-    expect(Object.keys(widget.subInputs)).toEqual(['id', 'description', 'template', 'Crabs', 'Fishes'])
-    expect((widget.subInputs['id'] as ValidatingInput<string>).wrappedInput).toBeInstanceOf(InputTextDialog);
+    expect(Object.keys(widget.subInputs)).toEqual([
+      'id',
+      'description',
+      'template',
+      'Crabs',
+      'Fishes'
+    ]);
+    expect(
+      (widget.subInputs['id'] as ValidatingInput<string>).wrappedInput
+    ).toBeInstanceOf(InputTextDialog);
     expect(widget.subInputs['description']).toBeInstanceOf(InputTextAreaDialog);
     expect(widget.subInputs['template']).toBeInstanceOf(InputItemsDialog);
-    expect((widget.subInputs['Crabs'] as ValidatingInput<string>).wrappedInput).toBeInstanceOf(InputTextDialog);
-    expect((widget.subInputs['Fishes'] as ValidatingInput<number>).wrappedInput).toBeInstanceOf(InputNumberDialog);
+    expect(
+      (widget.subInputs['Crabs'] as ValidatingInput<string>).wrappedInput
+    ).toBeInstanceOf(InputTextDialog);
+    expect(
+      (widget.subInputs['Fishes'] as ValidatingInput<number>).wrappedInput
+    ).toBeInstanceOf(InputNumberDialog);
   });
 
   test('full-serialisation', async () => {
@@ -70,8 +88,12 @@ describe('newChildDialog', () => {
     widget.descriptionInput._setValue('Description');
     widget.templateSelector._setValue('Template 2');
 
-    (widget.subInputs['Crabs'] as ValidatingInput<string>).wrappedInput._setValue('A');
-    (widget.subInputs['Fishes'] as ValidatingInput<number>).wrappedInput._setValue('10');
+    (
+      widget.subInputs['Crabs'] as ValidatingInput<string>
+    ).wrappedInput._setValue('A');
+    (
+      widget.subInputs['Fishes'] as ValidatingInput<number>
+    ).wrappedInput._setValue('10');
 
     expect(widget.getValue()).toMatchObject({
       id: '1',
@@ -111,8 +133,8 @@ describe('newChildDialog', () => {
       description: 'Description'
     });
 
-    expect(Object.keys(widget.getValue())).not.toContain('Crabs')
-    expect(Object.keys(widget.getValue())).not.toContain('template')
-    expect(Object.keys(widget.getValue())).not.toContain('Fishes')
+    expect(Object.keys(widget.getValue())).not.toContain('Crabs');
+    expect(Object.keys(widget.getValue())).not.toContain('template');
+    expect(Object.keys(widget.getValue())).not.toContain('Fishes');
   });
 });
