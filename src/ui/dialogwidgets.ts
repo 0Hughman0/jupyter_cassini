@@ -489,7 +489,7 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
   }
 }
 
-export interface InputIdDialogueOptions extends InputDialog.ITextOptions {
+export interface IInputIdDialogueOptions extends InputDialog.ITextOptions {
   nameTemplate: string;
 }
 
@@ -500,7 +500,7 @@ export class InputIdDialogue extends InputTextDialog {
   nameTemplate: string;
   previewBox: HTMLSpanElement;
 
-  constructor(options: InputIdDialogueOptions) {
+  constructor(options: IInputIdDialogueOptions) {
     super(options);
     this.nameTemplate = options.nameTemplate;
 
