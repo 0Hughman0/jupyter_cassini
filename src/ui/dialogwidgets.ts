@@ -8,7 +8,7 @@ Because these classes are not exported, we have to copy them!
 import { Message } from '@lumino/messaging';
 import { Widget } from '@lumino/widgets';
 
-import { Dialog, Styling, InputDialog } from '@jupyterlab/apputils';
+import { Styling, InputDialog } from '@jupyterlab/apputils';
 import { JSONObject } from '@lumino/coreutils';
 import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
 import { CodeMirrorEditorFactory } from '@jupyterlab/codemirror';
@@ -18,8 +18,9 @@ import { cassini } from '../core';
 const INPUT_DIALOG_CLASS = 'jp-Input-Dialog';
 const INPUT_BOOLEAN_DIALOG_CLASS = 'jp-Input-Boolean-Dialog';
 
-export interface IDialogueInput<T> extends Required<Dialog.IBodyWidget<T>> {
+export interface IDialogueInput<T> extends Widget {
   input: HTMLInputElement | HTMLTextAreaElement | HTMLDivElement;
+  getValue(): T | undefined;
 }
 
 export abstract class InputDialogBase<T>
@@ -31,6 +32,9 @@ export abstract class InputDialogBase<T>
    *
    * @param label Input field label
    */
+
+  protected _dirty: boolean;
+
   get elem(): string {
     return 'input';
   }
@@ -39,8 +43,13 @@ export abstract class InputDialogBase<T>
     return 'text';
   }
 
+  get dirty(): boolean {
+    return this._dirty
+  }
+
   constructor(options: { label?: string }) {
     super();
+    this._dirty = false;
     this.addClass(INPUT_DIALOG_CLASS);
 
     const { label } = options;
@@ -64,9 +73,27 @@ export abstract class InputDialogBase<T>
     }
 
     this.node.appendChild(this.input);
+    
+    this.input.addEventListener('input', this);
   }
 
-  abstract getValue(): T;
+  handleEvent(event: Event): void {
+    switch (event.type) {
+      case 'input': {
+        this._dirty = true;
+      }
+    }
+  }
+
+  protected undefinedIfClean(value: T): T | undefined {
+    if (this.dirty) {
+      return value
+    } else {
+      return undefined
+    }
+  }
+
+  abstract getValue(): T | undefined;
   /** Input HTML node, access is not part of public API */
   input: HTMLInputElement | HTMLTextAreaElement | HTMLDivElement;
 }
@@ -95,8 +122,8 @@ export class InputBooleanDialog extends InputDialogBase<boolean> {
   /**
    * Get the text specified by the user
    */
-  getValue(): boolean {
-    return this.input.checked;
+  getValue(): boolean | undefined {
+    return this.undefinedIfClean(this.input.checked);
   }
 }
 
@@ -125,11 +152,11 @@ export class InputNumberDialog extends InputDialogBase<number> {
   /**
    * Get the number specified by the user.
    */
-  getValue(): number {
+  getValue(): number | undefined {
     if (this.input.value) {
-      return Number(this.input.value);
+      return this.undefinedIfClean(Number(this.input.value));
     } else {
-      return Number.NaN;
+      return this.undefinedIfClean(Number.NaN);
     }
   }
 }
@@ -174,8 +201,8 @@ export class InputTextDialog extends InputDialogBase<string> {
   /**
    * Get the text specified by the user
    */
-  getValue(): string {
-    return this.input.value;
+  getValue(): string | undefined {
+    return this.undefinedIfClean(this.input.value);
   }
 
   private _initialSelectionRange: number;
@@ -218,8 +245,8 @@ export class InputPasswordDialog extends InputDialogBase<string> {
   /**
    * Get the text specified by the user
    */
-  getValue(): string {
-    return this.input.value;
+  getValue(): string | undefined {
+    return this.undefinedIfClean(this.input.value);
   }
 }
 
@@ -284,11 +311,11 @@ export class InputItemsDialog extends InputDialogBase<string> {
   /**
    * Get the user choice
    */
-  getValue(): string {
+  getValue(): string | undefined {
     if (this._editable) {
-      return this.input.value;
+      return this.undefinedIfClean(this.input.value);
     } else {
-      return this.list.value;
+      return this.undefinedIfClean(this.list.value);
     }
   }
 
@@ -315,8 +342,8 @@ export class InputTextAreaDialog extends InputDialogBase<string> {
     }
   }
 
-  getValue(): string {
-    return this.input.value;
+  getValue(): string | undefined {
+    return this.undefinedIfClean(this.input.value);
   }
 }
 
@@ -338,8 +365,8 @@ export class InputDateDialog extends InputDialogBase<Date> {
     }
   }
 
-  getValue(): Date {
-    return new Date(this.input.value);
+  getValue(): Date | undefined {
+    return this.undefinedIfClean(new Date(this.input.value));
   }
 }
 
@@ -357,8 +384,8 @@ export class InputDatetimeDialog extends InputDialogBase<Date> {
     }
   }
 
-  getValue(): Date {
-    return new Date(this.input.value + 'Z');
+  getValue(): Date | undefined {
+    return this.undefinedIfClean(new Date(this.input.value + 'Z'));
   }
 }
 
@@ -370,6 +397,10 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
   editor: CodeEditorWrapper;
   input: HTMLDivElement;
 
+  get elem(): string {
+    return 'div'
+  }
+
   constructor(options: IJSONOptions) {
     super({});
     const editor = (this.editor = new CodeEditorWrapper({
@@ -380,9 +411,9 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
       editorOptions: { config: { lineNumbers: false }, inline: true }
     }));
 
-    this.input.remove();
-    this.input = editor.node as HTMLInputElement; // this is bad
-    this.node.append(editor.node);
+    //this.input.remove();
+    this.input.appendChild(editor.node)
+    // this.node.append(editor.node);
 
     editor.model.sharedModel.setSource(JSON.stringify(options.value) ?? '');
 
@@ -396,7 +427,7 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
   */
   getValue(): JSONObject | undefined {
     try {
-      return JSON.parse(this.editor.model.sharedModel.getSource());
+      return this.undefinedIfClean(JSON.parse(this.editor.model.sharedModel.getSource()));
     } catch (SyntaxError) {
       return undefined;
     }
@@ -410,13 +441,13 @@ Validator Wrapper.
 */
 export class ValidatingInput<R, T = R> {
   validator: (value: R) => boolean;
-  postProcessor: ((value: T extends R ? R : T) => R) | null;
+  postProcessor: ((value: (T extends R ? R : T) | undefined) => R) | null;
   wrappedInput: InputDialogBase<T extends R ? R : T>;
 
   constructor(
     inputWidget: InputDialogBase<T extends R ? R : T>,
     validator: (value: R) => boolean,
-    postProcessor?: (value: T extends R ? R : T) => R
+    postProcessor?: (value: (T extends R ? R : T) | undefined) => R
   ) {
     this.wrappedInput = inputWidget;
     this.validator = validator;

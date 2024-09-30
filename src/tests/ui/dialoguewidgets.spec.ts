@@ -16,53 +16,56 @@ import {
 test('InputBooleanDialog', () => {
   let dialog = new InputBooleanDialog({ title: '', value: false });
   expect(dialog.input.type).toEqual('checkbox');
-  expect(dialog.getValue()).toEqual(false);
-
+  expect(dialog.input.checked).toEqual(false)
+  expect(dialog.getValue()).toEqual(undefined);
+  expect(dialog.dirty).toBeFalsy()
+  
   dialog.input.checked = true;
+  dialog.input.dispatchEvent(new Event('input'))
+  expect(dialog.dirty).toBeTruthy()
 
   expect(dialog.getValue()).toEqual(true);
 
   dialog = new InputBooleanDialog({ title: '', value: true });
-  expect(dialog.getValue()).toEqual(true);
+  expect(dialog.input.checked).toEqual(true)  
+  expect(dialog.getValue()).toBeUndefined()
 });
+
 
 test('InputNumberDialogue', () => {
   let dialog = new InputNumberDialog({ title: '', value: 1.5 });
   expect(dialog.input.type).toEqual('number');
-  expect(dialog.getValue()).toEqual(1.5);
+  expect(dialog.input.value).toEqual("1.5")
+  expect(dialog.getValue()).toEqual(undefined);
 
-  dialog.input.value = '1.5';
+  dialog.input.value = '2.5';
+  dialog.input.dispatchEvent(new Event('input'))
 
-  expect(dialog.getValue()).toEqual(1.5);
-
-  dialog = new InputNumberDialog({ title: '', value: 2.5 });
   expect(dialog.getValue()).toEqual(2.5);
 });
 
 test('InputTextDialog', () => {
   let dialog = new InputTextDialog({ title: '', text: 'initial' });
   expect(dialog.input.type).toEqual('text');
-  expect(dialog.getValue()).toEqual('initial');
+  expect(dialog.input.value).toEqual('initial');
+  expect(dialog.getValue()).toEqual(undefined);
 
   dialog.input.value = 'new';
+  dialog.input.dispatchEvent(new Event('input'));
 
   expect(dialog.getValue()).toEqual('new');
-
-  dialog = new InputTextDialog({ title: '', text: 'different' });
-  expect(dialog.getValue()).toEqual('different');
 });
 
 test('InputPasswordDialog', () => {
   let dialog = new InputPasswordDialog({ title: '', text: 'initial' });
   expect(dialog.input.type).toEqual('password');
-  expect(dialog.getValue()).toEqual('initial');
+  expect(dialog.input.value).toEqual('initial');
+  expect(dialog.getValue()).toEqual(undefined);
 
   dialog.input.value = 'new';
+  dialog.input.dispatchEvent(new Event('input'))
 
   expect(dialog.getValue()).toEqual('new');
-
-  dialog = new InputPasswordDialog({ title: '', text: 'different' });
-  expect(dialog.getValue()).toEqual('different');
 });
 
 test('InputItemsDialog', () => {
@@ -74,32 +77,25 @@ test('InputItemsDialog', () => {
   });
   expect(dialog.input.type).toEqual('text');
   expect(dialog.list.type).toEqual('select-one');
-  expect(dialog.getValue()).toEqual('two');
+  expect(dialog.input.value).toEqual('two');
+  expect(dialog.getValue()).toEqual(undefined);
 
   dialog.input.value = 'one';
+  dialog.input.dispatchEvent(new Event('input'))
 
-  expect(dialog.getValue()).toEqual('one');
-
-  dialog = new InputItemsDialog({
-    title: '',
-    items: ['one', 'two'],
-    current: 0,
-    editable: true
-  });
   expect(dialog.getValue()).toEqual('one');
 });
 
 test('InputTextAreaDialog', () => {
   let dialog = new InputTextAreaDialog({ title: '', text: 'initial' });
   expect(dialog.input.type).toEqual('textarea');
-  expect(dialog.getValue()).toEqual('initial');
+  expect(dialog.input.value).toEqual('initial');
+  expect(dialog.getValue()).toEqual(undefined);
 
   dialog.input.value = 'new';
+  dialog.input.dispatchEvent(new Event('input'))
 
   expect(dialog.getValue()).toEqual('new');
-
-  dialog = new InputTextAreaDialog({ title: '', text: 'different' });
-  expect(dialog.getValue()).toEqual('different');
 });
 
 test('InputDateDialog', () => {
@@ -108,50 +104,50 @@ test('InputDateDialog', () => {
 
   let dialog = new InputDateDialog({ title: '', value: initial });
   expect(dialog.input.type).toEqual('date');
-  expect(dialog.getValue()).toEqual(initial);
+  expect(dialog.input.value).toEqual(initial.toISOString().split('T')[0]);
+  expect(dialog.getValue()).toEqual(undefined);
 
   const newValue = new Date(initial);
   newValue.setMonth(1);
 
   dialog.input.value = dateToDateString(newValue);
-  expect(dialog.getValue()).toEqual(newValue);
-
-  dialog = new InputDateDialog({ title: '', value: newValue });
+  dialog.input.dispatchEvent(new Event('input'));
+  
   expect(dialog.getValue()).toEqual(newValue);
 });
 
 test('InputDatetimeDialog', () => {
-  const initial = new Date(2000, 11, 25);
+  const initial = new Date(2000, 11, 25, 10, 30);
 
   let dialog = new InputDatetimeDialog({ title: '', value: initial });
   expect(dialog.input.type).toEqual('datetime-local');
-  expect(dialog.getValue()).toEqual(initial);
+  expect(new Date(dialog.input.value)).toEqual(initial)
+  expect(dialog.getValue()).toEqual(undefined);
 
   const newValue = new Date(initial);
   newValue.setMonth(1);
 
   dialog.input.value = newValue.toISOString().split('.')[0];
-  expect(dialog.getValue()).toEqual(newValue);
+  dialog.input.dispatchEvent(new Event('input'));
 
-  dialog = new InputDatetimeDialog({ title: '', value: newValue });
   expect(dialog.getValue()).toEqual(newValue);
 });
 
 test('InputJSONDialog', () => {
   const initial = { 'a list': [] };
   let dialog = new InputJSONDialog({ title: '', value: initial });
-  expect(dialog.getValue()).toEqual(initial);
+  expect(dialog.editor.model.sharedModel.getSource()).toEqual(JSON.stringify(initial));
+  expect(dialog.dirty).toBeFalsy()
+  expect(dialog.getValue()).toEqual(undefined);
 
   const newValue = { 'new list': ['content'] };
 
   dialog.editor.model.sharedModel.setSource(JSON.stringify(newValue));
+  expect(dialog.dirty).toBeTruthy()
   expect(dialog.getValue()).toEqual(newValue);
 
   dialog.editor.model.sharedModel.setSource('invalid json');
   expect(dialog.getValue()).toEqual(undefined);
-
-  dialog = new InputJSONDialog({ title: '', value: newValue });
-  expect(dialog.getValue()).toEqual(newValue);
 });
 
 describe('ValidatedInput', () => {
@@ -161,6 +157,7 @@ describe('ValidatedInput', () => {
 
     const validated = new ValidatingInput(input, value => value == 'valid');
 
+    validated.input.dispatchEvent(new Event('input'));
     expect(validated.getValue()).toEqual(initial);
     expect(validated.validate()).toEqual(false);
     expect(validated.input.classList).toContain('cas-invalid-id');
@@ -179,6 +176,8 @@ describe('ValidatedInput', () => {
       value => value == 'valid',
       value => value + 'lid'
     );
+
+    validated.input.dispatchEvent(new Event('input'));
 
     expect(validated.getValue()).toEqual(initial + 'lid');
     expect(validated.validate()).toEqual(false);
