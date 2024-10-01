@@ -195,77 +195,56 @@ export class MetaEditor extends Panel {
 
   constructor(tierModel: TierModel | null) {
     super();
-    this.modelChanged.connect(
-      (sender, model) => this.onModelChanged(model),
-      this
-    );
-    this.model = tierModel;
+    this.table = null;
+    this._model = tierModel;
+    this.handleModelChanged(null, tierModel);
   }
-
-  get modelChanged(): ISignal<this, TierModel | null> {
-    return this._modelChanged;
-  }
-
-  private _modelChanged = new Signal<this, TierModel | null>(this);
 
   get model(): TierModel | null {
     return this._model;
   }
 
-  set model(model: TierModel | null) {
-    this._model = model;
-
-    this._modelChanged.emit(model);
+  set model(newModel: TierModel | null) {
+    const oldModel = this._model;
+    this._model = newModel;
+    this.handleModelChanged(oldModel, newModel);
   }
 
-  onModelChanged(model: TierModel | null): void {
-    if (!model) {
-      return;
-    }
-
-    if (model.publicMetaSchema) {
-      this.table?.dispose();
-
-      const table = (this.table = new MetaTableWidget(
-        model.publicMetaSchema,
-        model.additionalMeta,
-        this.onMetaUpdate.bind(this),
-        this.onRemoveMeta.bind(this),
-        model.changed
-      ));
-
-      this.addWidget(table);
+  handleModelUpdate(model: TierModel): void {
+    if (this.table) {
+      this._updateTableWidget(this.table, model);
     }
   }
 
-  onMetaUpdate(attribute: string, newValue: JSONValue | undefined): void {
-    /**
-     * TODO this is badly named and maybe not the best implementation
-     *
-     * inserts updated meta into model.
-     */
-    if (!this.model) {
+  handleModelChanged(
+    oldModel: TierModel | null,
+    newModel: TierModel | null
+  ): void {
+    if (oldModel) {
+      Signal.disconnectBetween(oldModel, this);
+    }
+
+    if (!newModel) {
+      if (this.table) {
+        this.table.values = {};
+        //this.table.schema = {}; // find a way!
+        this.table.update();
+      }
+
       return;
     }
 
-    if (newValue === undefined) {
-      return;
+    if (this.table) {
+      this._updateTableWidget(this.table, newModel);
+    } else {
+      this.table = this._createTableWidget(newModel);
+
+      if (this.table) {
+        this.addWidget(this.table);
+      }
     }
 
-    this.model.setMetaValue(attribute, newValue);
-  }
-
-  onRemoveMeta(attribute: string) {
-    /**
-     * TODO this is badly named and maybe not the best implementation
-     *
-     * Removes a meta from the model
-     */
-    if (!this.model) {
-      return;
-    }
-
-    this.model.removeMeta(attribute);
+    newModel.changed.connect(this.handleModelUpdate, this);
   }
 
   render(attributes: string[]) {
@@ -284,6 +263,53 @@ export class MetaEditor extends Panel {
 
     this.table.values = meta;
     this.table.update();
+  }
+
+  private _createTableWidget(model: TierModel): MetaTableWidget | null {
+    if (!model.publicMetaSchema) {
+      return null;
+    }
+
+    const onSetMetaValue = (
+      attribute: string,
+      newValue: JSONValue | undefined
+    ) => {
+      newValue && model.setMetaValue(attribute, newValue);
+    };
+
+    const onRemoveMetaKey = (attribute: string) => {
+      model.removeMeta(attribute);
+    };
+
+    return new MetaTableWidget(
+      model.publicMetaSchema,
+      model.additionalMeta,
+      onSetMetaValue.bind(this),
+      onRemoveMetaKey.bind(this)
+    );
+  }
+
+  private _updateTableWidget(table: MetaTableWidget, model: TierModel): void {
+    const onSetMetaValue = (
+      attribute: string,
+      newValue: JSONValue | undefined
+    ) => {
+      newValue && model.setMetaValue(attribute, newValue);
+    };
+    const onRemoveMetaKey = (attribute: string) => {
+      model.removeMeta(attribute);
+    };
+
+    table.values = model.additionalMeta;
+
+    if (model.publicMetaSchema) {
+      table.schema = model.publicMetaSchema;
+    }
+
+    table.handleSetMetaValue = onSetMetaValue.bind(this);
+    table.handleRemoveMetaKey = onRemoveMetaKey.bind(this);
+
+    table.update();
   }
 }
 
