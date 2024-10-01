@@ -3,6 +3,7 @@ import {
   InputBooleanDialog,
   InputDateDialog,
   InputDatetimeDialog,
+  InputItemsDialog,
   InputJSONDialog,
   InputNumberDialog,
   InputPasswordDialog,
@@ -20,6 +21,16 @@ import { MetaTableWidget } from '../../ui/metatable';
 import { MetaSchema } from '../../schema/types';
 
 describe('createMetaInput', () => {
+  test('items MetaInput', () => {
+    const initial = 'intial';
+    const input = createMetaInput(
+      { type: 'string', enum: ['a', 'b', 'c'] },
+      initial,
+      ''
+    );
+    expect(input).toBeInstanceOf(InputItemsDialog);
+  });
+
   test('string MetaInput', () => {
     const initial = 'intial';
     const input = createMetaInput({ type: 'string' }, initial, '');
