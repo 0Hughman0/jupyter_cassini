@@ -195,8 +195,8 @@ export class MetaEditor extends Panel {
 
   constructor(tierModel: TierModel | null) {
     super();
-    this.model = tierModel;
-    this.model?.changed.connect(this.handleModelUpdate, this);
+    this._model = tierModel;
+    this.handleModelChanged(null, tierModel);
   }
 
   get model(): TierModel | null {
@@ -204,25 +204,21 @@ export class MetaEditor extends Panel {
   }
 
   set model(newModel: TierModel | null) {
-    this.handleModelChanged(this._model, newModel);
+    const oldModel = this._model;
     this._model = newModel;
+    this.handleModelChanged(oldModel, newModel);
   }
 
   handleModelUpdate(model: TierModel): void {
     if (this.table) {
-      this.table.values = model.additionalMeta;
-      if (model.publicMetaSchema) {
-        this.table.schema = model.publicMetaSchema;
-      }
-
-      this.table.update();
+      this._updateTableWidget(this.table, model);
     }
   }
 
-  async handleModelChanged(
+  handleModelChanged(
     oldModel: TierModel | null,
     newModel: TierModel | null
-  ): Promise<void> {
+  ): void {
     if (oldModel) {
       Signal.disconnectBetween(oldModel, this);
     }
@@ -231,42 +227,23 @@ export class MetaEditor extends Panel {
       if (this.table) {
         this.table.values = {};
         //this.table.schema = {}; // find a way!
+        this.table.update()
       }
 
       return;
     }
 
-    if (newModel.publicMetaSchema) {
-      await newModel.ready;
-
-      const onSetMetaValue = (
-        attribute: string,
-        newValue: JSONValue | undefined
-      ) => {
-        newValue && newModel.setMetaValue(attribute, newValue);
-      };
-      const onRemoveMetaKey = (attribute: string) => {
-        newModel.removeMeta(attribute);
-      };
-
-      if (!this.table) {
-        const table = (this.table = new MetaTableWidget(
-          newModel.publicMetaSchema,
-          newModel.additionalMeta,
-          onSetMetaValue.bind(this),
-          onRemoveMetaKey.bind(this)
-        ));
-
-        this.addWidget(table);
-      } else {
-        this.table.handleSetMetaValue = onSetMetaValue.bind(this);
-        this.table.handleRemoveMetaKey = onRemoveMetaKey.bind(this);
-        this.table.values = newModel.additionalMeta;
-        this.table.schema = newModel.publicMetaSchema;
+    if (this.table) {
+      this._updateTableWidget(this.table, newModel);
+    } else {
+      this.table = this._createTableWidget(newModel);
+      
+      if (this.table) {
+        this.addWidget(this.table)
       }
-
-      this.table.update();
     }
+    
+    newModel.changed.connect(this.handleModelUpdate, this);  
   }
 
   render(attributes: string[]) {
@@ -285,6 +262,53 @@ export class MetaEditor extends Panel {
 
     this.table.values = meta;
     this.table.update();
+  }
+
+  private _createTableWidget(model: TierModel): MetaTableWidget | null {
+    if (!model.publicMetaSchema) {
+      return null
+    }
+
+    const onSetMetaValue = (
+      attribute: string,
+      newValue: JSONValue | undefined
+    ) => {
+      newValue && model.setMetaValue(attribute, newValue);
+    };
+    
+    const onRemoveMetaKey = (attribute: string) => {
+      model.removeMeta(attribute);
+    };
+
+    return new MetaTableWidget(
+      model.publicMetaSchema,
+      model.additionalMeta,
+      onSetMetaValue.bind(this),
+      onRemoveMetaKey.bind(this)
+    );
+  }
+
+  private _updateTableWidget(table: MetaTableWidget, model: TierModel): void {
+    const onSetMetaValue = (
+      attribute: string,
+      newValue: JSONValue | undefined
+    ) => {
+      newValue && model.setMetaValue(attribute, newValue);
+    };
+    const onRemoveMetaKey = (attribute: string) => {
+      model.removeMeta(attribute);
+    };
+
+    table.values = model.additionalMeta;
+    
+    if (model.publicMetaSchema) {
+      table.schema = model.publicMetaSchema;
+    }
+
+    table.handleSetMetaValue = onSetMetaValue.bind(this);
+    table.handleRemoveMetaKey = onRemoveMetaKey.bind(this);
+
+    table.update();
   }
 }
 

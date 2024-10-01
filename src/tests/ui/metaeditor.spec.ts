@@ -275,4 +275,25 @@ describe('metaeditor widget', () => {
 
     expect(Object.keys(table.values)).toContain('WP1.1Meta');
   });
+
+  test('old model events disconnected', async () => {
+    const model = await cassini.tierModelManager.get('WP1');
+    await model.ready;
+
+    const widget = new MetaEditor(model);
+
+    const table = widget.table as MetaTableWidget;
+    expect(Object.keys(table.values)).not.toContain('WP1.1Meta');
+
+    const newModel = await cassini.tierModelManager.get('WP1.1');
+    await newModel.ready;
+
+    widget.model = newModel;
+
+    expect(Object.keys(table.values)).toContain('WP1.1Meta');
+
+    model.setMetaValue('newValue', 100);
+
+    expect(Object.keys(table.values)).not.toContain('newValue');
+  });
 });
