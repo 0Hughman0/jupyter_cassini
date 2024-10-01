@@ -227,7 +227,7 @@ export class MetaEditor extends Panel {
       if (this.table) {
         this.table.values = {};
         //this.table.schema = {}; // find a way!
-        this.table.update()
+        this.table.update();
       }
 
       return;
@@ -237,13 +237,13 @@ export class MetaEditor extends Panel {
       this._updateTableWidget(this.table, newModel);
     } else {
       this.table = this._createTableWidget(newModel);
-      
+
       if (this.table) {
-        this.addWidget(this.table)
+        this.addWidget(this.table);
       }
     }
-    
-    newModel.changed.connect(this.handleModelUpdate, this);  
+
+    newModel.changed.connect(this.handleModelUpdate, this);
   }
 
   render(attributes: string[]) {
@@ -266,7 +266,7 @@ export class MetaEditor extends Panel {
 
   private _createTableWidget(model: TierModel): MetaTableWidget | null {
     if (!model.publicMetaSchema) {
-      return null
+      return null;
     }
 
     const onSetMetaValue = (
@@ -275,7 +275,7 @@ export class MetaEditor extends Panel {
     ) => {
       newValue && model.setMetaValue(attribute, newValue);
     };
-    
+
     const onRemoveMetaKey = (attribute: string) => {
       model.removeMeta(attribute);
     };
@@ -300,7 +300,7 @@ export class MetaEditor extends Panel {
     };
 
     table.values = model.additionalMeta;
-    
+
     if (model.publicMetaSchema) {
       table.schema = model.publicMetaSchema;
     }
