@@ -15,10 +15,6 @@ from cassini import env, Project
 from cassini.core import NotebookTierBase, TierABC
 
 
-def encode_datetime(date: datetime.datetime) -> str:
-    return date.astimezone().isoformat()
-
-
 def encode_path(path: Path, project: Project) -> str:
     project_folder = project.project_folder
     return path.relative_to(project_folder).as_posix()
@@ -41,7 +37,7 @@ def serialize_child(tier: TierABC) -> TreeChildResponse:
             if key not in ["description", "conclusion", "started"]
         }
 
-        started = tier.started.astimezone().isoformat()
+        started = tier.started.isoformat()
 
         if tier.description:
             info = tier.description.split("\n")[0]

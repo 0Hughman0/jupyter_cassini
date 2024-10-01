@@ -1,5 +1,4 @@
 import { Panel } from '@lumino/widgets';
-import { JSONObject } from '@lumino/coreutils';
 
 import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
 import { RenderMimeRegistry } from '@jupyterlab/rendermime';
@@ -7,10 +6,185 @@ import { PathExt } from '@jupyterlab/coreutils';
 
 import { TierModel } from '../models';
 import { MetaTableWidget } from './metatable';
-import { JSONValue } from '@lumino/coreutils';
+import { JSONObject, JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
 
 import { cassini } from '../core';
+import {
+  InputBooleanDialog,
+  InputItemsDialog,
+  InputNumberDialog,
+  InputPasswordDialog,
+  InputTextDialog,
+  InputDateDialog,
+  InputDatetimeDialog,
+  InputJSONDialog,
+  InputDialogBase,
+  ValidatingInput
+} from './dialogwidgets';
+import { ObjectDef } from '../schema/types';
+
+export function createMetaInput(
+  propertySchema: ObjectDef,
+  currentValue: any | null,
+  label: string | undefined
+): InputDialogBase<any> {
+  if (propertySchema.enum && propertySchema.type) {
+    const items = propertySchema.enum as (typeof propertySchema.type)[];
+    return new InputItemsDialog({
+      label: label,
+      current: items.indexOf(currentValue),
+      items: items,
+      title: '',
+      editable: false
+    });
+  }
+
+  switch (propertySchema.type) {
+    case 'string': {
+      const currentValueString = currentValue as string | undefined;
+
+      if (!propertySchema.format) {
+        return new InputTextDialog({
+          label: label,
+          text: currentValueString,
+          title: ''
+        });
+      }
+
+      switch (propertySchema.format) {
+        case 'date':
+          return new InputDateDialog({
+            label: label,
+            value: currentValueString
+              ? new Date(currentValueString)
+              : undefined,
+            title: ''
+          });
+        case 'date-time':
+          return new InputDatetimeDialog({
+            label: label,
+            value: currentValueString
+              ? new Date(currentValueString)
+              : undefined,
+            title: ''
+          });
+        case 'password':
+          return new InputPasswordDialog({
+            label: label,
+            text: currentValueString,
+            title: ''
+          });
+        default:
+          return new InputTextDialog({
+            label: label,
+            text: currentValueString,
+            title: ''
+          });
+      }
+    }
+
+    case 'number': {
+      const currentValueNumber = currentValue as number | undefined;
+
+      return new InputNumberDialog({
+        label: label,
+        value: currentValueNumber,
+        title: ''
+      });
+    }
+
+    case 'integer': {
+      const currentValueInteger = currentValue as number | undefined;
+      return new InputNumberDialog({
+        label: label,
+        value: currentValueInteger,
+        title: ''
+      });
+    }
+
+    case 'boolean': {
+      const currentValueBool = currentValue as boolean | undefined;
+
+      return new InputBooleanDialog({
+        label: label,
+        value: currentValueBool,
+        title: ''
+      });
+    }
+
+    case 'array': {
+      const currentValueArray = currentValue as JSONObject | undefined;
+
+      return new InputJSONDialog({
+        label: label,
+        value: currentValueArray,
+        title: ''
+      });
+    }
+
+    case 'object': {
+      const currentValueObject = currentValue as JSONObject | undefined;
+
+      return new InputJSONDialog({
+        label: label,
+        value: currentValueObject,
+        title: ''
+      });
+    }
+
+    default: {
+      const currentValueUnknown = currentValue as any;
+
+      return new InputJSONDialog({
+        label: label,
+        value: currentValueUnknown,
+        title: ''
+      });
+    }
+  }
+}
+
+export function createValidatedInput(
+  propertySchema: ObjectDef,
+  currentVal: any,
+  label: string | undefined
+): ValidatingInput<any> {
+  const input = createMetaInput(propertySchema, currentVal, label);
+
+  let validator: (value: any) => boolean;
+  let postProcessor;
+
+  if (input instanceof InputJSONDialog) {
+    validator = (value: JSONObject) => value !== undefined;
+  } else {
+    validator = (value: any) => cassini.ajv.validate(propertySchema, value);
+  }
+
+  if (input instanceof InputDateDialog) {
+    postProcessor = (value: Date | undefined) => {
+      if (value === undefined || isNaN(value.getTime())) {
+        return undefined;
+      } else {
+        return value.toISOString().slice(0, 10);
+      }
+    };
+  } else if (input instanceof InputDatetimeDialog) {
+    postProcessor = (value: Date | undefined) => {
+      if (value === undefined || isNaN(value.getTime())) {
+        return undefined;
+      } else {
+        return value.toISOString();
+      }
+    };
+  } else {
+    postProcessor = undefined;
+  }
+
+  const validatedInput = new ValidatingInput(input, validator, postProcessor);
+
+  return validatedInput;
+}
 
 /**
  * Widget for modifying the meta of a TierModel.
@@ -21,79 +195,56 @@ export class MetaEditor extends Panel {
 
   constructor(tierModel: TierModel | null) {
     super();
-    this.modelChanged.connect(
-      (sender, model) => this.onModelChanged(model),
-      this
-    );
-    this.model = tierModel;
+    this.table = null;
+    this._model = tierModel;
+    this.handleModelChanged(null, tierModel);
   }
-
-  get modelChanged(): ISignal<this, TierModel | null> {
-    return this._modelChanged;
-  }
-
-  private _modelChanged = new Signal<this, TierModel | null>(this);
 
   get model(): TierModel | null {
     return this._model;
   }
 
-  set model(model: TierModel | null) {
-    this._model = model;
-
-    this._modelChanged.emit(model);
+  set model(newModel: TierModel | null) {
+    const oldModel = this._model;
+    this._model = newModel;
+    this.handleModelChanged(oldModel, newModel);
   }
 
-  onModelChanged(model: TierModel | null): void {
+  handleModelUpdate(model: TierModel): void {
     if (this.table) {
-      this.table.dispose();
+      this._updateTableWidget(this.table, model);
     }
-
-    if (!model) {
-      return;
-    }
-
-    const table = (this.table = new MetaTableWidget(
-      model.additionalMeta,
-      this.onMetaUpdate.bind(this),
-      this.onRemoveMeta.bind(this),
-      model.changed
-    ));
-
-    this.addWidget(table);
   }
 
-  onMetaUpdate(attribute: string, newValue: string): void {
-    /**
-     * TODO this is badly named and maybe not the best implementation
-     *
-     * inserts updated meta into model.
-     */
-    if (!this.model) {
+  handleModelChanged(
+    oldModel: TierModel | null,
+    newModel: TierModel | null
+  ): void {
+    if (oldModel) {
+      Signal.disconnectBetween(oldModel, this);
+    }
+
+    if (!newModel) {
+      if (this.table) {
+        this.table.values = {};
+        //this.table.schema = {}; // find a way!
+        this.table.update();
+      }
+
       return;
     }
 
-    const meta = this.model.metaFile?.model.toJSON() as JSONObject;
+    if (this.table) {
+      this._updateTableWidget(this.table, newModel);
+    } else {
+      this.table = this._createTableWidget(newModel);
 
-    meta[attribute] = JSON.parse(newValue);
-
-    this.model.metaFile?.model.fromJSON(meta);
-  }
-
-  onRemoveMeta(attribute: string) {
-    /**
-     * TODO this is badly named and maybe not the best implementation
-     *
-     * Removes a meta from the model
-     */
-    if (!this.model) {
-      return;
+      if (this.table) {
+        this.addWidget(this.table);
+      }
     }
 
-    const meta = this.model.metaFile?.model.toJSON() as JSONObject;
-    delete meta[attribute];
-
-    this.model.metaFile?.model.fromJSON(meta);
+    newModel.changed.connect(this.handleModelUpdate, this);
   }
 
   render(attributes: string[]) {
@@ -110,8 +261,55 @@ export class MetaEditor extends Panel {
       meta[key] = val;
     }
 
-    this.table.attributes = meta;
+    this.table.values = meta;
     this.table.update();
+  }
+
+  private _createTableWidget(model: TierModel): MetaTableWidget | null {
+    if (!model.publicMetaSchema) {
+      return null;
+    }
+
+    const onSetMetaValue = (
+      attribute: string,
+      newValue: JSONValue | undefined
+    ) => {
+      newValue && model.setMetaValue(attribute, newValue);
+    };
+
+    const onRemoveMetaKey = (attribute: string) => {
+      model.removeMeta(attribute);
+    };
+
+    return new MetaTableWidget(
+      model.publicMetaSchema,
+      model.additionalMeta,
+      onSetMetaValue.bind(this),
+      onRemoveMetaKey.bind(this)
+    );
+  }
+
+  private _updateTableWidget(table: MetaTableWidget, model: TierModel): void {
+    const onSetMetaValue = (
+      attribute: string,
+      newValue: JSONValue | undefined
+    ) => {
+      newValue && model.setMetaValue(attribute, newValue);
+    };
+    const onRemoveMetaKey = (attribute: string) => {
+      model.removeMeta(attribute);
+    };
+
+    table.values = model.additionalMeta;
+
+    if (model.publicMetaSchema) {
+      table.schema = model.publicMetaSchema;
+    }
+
+    table.handleSetMetaValue = onSetMetaValue.bind(this);
+    table.handleRemoveMetaKey = onRemoveMetaKey.bind(this);
+
+    table.update();
   }
 }
 

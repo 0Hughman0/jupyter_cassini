@@ -1,6 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Ajv, ValidateFunction } from 'ajv';
-import addFormats from 'ajv-formats';
+import { ValidateFunction } from 'ajv';
 
 import { ObservableList } from '@jupyterlab/observables';
 import {
@@ -12,13 +11,10 @@ import { IOutput } from '@jupyterlab/nbformat';
 
 import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
+import { Notification } from '@jupyterlab/apputils';
 
 import { cassini, ITreeChildData, ITreeData, TreeManager } from './core';
 import { MetaSchema, TierInfo, IChange } from './schema/types';
-
-const ajv = new Ajv();
-addFormats(ajv);
-ajv.addKeyword('x-cas-field');
 
 /**
  * Browser-side model of a cassini tier.
@@ -48,7 +44,8 @@ export class TierModel {
   readonly notebookPath: string | undefined;
   readonly started: Date;
   readonly metaSchema: MetaSchema | undefined;
-  readonly metaValidator: ValidateFunction<any>;
+  readonly publicMetaSchema: MetaSchema | undefined;
+  readonly metaValidator: ValidateFunction<MetaSchema>;
 
   readonly hltsPath: string | undefined;
 
@@ -68,7 +65,9 @@ export class TierModel {
     this.notebookPath = options.notebookPath;
     this.hltsPath = options.hltsPath;
     this.metaSchema = options.metaSchema;
-    this.metaValidator = ajv.compile(this.metaSchema);
+    this.publicMetaSchema = this.createPublicMetaSchema(this.metaSchema);
+
+    this.metaValidator = cassini.ajv.compile<MetaSchema>(this.metaSchema);
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.ids.toString()) {
@@ -116,6 +115,20 @@ export class TierModel {
     }
   }
 
+  private createPublicMetaSchema(schema: MetaSchema): MetaSchema {
+    const publicMetaSchema = structuredClone(schema);
+    const names = Object.keys(publicMetaSchema.properties);
+
+    for (const name of names) {
+      const info = publicMetaSchema.properties[name];
+      if (info['x-cas-field'] === 'core' || info['x-cas-field'] === 'private') {
+        delete publicMetaSchema.properties[name];
+      }
+    }
+
+    return publicMetaSchema;
+  }
+
   private _changed = new Signal<TierModel, void>(this);
 
   get changed(): ISignal<TierModel, void> {
@@ -128,7 +141,10 @@ export class TierModel {
    * Models should not be considered in a valid state until this happens... although the readonly attributes are probably fine...
    */
   get ready(): Promise<TierModel> {
-    return Promise.all(this._required).then(() => this);
+    return Promise.all(this._required).then(() => {
+      this._changed.emit();
+      return this;
+    });
   }
 
   get treeData(): Promise<ITreeData | null> {
@@ -148,6 +164,29 @@ export class TierModel {
       return this.metaFile.model.toJSON() as JSONObject;
     } else {
       return {};
+    }
+  }
+
+  protected updateMeta(newMeta: JSONObject): boolean {
+    if (this.metaValidator(newMeta)) {
+      this.metaFile?.model.fromJSON(newMeta);
+      return true;
+    } else {
+      const error = this.metaValidator.errors && this.metaValidator.errors[0];
+
+      if (!error) {
+        return false;
+      }
+
+      const name = error.instancePath.split('/')[1];
+      const value = newMeta[name];
+      Notification.error(
+        `Cassini Error - ${name} ${error.message}, got: ${JSON.stringify(
+          value
+        )}`
+      );
+
+      return false;
     }
   }
 
@@ -176,6 +215,21 @@ export class TierModel {
     return o;
   }
 
+  setMetaValue<T extends JSONValue>(key: string, value: T): boolean {
+    const newMeta = this.meta;
+    newMeta[key] = value;
+    const outcome = this.updateMeta(newMeta);
+    this._changed.emit();
+    return outcome;
+  }
+
+  removeMeta(key: string) {
+    const newMeta = this.meta;
+    delete newMeta[key];
+    this.updateMeta(newMeta);
+    this._changed.emit();
+  }
+
   get description(): string {
     return (this.meta['description'] as string) || '';
   }
@@ -185,22 +239,19 @@ export class TierModel {
       throw 'Tier has no meta, cannot store description';
     }
 
-    const oldMeta = this.meta;
-    oldMeta['description'] = value;
-    this.metaFile.model.fromJSON(oldMeta);
+    this.setMetaValue('description', value);
   }
 
   get conclusion(): string {
     return (this.meta['conclusion'] as string) || '';
   }
+
   set conclusion(value: string) {
     if (!this.metaFile) {
       throw 'Tier has no meta, cannot store conclusion';
     }
 
-    const oldMeta = this.meta;
-    oldMeta['conclusion'] = value;
-    this.metaFile.model.fromJSON(oldMeta);
+    this.setMetaValue('conclusion', value);
   }
 
   get dirty(): boolean {

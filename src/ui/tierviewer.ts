@@ -347,7 +347,7 @@ export class TierViewer extends BoxPanel {
     this.concCell.source = this.model.conclusion;
 
     // the update could be new meta
-    this.metaView.render(Object.keys(this.model.additionalMeta));
+    // this.metaView.render(Object.keys(this.model.additionalMeta));
 
     this.renderHighlights(this.model);
   }

@@ -40,7 +40,9 @@ export interface paths {
           headers: {
             [name: string]: unknown;
           };
-          content?: never;
+          content: {
+            'application/json': components['schemas']['CassiniServerError'];
+          };
         };
       };
     };
@@ -88,7 +90,9 @@ export interface paths {
           headers: {
             [name: string]: unknown;
           };
-          content?: never;
+          content: {
+            'application/json': components['schemas']['CassiniServerError'];
+          };
         };
       };
     };
@@ -136,7 +140,9 @@ export interface paths {
           headers: {
             [name: string]: unknown;
           };
-          content?: never;
+          content: {
+            'application/json': components['schemas']['CassiniServerError'];
+          };
         };
       };
     };
@@ -228,27 +234,34 @@ export interface components {
        */
       tierType: 'notebook';
     });
-    metaSchema: {
-      properties: {
-        [key: string]: {
-          title?: string;
-          type?: string;
-          default?: unknown;
-          format?: string;
-          /** @enum {string} */
-          'x-cas-field'?: 'private' | 'core';
-        };
-      };
+    objectDef: ({
+      title?: string;
+      type?: string;
+      default?: unknown;
+      format?: string;
+      enum?: components['schemas']['objectDef']['type'][];
+      /** @enum {string} */
+      'x-cas-field'?: 'private' | 'core';
+      $ref?: string;
     } & {
       [key: string]: unknown;
+    }) &
+      (unknown | unknown | unknown);
+    metaSchema: {
+      properties: {
+        [key: string]: components['schemas']['objectDef'];
+      };
+      additionalProperties: components['schemas']['objectDef'];
+      $defs?: unknown;
+      type?: string;
     };
     ChildClsInfo:
       | components['schemas']['ChildClsFolderInfo']
       | components['schemas']['ChildClsNotebookInfo'];
     CommonChildClsInfo: {
-      name?: string;
-      idRegex?: string;
-      namePartTemplate?: string;
+      name: string;
+      idRegex: string;
+      namePartTemplate: string;
     };
     ChildClsFolderInfo: components['schemas']['CommonChildClsInfo'] & {
       /**
@@ -293,6 +306,10 @@ export interface components {
       template?: string;
     } & {
       [key: string]: unknown;
+    };
+    CassiniServerError: {
+      reason: string;
+      message: string;
     };
   };
   responses: never;

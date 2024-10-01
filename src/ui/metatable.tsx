@@ -8,10 +8,9 @@ import {
   createColumnHelper
 } from '@tanstack/react-table';
 
-import { JSONValue } from '@lumino/coreutils';
-import { ISignal } from '@lumino/signaling';
+import { JSONObject, JSONValue } from '@lumino/coreutils';
 
-import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
+import { CodeEditorWrapper } from '@jupyterlab/codeeditor';
 import { ReactWidget, InputDialog } from '@jupyterlab/apputils';
 import {
   checkIcon,
@@ -20,14 +19,15 @@ import {
   closeIcon
 } from '@jupyterlab/ui-components';
 
-import { cassini } from '../core';
-import { TierModel } from '../models';
+import { MetaSchema } from '../schema/types';
+import { ValidatingInput } from './dialogwidgets';
+import { createValidatedInput } from './metaeditor';
 
 export type MetaTableCallback = { name: string; editor: CodeEditorWrapper };
 
 export type MetaTableRow = {
   name: string;
-  editor: () => CodeEditorWrapper;
+  editor: () => ValidatingInput<any, any>;
 };
 
 export interface IMetaTableProps {
@@ -72,7 +72,8 @@ export function MetaTable(props: IMetaTableProps) {
       }),
       columnHelper.accessor('editor', {
         cell: props => {
-          const widget = props.getValue()();
+          const validator = props.getValue()();
+          const widget = validator.wrappedInput;
           // I have no idea what this means or how it works: https://stackoverflow.com/questions/69185915/how-to-cast-an-htmlelement-to-a-react-element
           return (
             <span
@@ -104,12 +105,7 @@ export function MetaTable(props: IMetaTableProps) {
               )}
               <ToolbarButtonComponent
                 icon={checkIcon}
-                onClick={() =>
-                  onMetaUpdate(
-                    row.name,
-                    row.editor().model.sharedModel.getSource()
-                  )
-                }
+                onClick={() => onMetaUpdate(row.name, row.editor().getValue())}
                 tooltip="Apply changes"
               />
             </span>
@@ -180,48 +176,26 @@ export function MetaTable(props: IMetaTableProps) {
  * TODO: Should probably use signals really. This would allow multiple objects to listen out for changes, plus the names are confusing.
  *
  * @property { ((attribute: string, newValue: string) => void) | null } onMetaUpdate - callback that's called when an entry in the TierTable is updated.
- * @property { ((attribute: string) => void) | null } - onRemoveMeta callback that's when an entry is removed from the TierTable.
+ * @property { ((attribute: string) => void) } - onRemoveMeta callback that's when an entry is removed from the TierTable.
  *
  */
 export class MetaTableWidget extends ReactWidget {
-  attributes: { [name: string]: JSONValue | undefined };
-  onMetaUpdate: (attribute: string, newValue: string) => void;
-  onRemoveMeta: ((attribute: string) => void) | null;
+  schema: MetaSchema;
+  values: JSONObject;
+  handleSetMetaValue: (attribute: string, newValue: JSONValue) => void;
+  handleRemoveMetaKey: (attribute: string) => void;
 
   constructor(
-    attributes: { [name: string]: JSONValue | undefined },
-    onMetaUpdate: (attribute: string, newValue: string) => void,
-    onRemoveMeta: ((attribute: string) => void) | null,
-    metaChanged: ISignal<TierModel, void>
+    schema: MetaSchema,
+    values: JSONObject,
+    onSetMetaValue: (attribute: string, newValue: JSONValue) => void,
+    onRemoveMetaKey: (attribute: string) => void
   ) {
     super();
-    this.attributes = attributes;
-    this.onMetaUpdate = onMetaUpdate;
-    this.onRemoveMeta = onRemoveMeta;
-
-    metaChanged.connect(
-      model => this.onMetaChanged(model.additionalMeta),
-      this
-    );
-  }
-
-  /**
-   * Confusingly, this method handles changes to the meta from the model which are provided as a signal at construction...
-   *
-   * Rerenders the widget with new meta
-   *
-   * @param newMeta
-   */
-  onMetaChanged(newMeta: { [name: string]: JSONValue }) {
-    const meta: { [name: string]: JSONValue } = {};
-
-    for (const key of Object.keys(this.attributes)) {
-      const val = newMeta[key];
-      meta[key] = val;
-    }
-
-    this.attributes = meta;
-    this.update();
+    this.schema = schema;
+    this.values = values;
+    this.handleSetMetaValue = onSetMetaValue;
+    this.handleRemoveMetaKey = onRemoveMetaKey;
   }
 
   /**
@@ -231,37 +205,44 @@ export class MetaTableWidget extends ReactWidget {
    *
    * @param key
    */
-  onNewMetaKey(key: string) {
-    this.attributes[key] = undefined;
+  handleNewMetaKey(key: string) {
+    this.values[key] = null;
     this.update();
   }
 
   render() {
     const metas = [];
 
-    for (const name of Object.keys(this.attributes)) {
-      const editor = new CodeEditorWrapper({
-        model: new CodeEditor.Model({ mimeType: 'application/json' }),
-        factory: cassini.contentFactory.newInlineEditor,
-        editorOptions: { config: { lineNumbers: false } }
-      });
+    const allKeys = new Set(Object.keys(this.values));
 
-      const val = this.attributes[name];
-
-      editor.model.sharedModel.setSource(val ? JSON.stringify(val) : '');
-
-      metas.push({ name: name, editor: () => editor });
+    for (const [name, info] of Object.entries(this.schema.properties)) {
+      const value = this.values[name];
+      allKeys.delete(name);
+      const input = createValidatedInput(info, value, undefined);
+      metas.push({ name: name, editor: () => input });
     }
 
-    const onNewMetaKey = this.onNewMetaKey.bind(this);
+    for (const extraKey of allKeys) {
+      const value = this.values[extraKey];
+      const additionalInfo = this.schema.additionalProperties;
+
+      if (additionalInfo.$ref) {
+        additionalInfo['$defs'] = this.schema.$defs;
+      }
+
+      const input = createValidatedInput(additionalInfo, value, undefined);
+      metas.push({ name: extraKey, editor: () => input });
+    }
+
+    const onNewMetaKey = this.handleNewMetaKey.bind(this);
 
     return (
       <div>
         <MetaTable
           metas={metas}
-          onMetaUpdate={this.onMetaUpdate}
+          onMetaUpdate={this.handleSetMetaValue}
           onNewMetaKey={onNewMetaKey}
-          onRemoveMeta={this.onRemoveMeta}
+          onRemoveMeta={this.handleRemoveMetaKey}
         />
       </div>
     );

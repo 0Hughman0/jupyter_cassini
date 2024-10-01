@@ -69,6 +69,13 @@ describe('TierModel', () => {
       expect(tier.additionalMeta).toEqual({ temperature: 273 });
     });
 
+    test('addingInvalidMeta', async () => {
+      const tier = new TierModel(WP1_INFO);
+      await tier.ready;
+      expect(tier.setMetaValue('description', 'new')).toEqual(true);
+      expect(tier.setMetaValue('description', 15)).toEqual(false);
+    });
+
     test('treeData', async () => {
       const tier = new TierModel(WP1_INFO);
       await tier.ready;
