@@ -141,7 +141,10 @@ export class TierModel {
    * Models should not be considered in a valid state until this happens... although the readonly attributes are probably fine...
    */
   get ready(): Promise<TierModel> {
-    return Promise.all(this._required).then(() => this);
+    return Promise.all(this._required).then(() => {
+      this._changed.emit();
+      return this;
+    });
   }
 
   get treeData(): Promise<ITreeData | null> {

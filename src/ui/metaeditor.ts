@@ -195,77 +195,78 @@ export class MetaEditor extends Panel {
 
   constructor(tierModel: TierModel | null) {
     super();
-    this.modelChanged.connect(
-      (sender, model) => this.onModelChanged(model),
-      this
-    );
     this.model = tierModel;
+    this.model?.changed.connect(this.handleModelUpdate, this);
   }
-
-  get modelChanged(): ISignal<this, TierModel | null> {
-    return this._modelChanged;
-  }
-
-  private _modelChanged = new Signal<this, TierModel | null>(this);
 
   get model(): TierModel | null {
     return this._model;
   }
 
-  set model(model: TierModel | null) {
-    this._model = model;
-
-    this._modelChanged.emit(model);
+  set model(newModel: TierModel | null) {
+    this.handleModelChanged(this._model, newModel);
+    this._model = newModel;
   }
 
-  onModelChanged(model: TierModel | null): void {
-    if (!model) {
-      return;
-    }
+  handleModelUpdate(model: TierModel): void {
+    if (this.table) {
+      this.table.values = model.additionalMeta;
+      if (model.publicMetaSchema) {
+        this.table.schema = model.publicMetaSchema;
+      }
 
-    if (model.publicMetaSchema) {
-      this.table?.dispose();
-
-      const table = (this.table = new MetaTableWidget(
-        model.publicMetaSchema,
-        model.additionalMeta,
-        this.onMetaUpdate.bind(this),
-        this.onRemoveMeta.bind(this),
-        model.changed
-      ));
-
-      this.addWidget(table);
+      this.table.update();
     }
   }
 
-  onMetaUpdate(attribute: string, newValue: JSONValue | undefined): void {
-    /**
-     * TODO this is badly named and maybe not the best implementation
-     *
-     * inserts updated meta into model.
-     */
-    if (!this.model) {
+  async handleModelChanged(
+    oldModel: TierModel | null,
+    newModel: TierModel | null
+  ): Promise<void> {
+    if (oldModel) {
+      Signal.disconnectBetween(oldModel, this);
+    }
+
+    if (!newModel) {
+      if (this.table) {
+        this.table.values = {};
+        //this.table.schema = {}; // find a way!
+      }
+
       return;
     }
 
-    if (newValue === undefined) {
-      return;
+    if (newModel.publicMetaSchema) {
+      await newModel.ready;
+
+      const onSetMetaValue = (
+        attribute: string,
+        newValue: JSONValue | undefined
+      ) => {
+        newValue && newModel.setMetaValue(attribute, newValue);
+      };
+      const onRemoveMetaKey = (attribute: string) => {
+        newModel.removeMeta(attribute);
+      };
+
+      if (!this.table) {
+        const table = (this.table = new MetaTableWidget(
+          newModel.publicMetaSchema,
+          newModel.additionalMeta,
+          onSetMetaValue.bind(this),
+          onRemoveMetaKey.bind(this)
+        ));
+
+        this.addWidget(table);
+      } else {
+        this.table.handleSetMetaValue = onSetMetaValue.bind(this);
+        this.table.handleRemoveMetaKey = onRemoveMetaKey.bind(this);
+        this.table.values = newModel.additionalMeta;
+        this.table.schema = newModel.publicMetaSchema;
+      }
+
+      this.table.update();
     }
-
-    this.model.setMetaValue(attribute, newValue);
-  }
-
-  onRemoveMeta(attribute: string) {
-    /**
-     * TODO this is badly named and maybe not the best implementation
-     *
-     * Removes a meta from the model
-     */
-    if (!this.model) {
-      return;
-    }
-
-    this.model.removeMeta(attribute);
   }
 
   render(attributes: string[]) {

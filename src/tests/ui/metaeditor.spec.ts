@@ -1,3 +1,4 @@
+import { cassini } from '../../core';
 import {
   InputBooleanDialog,
   InputDateDialog,
@@ -7,7 +8,16 @@ import {
   InputPasswordDialog,
   InputTextDialog
 } from '../../ui/dialogwidgets';
-import { createMetaInput, createValidatedInput } from '../../ui/metaeditor';
+import {
+  createMetaInput,
+  createValidatedInput,
+  MetaEditor
+} from '../../ui/metaeditor';
+
+import { mockServerAPI, createTierFiles } from '../tools';
+import { WP1_INFO, TEST_META_CONTENT, WP1_1_INFO } from '../test_cases';
+import { MetaTableWidget } from '../../ui/metatable';
+import { MetaSchema } from '../../schema/types';
 
 describe('createMetaInput', () => {
   test('string MetaInput', () => {
@@ -189,5 +199,80 @@ describe('createValidatedInput', () => {
 
     expect(validated.getValue()).toEqual(13);
     expect(validated.validate()).toEqual(false);
+  });
+});
+
+describe('metaeditor widget', () => {
+  beforeEach(async () => {
+    const WP1_NO_HLTS = structuredClone(WP1_INFO);
+    delete WP1_NO_HLTS['hltsPath'];
+
+    const WP1_1_NO_HLTS = structuredClone(WP1_1_INFO);
+    delete WP1_1_NO_HLTS['hltsPath'];
+
+    mockServerAPI({
+      '/lookup': [
+        { query: { name: 'WP1' }, response: WP1_NO_HLTS },
+        { query: { name: 'WP1.1' }, response: WP1_1_NO_HLTS }
+      ]
+    });
+
+    const WP1_1_META = structuredClone(TEST_META_CONTENT) as any;
+    WP1_1_META['WP1.1Meta'] = 'WP1.1MetaValue';
+
+    await createTierFiles([
+      { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
+      { path: WP1_1_INFO.metaPath, content: WP1_1_META }
+    ]);
+  });
+
+  test('construct', async () => {
+    const model = await cassini.tierModelManager.get('WP1');
+    await model.ready;
+
+    expect(model.publicMetaSchema).not.toBeUndefined();
+    const publicMetaSchema = model.publicMetaSchema as MetaSchema;
+
+    const widget = new MetaEditor(model);
+
+    const table = widget.table as MetaTableWidget;
+
+    expect(table).not.toBeNull();
+
+    expect(table.values).toEqual(model.additionalMeta);
+
+    const schema = table.schema as MetaSchema;
+    expect(schema).toEqual(publicMetaSchema);
+  });
+
+  test('model changes', async () => {
+    const model = await cassini.tierModelManager.get('WP1');
+    await model.ready;
+
+    const widget = new MetaEditor(model);
+
+    const table = widget.table as MetaTableWidget;
+    expect(Object.keys(table.values)).not.toContain('newKey');
+    model.setMetaValue('newKey', 100);
+    expect(Object.keys(model.additionalMeta)).toContain('newKey');
+
+    expect(Object.keys(table.values)).toContain('newKey');
+  });
+
+  test('new model', async () => {
+    const model = await cassini.tierModelManager.get('WP1');
+    await model.ready;
+
+    const widget = new MetaEditor(model);
+
+    const table = widget.table as MetaTableWidget;
+    expect(Object.keys(table.values)).not.toContain('WP1.1Meta');
+
+    const newModel = await cassini.tierModelManager.get('WP1.1');
+    await newModel.ready;
+
+    widget.model = newModel;
+
+    expect(Object.keys(table.values)).toContain('WP1.1Meta');
   });
 });
