@@ -8,7 +8,7 @@ import {
   createColumnHelper
 } from '@tanstack/react-table';
 
-import { JSONObject } from '@lumino/coreutils';
+import { JSONObject, JSONValue } from '@lumino/coreutils';
 
 import { CodeEditorWrapper } from '@jupyterlab/codeeditor';
 import { ReactWidget, InputDialog } from '@jupyterlab/apputils';
@@ -176,20 +176,20 @@ export function MetaTable(props: IMetaTableProps) {
  * TODO: Should probably use signals really. This would allow multiple objects to listen out for changes, plus the names are confusing.
  *
  * @property { ((attribute: string, newValue: string) => void) | null } onMetaUpdate - callback that's called when an entry in the TierTable is updated.
- * @property { ((attribute: string) => void) | null } - onRemoveMeta callback that's when an entry is removed from the TierTable.
+ * @property { ((attribute: string) => void) } - onRemoveMeta callback that's when an entry is removed from the TierTable.
  *
  */
 export class MetaTableWidget extends ReactWidget {
   schema: MetaSchema;
   values: JSONObject;
-  handleSetMetaValue: (attribute: string, newValue: string) => void;
-  handleRemoveMetaKey: ((attribute: string) => void) | null;
+  handleSetMetaValue: (attribute: string, newValue: JSONValue) => void;
+  handleRemoveMetaKey: (attribute: string) => void;
 
   constructor(
     schema: MetaSchema,
     values: JSONObject,
-    onSetMetaValue: (attribute: string, newValue: string) => void,
-    onRemoveMetaKey: ((attribute: string) => void) | null
+    onSetMetaValue: (attribute: string, newValue: JSONValue) => void,
+    onRemoveMetaKey: (attribute: string) => void
   ) {
     super();
     this.schema = schema;

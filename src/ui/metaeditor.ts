@@ -195,6 +195,7 @@ export class MetaEditor extends Panel {
 
   constructor(tierModel: TierModel | null) {
     super();
+    this.table = null;
     this._model = tierModel;
     this.handleModelChanged(null, tierModel);
   }

@@ -226,6 +226,11 @@ describe('metaeditor widget', () => {
     ]);
   });
 
+  afterEach(async () => {
+    cassini.tierModelManager.cache = {};
+    cassini.treeManager.cache = {};
+  });
+
   test('construct', async () => {
     const model = await cassini.tierModelManager.get('WP1');
     await model.ready;
@@ -245,7 +250,7 @@ describe('metaeditor widget', () => {
     expect(schema).toEqual(publicMetaSchema);
   });
 
-  test('model changes', async () => {
+  test('model changes content', async () => {
     const model = await cassini.tierModelManager.get('WP1');
     await model.ready;
 
@@ -295,5 +300,80 @@ describe('metaeditor widget', () => {
     model.setMetaValue('newValue', 100);
 
     expect(Object.keys(table.values)).not.toContain('newValue');
+  });
+
+  test('from null model', async () => {
+    const widget = new MetaEditor(null);
+
+    expect(widget.table).toBeNull();
+
+    const model = await cassini.tierModelManager.get('WP1');
+    await model.ready;
+
+    widget.model = model;
+
+    expect(widget.table).not.toBeNull();
+    expect(Object.keys((widget.table as MetaTableWidget).values)).toContain(
+      'temperature'
+    );
+  });
+
+  test('to null model', async () => {
+    const model = await cassini.tierModelManager.get('WP1');
+    await model.ready;
+
+    const widget = new MetaEditor(model);
+
+    const table = widget.table as MetaTableWidget;
+    expect(table.values).toEqual(model.additionalMeta);
+
+    widget.model = null;
+
+    expect(table.values).toEqual({});
+  });
+
+  test('update meta value', async () => {
+    const model = await cassini.tierModelManager.get('WP1');
+    await model.ready;
+
+    const widget = new MetaEditor(model);
+    const table = widget.table as MetaTableWidget;
+
+    expect(table.values['temperature']).toEqual(
+      TEST_META_CONTENT['temperature']
+    );
+
+    table.handleSetMetaValue('temperature', 500);
+
+    expect(table.values['temperature']).toEqual(500);
+    expect(model.meta['temperature']).toEqual(500);
+  });
+
+  test('delete meta key', async () => {
+    const model = await cassini.tierModelManager.get('WP1');
+    await model.ready;
+
+    const widget = new MetaEditor(model);
+    const table = widget.table as MetaTableWidget;
+
+    expect(Object.keys(table.values)).toContain('temperature');
+
+    table.handleRemoveMetaKey('temperature');
+
+    expect(Object.keys(table.values)).not.toContain('temperature');
+  });
+
+  test('add a new meta key', async () => {
+    const model = await cassini.tierModelManager.get('WP1');
+    await model.ready;
+
+    const widget = new MetaEditor(model);
+    const table = widget.table as MetaTableWidget;
+
+    expect(Object.keys(table.values)).not.toContain('newKey');
+
+    table.handleNewMetaKey('newKey');
+
+    expect(Object.keys(table.values)).toContain('newKey');
   });
 });
