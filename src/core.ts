@@ -448,4 +448,3 @@ export class Cassini {
  * @global cassini - the global instance of cassini
  */
 export const cassini = new Cassini();
-export const ajv = new Ajv();

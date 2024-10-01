@@ -70,20 +70,25 @@ export class BrowserComponent extends React.Component<
     console.log(this.state);
 
     const setState = this.setState.bind(this);
+    const model = this.props.model;
 
-    this.props.model.childrenUpdated.connect(model => {
-      this.props.model
-        .getChildren()
-        .then(children => setState({ children: children }));
-      this.props.model.current.then(tierData => {
-        setState({
-          childMetas:
-            (tierData &&
-              tierData?.childClsInfo &&
-              tierData.childClsInfo.tierType === 'notebook' &&
-              Object.keys(tierData.childClsInfo.metaSchema.properties)) ||
-            []
-        });
+    model.childrenUpdated.connect(model => {
+      model.getChildren().then(
+        children => {
+          setState({ children: children });
+
+          const childMetas = new Set<string>()
+
+          for (const child of Object.values(children)) {
+            for (const key of Object.keys(child.additionalMeta || {})) {
+              childMetas.add(key)
+            }
+          }
+
+          setState({ childMetas: Array.from(childMetas.keys()) })
+        })
+      
+      model.current.then(tierData => {
         setState({ additionalColumns: props.model.additionalColumns });
       });
     });
