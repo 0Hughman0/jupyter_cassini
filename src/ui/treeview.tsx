@@ -80,12 +80,10 @@ interface ICrumbsProps {
   onCreateChild: (currentTier: ITreeData) => void;
 }
 
-export interface ICrumbsState {}
-
 /**
  * Crumbs are like a visual representation of the currentPath
  */
-export class CassiniCrumbs extends React.Component<ICrumbsProps, ICrumbsState> {
+export class CassiniCrumbs extends React.Component<ICrumbsProps> {
   constructor(props: ICrumbsProps) {
     super(props);
   }
@@ -308,10 +306,6 @@ interface IChildrenTableProps {
   onTierSelected: (casPath: string[], name: string) => void;
   onCreateChild: (currentTier: ITreeData) => void;
   onSelectMetas: (event: React.MouseEvent) => void;
-}
-
-export interface IChildrenState {
-  // currentTier: ITreeData | null;
 }
 
 /**
