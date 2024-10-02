@@ -2,7 +2,6 @@
 import React, { useMemo } from 'react';
 import { useState } from 'react';
 
-import { Signal, ISignal } from '@lumino/signaling';
 import { CommandRegistry } from '@lumino/commands';
 import { Menu } from '@lumino/widgets';
 
@@ -34,7 +33,6 @@ import { ITreeData, ITreeChildData, ILaunchable, TreeChildren } from '../core';
 import { TierBrowserModel } from '../models';
 import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
-import { openNewChildDialog } from './newchilddialog';
 import { ObservableList } from '@jupyterlab/observables';
 
 
@@ -80,7 +78,7 @@ interface ICrumbsProps {
   onRefreshTree: () => void;
   onTierSelected: (casPath: string[], name: string) => void;
   onTierLaunched: (tierData: ILaunchable) => void;
-  onCreateChild: () => void;
+  onCreateChild: (currentTier: ITreeData) => void;
 }
 
 export interface ICrumbsState {}
@@ -148,7 +146,7 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps, ICrumbsState> {
               icon={addIcon}
               className="jp-BreadCrumbs-home jp-ToolbarButtonComponent-icon"
               onClick={() => {
-                tier && onCreateChild();
+                tier && onCreateChild(tier);
               }}
               tooltip={`Add new child of ${tier?.name}`}
             />
@@ -181,7 +179,7 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps, ICrumbsState> {
 
 
 export interface IBrowserProps {
-  currentName: string;
+  currentTier: ITreeData;
   currentPath: ObservableList<string>;
   children: TreeChildren;
   childMetas: string[];
@@ -189,7 +187,7 @@ export interface IBrowserProps {
   onAdditionalColumnsSet: (names: Set<string>) => void;
   onTierSelected: (casPath: string[], name: string) => void;
   onTierLaunched: (tierData: ILaunchable) => void;
-  onCreateChild: () => void;
+  onCreateChild: (currentTier: ITreeData) => void;
 }
 
 
@@ -286,7 +284,7 @@ export class BrowserComponent extends React.Component<
     return (
       <div data-jp-suppress-context-menu>
         <ChildrenTable
-          currentName={this.props.currentName}
+          currentTier={this.props.currentTier}
           currentPath={this.props.currentPath}
           children={this.props.children}
           onTierLaunched={onTierLaunched}
@@ -307,13 +305,13 @@ export interface ICasSearchProps {
 
 
 interface IChildrenTableProps {
-  currentName: string;
-  currentPath: ObservableList<string>
+  currentTier: ITreeData;
+  currentPath: ObservableList<string>;
   children: { [id: string]: ITreeChildData };
   additionalColumns: Set<string>;
   onTierLaunched: (tier: ILaunchable) => void;
   onTierSelected: (casPath: string[], name: string) => void;
-  onCreateChild: () => void;
+  onCreateChild: (currentTier: ITreeData) => void;
   onSelectMetas: (event: React.MouseEvent) => void;
 }
 
@@ -529,7 +527,7 @@ function ChildrenTable(props: IChildrenTableProps) {
 
   return (
     <div>
-      <h1>{props.currentName}</h1>
+      <h1>{props.currentTier.name}</h1>
       <table
         className="cas-ChildrenTable-table"
         // style={{width: table.getCenterTotalSize()}}
@@ -597,8 +595,8 @@ function ChildrenTable(props: IChildrenTableProps) {
               <td colSpan={3}>
                 <ToolbarButtonComponent
                   icon={addIcon}
-                  onClick={() => onCreateChild()}
-                  tooltip={`Create new child of ${props.currentName}`}
+                  onClick={() => onCreateChild(props.currentTier)}
+                  tooltip={`Create new child of ${props.currentTier.name}`}
                 />
               </td>
             </tr>
@@ -624,15 +622,29 @@ export interface ITierSelectedSignal {
  * Has the children table for heading into the tree.
  */
 export class TierBrowser extends ReactWidget {
+  model: TierBrowserModel;
+
   currentPath: ObservableList<string>;
   currentTier: ITreeData;
   tierChildren: TreeChildren;
   childMetas: string[];
   additionalColumns: Set<string>;
-
-  constructor(model: TierBrowserModel) {
+  onTierSelected: (path: string[], name: string) => void
+  onTierLaunched: (branch: ILaunchable) => void
+  onCreateChild: (currentTier: ITreeData) => Promise<ITreeData | null>
+  
+  constructor(
+    model: TierBrowserModel, 
+    onTierSelected: (path: string[], name: string) => void,
+    onTierLaunched: (branch: ILaunchable) => void,
+    onCreateChild: (currentTier: ITreeData) => Promise<ITreeData | null>
+  ) {
     super();
     this.model = model;
+    this.onTierSelected = onTierSelected;
+    this.onTierLaunched = onTierLaunched;
+    this.onCreateChild = onCreateChild;
+
     this.addClass('cas-TierBrowser');
 
     model.childrenUpdated.connect((model, children) => {
@@ -643,20 +655,6 @@ export class TierBrowser extends ReactWidget {
     model.currentUpdated.connect((model, current) => {
       this.handleCurrentChanged(current);
     }, this)
-  }
-
-  model: TierBrowserModel;
-
-  private _tierSelected = new Signal<this, ITierSelectedSignal>(this);
-
-  public get tierSelected(): ISignal<this, ITierSelectedSignal> {
-    return this._tierSelected;
-  }
-
-  private _tierLaunched = new Signal<this, ILaunchable>(this);
-
-  public get tierLaunched(): ISignal<this, ILaunchable> {
-    return this._tierLaunched;
   }
 
   handleCurrentChanged(current: ITreeData | null) {
@@ -706,16 +704,10 @@ export class TierBrowser extends ReactWidget {
     if (!this.currentTier) {
       return <div><a>Loading</a></div>
     }
-    const onTierSelected = (path: string[], name: string) => {
-      this._tierSelected.emit({ path: path, name: name });
-    };
 
-    const onTierLaunched = (branch: ILaunchable) => {
-      this._tierLaunched.emit(branch);
-    };
-
-    const onCreateChild = () =>
-      openNewChildDialog(this.currentTier).then(() => this.model.refresh());
+    const onCreateChild = (currentTier: ITreeData) => {
+      this.onCreateChild(currentTier).then(() => this.model.refresh());
+    }
 
     return (
       <div style={{ height: '100%', overflow: 'auto' }}>
@@ -724,19 +716,19 @@ export class TierBrowser extends ReactWidget {
           currentPath={this.currentPath}
           currentTier={this.currentTier}
           onRefreshTree={this.handleRefreshTree.bind(this)}
-          onTierSelected={onTierSelected}
-          onTierLaunched={onTierLaunched}
+          onTierSelected={this.onTierSelected}
+          onTierLaunched={this.onTierLaunched}
           onCreateChild={onCreateChild}
         ></CassiniCrumbs>
         <BrowserComponent
-          currentName={this.currentTier.name}
+          currentTier={this.currentTier}
           currentPath={this.currentPath}
           children={this.tierChildren}
           childMetas={this.childMetas}
           additionalColumns={this.additionalColumns}
           onAdditionalColumnsSet={this.handleAdditionalColumnsSet.bind(this)}
-          onTierSelected={onTierSelected}
-          onTierLaunched={onTierLaunched}
+          onTierSelected={this.onTierSelected}
+          onTierLaunched={this.onTierLaunched}
           onCreateChild={onCreateChild}
         ></BrowserComponent>
       </div>

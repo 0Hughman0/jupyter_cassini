@@ -5,6 +5,7 @@ import { cassini, ILaunchable } from '../core';
 import { TierBrowserModel as TierTreeModel } from '../models';
 import { TierBrowser as TierTree } from './treeview';
 import { TierViewer } from './tierviewer';
+import { openNewChildDialog } from './newchilddialog'
 
 /**
  * BrowserPanel contains a TierBrowser, and TierViewer.
@@ -38,14 +39,11 @@ export class BrowserPanel extends SplitPanel {
         return;
       }
 
-      const browser = (this.browser = new TierTree(treeModel));
-
-      browser.tierSelected.connect((sender, tierSelectedSignal) => {
-        this.previewTier(tierSelectedSignal.name);
-      }, this);
-      browser.tierLaunched.connect((sender, tierData) => {
-        this.launchTier(tierData);
-      }, this);
+      const browser = (this.browser = new TierTree(treeModel,
+        (path: string[], name: string) => this.previewTier(name),
+        this.launchTier,
+        (currentTier) => openNewChildDialog(currentTier)
+      ));
 
       this.addWidget(browser);
       SplitPanel.setStretch(browser, 0);
