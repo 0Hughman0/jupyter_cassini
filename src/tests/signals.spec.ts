@@ -112,13 +112,13 @@ describe('tree-model', () => {
     const pathSentinal = jest.fn();
 
     browserModel.currentPath.changed.connect(pathSentinal);
-    
-    const pathChanged = signalToPromise(browserModel.currentPath.changed)
-    const childrenChanged = signalToPromise(browserModel.childrenUpdated)
+
+    const pathChanged = signalToPromise(browserModel.currentPath.changed);
+    const childrenChanged = signalToPromise(browserModel.childrenUpdated);
     browserModel.currentPath.push('1');
-    
-    await pathChanged
-    await childrenChanged
+
+    await pathChanged;
+    await childrenChanged;
 
     expect(pathSentinal).toBeCalledTimes(1);
     expect(childrenSentinal).toBeCalledTimes(1);

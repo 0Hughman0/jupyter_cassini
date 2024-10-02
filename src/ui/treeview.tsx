@@ -35,7 +35,6 @@ import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
 import { ObservableList } from '@jupyterlab/observables';
 
-
 /**
  * Widget for searching through tiers. Currently can only get a tier by name.
  *
@@ -177,7 +176,6 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps, ICrumbsState> {
   }
 }
 
-
 export interface IBrowserProps {
   currentTier: ITreeData;
   currentPath: ObservableList<string>;
@@ -189,7 +187,6 @@ export interface IBrowserProps {
   onTierLaunched: (tierData: ILaunchable) => void;
   onCreateChild: (currentTier: ITreeData) => void;
 }
-
 
 export interface IBrowserState {
   additionalColumns: Set<string>;
@@ -247,16 +244,16 @@ export class BrowserComponent extends React.Component<
 
             if (newColumns.has(columnName)) {
               newColumns.delete(columnName);
-              
+
               this.props.onAdditionalColumnsSet(newColumns);
-              
+
               return { additionalColumns: newColumns };
             } else {
-              newColumns.add(columnName)
+              newColumns.add(columnName);
 
-              this.props.onAdditionalColumnsSet(newColumns)
-              
-              return {additionalColumns: newColumns};
+              this.props.onAdditionalColumnsSet(newColumns);
+
+              return { additionalColumns: newColumns };
             }
           })
       });
@@ -302,8 +299,6 @@ export interface ICasSearchProps {
   model: TierBrowserModel;
 }
 
-
-
 interface IChildrenTableProps {
   currentTier: ITreeData;
   currentPath: ObservableList<string>;
@@ -338,7 +333,6 @@ function ChildrenTable(props: IChildrenTableProps) {
     () => Object.entries(props.children),
     [props.children, props.additionalColumns]
   );
-
 
   const columnHelper = createColumnHelper<[string, ITreeChildData]>();
   type columnsType = ColumnDef<[string, ITreeChildData], any>[];
@@ -629,12 +623,12 @@ export class TierBrowser extends ReactWidget {
   tierChildren: TreeChildren;
   childMetas: string[];
   additionalColumns: Set<string>;
-  onTierSelected: (path: string[], name: string) => void
-  onTierLaunched: (branch: ILaunchable) => void
-  onCreateChild: (currentTier: ITreeData) => Promise<ITreeData | null>
-  
+  onTierSelected: (path: string[], name: string) => void;
+  onTierLaunched: (branch: ILaunchable) => void;
+  onCreateChild: (currentTier: ITreeData) => Promise<ITreeData | null>;
+
   constructor(
-    model: TierBrowserModel, 
+    model: TierBrowserModel,
     onTierSelected: (path: string[], name: string) => void,
     onTierLaunched: (branch: ILaunchable) => void,
     onCreateChild: (currentTier: ITreeData) => Promise<ITreeData | null>
@@ -654,45 +648,45 @@ export class TierBrowser extends ReactWidget {
 
     model.currentUpdated.connect((model, current) => {
       this.handleCurrentChanged(current);
-    }, this)
+    }, this);
   }
 
   handleCurrentChanged(current: ITreeData | null) {
     if (current) {
-      this.currentTier = current
-      this.currentPath = this.model.currentPath
-      this.additionalColumns = this.model.additionalColumns
+      this.currentTier = current;
+      this.currentPath = this.model.currentPath;
+      this.additionalColumns = this.model.additionalColumns;
       this.handleChildrenUpdated(current.children);
     }
 
-    this.update()
+    this.update();
   }
 
   handleChildrenUpdated(children: TreeChildren | null) {
-    this.tierChildren = children || {}
-    const childMetas = new Set<string>()
+    this.tierChildren = children || {};
+    const childMetas = new Set<string>();
 
     if (children) {
       for (const child of Object.values(children)) {
         for (const key of Object.keys(child.additionalMeta || {})) {
-            childMetas.add(key)
+          childMetas.add(key);
         }
       }
-    this.childMetas = Array.from(childMetas.keys())   
+      this.childMetas = Array.from(childMetas.keys());
     }
     this.update();
   }
 
   handleAdditionalColumnsSet(additionalColumns: Set<string>): void {
-    this.model.additionalColumns.clear()
+    this.model.additionalColumns.clear();
 
     for (const column of additionalColumns) {
-      this.model.additionalColumns.add(column)  
+      this.model.additionalColumns.add(column);
     }
-    
-    this.additionalColumns = new Set(additionalColumns)
 
-    this.update()
+    this.additionalColumns = new Set(additionalColumns);
+
+    this.update();
   }
 
   handleRefreshTree() {
@@ -702,12 +696,16 @@ export class TierBrowser extends ReactWidget {
 
   render(): JSX.Element {
     if (!this.currentTier) {
-      return <div><a>Loading</a></div>
+      return (
+        <div>
+          <a>Loading</a>
+        </div>
+      );
     }
 
     const onCreateChild = (currentTier: ITreeData) => {
       this.onCreateChild(currentTier).then(() => this.model.refresh());
-    }
+    };
 
     return (
       <div style={{ height: '100%', overflow: 'auto' }}>

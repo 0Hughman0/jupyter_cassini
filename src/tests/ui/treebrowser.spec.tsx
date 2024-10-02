@@ -7,33 +7,28 @@ import { TreeManager } from '../../core';
 import { mockServerAPI } from '../tools';
 import { HOME_TREE, WP1_TREE } from '../test_cases';
 
-
-
 beforeEach(() => {
-    mockServerAPI({
-      '/tree': [
-        { query: { 'ids[]': '' }, response: HOME_TREE },
-        { query: { 'ids[]': '1' }, response: WP1_TREE }
-      ]
-    });
+  mockServerAPI({
+    '/tree': [
+      { query: { 'ids[]': '' }, response: HOME_TREE },
+      { query: { 'ids[]': '1' }, response: WP1_TREE }
+    ]
+  });
 });
 
 test('construct', async () => {
-    const model = new TierBrowserModel();
-    
-    const widget = new TierBrowser( 
-        model, 
-        jest.fn(), 
-        jest.fn(), 
-        jest.fn(), 
-    );
+  const model = new TierBrowserModel();
 
-    const updated = signalToPromise(model.currentPath.changed);
-    const childrenUpdated = signalToPromise(model.childrenUpdated);
-    model.currentPath.clear();
+  const widget = new TierBrowser(model, jest.fn(), jest.fn(), jest.fn());
 
-    await childrenUpdated;
-    await updated;
+  const updated = signalToPromise(model.currentPath.changed);
+  const childrenUpdated = signalToPromise(model.childrenUpdated);
+  model.currentPath.clear();
 
-    expect(widget.tierChildren).toMatchObject(TreeManager._treeResponseToData(HOME_TREE, []).children)
-})
+  await childrenUpdated;
+  await updated;
+
+  expect(widget.tierChildren).toMatchObject(
+    TreeManager._treeResponseToData(HOME_TREE, []).children
+  );
+});

@@ -17,7 +17,6 @@ import {
 } from './test_cases';
 import { createTierFiles } from './tools';
 
-
 describe('TierModel', () => {
   let theManager: ServiceManager.IManager;
 
@@ -224,13 +223,13 @@ describe('TierBrowserModel', () => {
   });
 
   test('initial', async () => {
-    expect(Array.from(model.currentPath)).toEqual([])
-    expect(model.current).toBeNull()
+    expect(Array.from(model.currentPath)).toEqual([]);
+    expect(model.current).toBeNull();
 
     const changed = signalToPromise(model.currentUpdated);
-    model.currentPath.clear()
-    await changed
-    
+    model.currentPath.clear();
+    await changed;
+
     expect(model.current).toMatchObject(
       TreeManager._treeResponseToData(HOME_TREE, [])
     );
@@ -242,11 +241,11 @@ describe('TierBrowserModel', () => {
 
   test('updating', async () => {
     const ids = ['1', '1'];
-    
+
     const changed = signalToPromise(model.currentUpdated);
     model.currentPath.pushAll(ids);
-    await changed
-    
+    await changed;
+
     const childReponse = Object.assign(HOME_TREE);
 
     expect(model.current).toMatchObject(

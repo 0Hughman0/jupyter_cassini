@@ -13,7 +13,13 @@ import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
 import { Notification } from '@jupyterlab/apputils';
 
-import { cassini, TreeChildren, ITreeChildData, ITreeData, TreeManager } from './core';
+import {
+  cassini,
+  TreeChildren,
+  ITreeChildData,
+  ITreeData,
+  TreeManager
+} from './core';
 import { MetaSchema, TierInfo, IChange } from './schema/types';
 
 /**
@@ -343,13 +349,14 @@ export class TierBrowserModel {
     this._current = null;
 
     this.currentPath.changed.connect(() => {
-      this.treeManager.get(this.sCurrentPath).then((value) => {
+      this.treeManager.get(this.sCurrentPath).then(value => {
         this._current = value;
-        this._currentUpdated.emit(this._current)
+        this._currentUpdated.emit(this._current);
         if (value?.children) {
           this._childrenUpdated.emit(value.children);
-        }})
-      }, this);
+        }
+      });
+    }, this);
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.sCurrentPath.toString()) {
