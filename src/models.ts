@@ -13,7 +13,7 @@ import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
 import { Notification } from '@jupyterlab/apputils';
 
-import { cassini, ITreeChildData, ITreeData, TreeManager } from './core';
+import { cassini, TreeChildren, ITreeChildData, ITreeData, TreeManager } from './core';
 import { MetaSchema, TierInfo, IChange } from './schema/types';
 
 /**
@@ -335,21 +335,26 @@ export class TierBrowserModel {
   currentPath: ObservableList<string>;
   treeManager: TreeManager;
   protected _additionalColumnsStore: IAdditionalColumnsStore;
-  protected _current: Promise<ITreeData | null>;
+  protected _current: ITreeData | null;
 
   constructor() {
     this.currentPath = new ObservableList<string>();
     this.treeManager = cassini.treeManager;
-    this._current = Promise.resolve(null);
+    this._current = null;
 
     this.currentPath.changed.connect(() => {
-      this._current = this.treeManager.get(this.sCurrentPath);
-      this._childrenUpdated.emit(this.current);
-    }, this);
+      this.treeManager.get(this.sCurrentPath).then((value) => {
+        this._current = value;
+        if (value?.children) {
+          this._childrenUpdated.emit(value.children);
+        }})
+      }, this);
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.sCurrentPath.toString()) {
-        this._childrenUpdated.emit(this.current);
+        if (this.current?.children) {
+          this._childrenUpdated.emit(this.current?.children);
+        }
       }
     }, this);
 
@@ -359,13 +364,13 @@ export class TierBrowserModel {
     };
   }
 
-  get current(): Promise<ITreeData | null> {
+  get current(): ITreeData | null {
     return this._current;
   }
 
-  private _childrenUpdated = new Signal<this, Promise<ITreeData | null>>(this);
+  private _childrenUpdated = new Signal<this, TreeChildren | null>(this);
 
-  public get childrenUpdated(): ISignal<this, Promise<ITreeData | null>> {
+  public get childrenUpdated(): ISignal<this, TreeChildren | null> {
     return this._childrenUpdated;
   }
 
@@ -388,19 +393,6 @@ export class TierBrowserModel {
     }
 
     return branch.additionalColumns;
-  }
-
-  /**
-   * Promise that resolves with the children of the currentTier
-   */
-  getChildren(): Promise<{ [name: string]: ITreeChildData }> {
-    return this.current.then(tierData => {
-      if (tierData?.children) {
-        return tierData.children;
-      } else {
-        return {};
-      }
-    });
   }
 
   /**

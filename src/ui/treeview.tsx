@@ -35,15 +35,19 @@ import { TierBrowserModel } from '../models';
 import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
 import { openNewChildDialog } from './newchilddialog';
+import { ObservableList } from '@jupyterlab/observables';
 
-interface IBrowserProps {
-  model: TierBrowserModel;
+export interface IBrowserProps {
+  children: { [id: string]: ITreeChildData };
+  childMetas: string[];
+  additionalColumns: Set<string>;
+  onAdditionalColumnsSet: (names: Set<string>) => void;
   onTierSelected: (casPath: string[], name: string) => void;
   onTierLaunched: (tierData: ILaunchable) => void;
   onCreateChild: (tierData: ITreeData) => void;
 }
 
-interface IBrowserState {
+export interface IBrowserState {
   children: { [id: string]: ITreeChildData };
   childMetas: string[];
   additionalColumns: Set<string>;
@@ -62,36 +66,10 @@ export class BrowserComponent extends React.Component<
     super(props);
 
     this.state = {
-      children: {},
-      childMetas: [],
-      additionalColumns: props.model.additionalColumns
+      children: props.children,
+      childMetas: props.childMetas,
+      additionalColumns: props.additionalColumns
     };
-
-    console.log(this.state);
-
-    const setState = this.setState.bind(this);
-    const model = this.props.model;
-
-    model.childrenUpdated.connect(model => {
-      model.getChildren().then(
-        children => {
-          setState({ children: children });
-
-          const childMetas = new Set<string>()
-
-          for (const child of Object.values(children)) {
-            for (const key of Object.keys(child.additionalMeta || {})) {
-              childMetas.add(key)
-            }
-          }
-
-          setState({ childMetas: Array.from(childMetas.keys()) })
-        })
-      
-      model.current.then(tierData => {
-        setState({ additionalColumns: props.model.additionalColumns });
-      });
-    });
   }
 
   /**
@@ -125,18 +103,20 @@ export class BrowserComponent extends React.Component<
         icon: icon,
         execute: args =>
           this.setState((state, props) => {
-            const currentColumns = state.additionalColumns;
+            const newColumns = state.additionalColumns;
 
-            if (currentColumns.has(columnName)) {
-              currentColumns.delete(columnName);
-              this.props.model.additionalColumns.delete(columnName);
-
-              return { additionalColumns: currentColumns };
+            if (newColumns.has(columnName)) {
+              newColumns.delete(columnName);
+              
+              this.props.onAdditionalColumnsSet(newColumns);
+              
+              return { additionalColumns: newColumns };
             } else {
-              this.props.model.additionalColumns.add(columnName);
-              return {
-                additionalColumns: state.additionalColumns.add(columnName)
-              };
+              newColumns.add(columnName)
+
+              this.props.onAdditionalColumnsSet(newColumns)
+              
+              return {additionalColumns: newColumns};
             }
           })
       });
@@ -218,7 +198,9 @@ const CasSearch = (props: ICasSearchProps) => {
 };
 
 interface ICrumbsProps {
-  model: TierBrowserModel;
+  currentPath: ObservableList<string>;
+  currentTier: ITreeData | null;
+  onRefreshTree: () => void;
   onTierSelected: (casPath: string[], name: string) => void;
   onTierLaunched: (tierData: ILaunchable) => void;
   onCreateChild: (tierData: ITreeData) => void;
@@ -247,9 +229,9 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps, ICrumbsState> {
 
   render(): JSX.Element {
     const elements = [];
-    const path = this.props.model.currentPath;
+    const path = this.props.currentPath;
     const tier = this.state.currentTier;
-    const refresh = this.props.model.refresh.bind(this.props.model);
+    const refresh = this.props.onRefreshTree;
 
     const onTierLaunched = this.props.onTierLaunched;
     const onTierSelected = this.props.onTierSelected;
@@ -655,10 +637,35 @@ export interface ITierSelectedSignal {
  * Has the children table for heading into the tree.
  */
 export class TierBrowser extends ReactWidget {
+  tierChildren: { [id: string]: ITreeChildData; };
+  childMetas: string[];
+  additionalColumns: Set<string>;
+
   constructor(model: TierBrowserModel) {
     super();
     this.model = model;
     this.addClass('cas-TierBrowser');
+
+    model.childrenUpdated.connect(model => {
+      model.getChildren().then(
+        children => {
+          this.setState({ children: children });
+
+          const childMetas = new Set<string>()
+
+          for (const child of Object.values(children)) {
+            for (const key of Object.keys(child.additionalMeta || {})) {
+              childMetas.add(key)
+            }
+          }
+
+          this.setState({ childMetas: Array.from(childMetas.keys()) })
+        })
+      
+      model.current.then(tierData => {
+        this.setState({ additionalColumns: props.model.additionalColumns });
+      });
+    });
   }
 
   model: TierBrowserModel;
@@ -673,6 +680,11 @@ export class TierBrowser extends ReactWidget {
 
   public get tierLaunched(): ISignal<this, ILaunchable> {
     return this._tierLaunched;
+  }
+
+  handleChildrenUpdated(children: ITreeData | null) {
+    this.tierChildren = children
+    this.update();
   }
 
   render(): JSX.Element {
@@ -697,7 +709,10 @@ export class TierBrowser extends ReactWidget {
           onCreateChild={onCreateChild}
         ></CassiniCrumbs>
         <BrowserComponent
-          model={this.model}
+          children={this.tierChildren}
+          childMetas={this.childMetas}
+          additionalColumns={this.additionalColumns}
+          onAdditionalColumnsSet={this.additionalColumnsSet}
           onTierSelected={onTierSelected}
           onTierLaunched={onTierLaunched}
           onCreateChild={onCreateChild}

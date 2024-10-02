@@ -34,13 +34,16 @@ export interface ILaunchable {
  */
 export interface ITreeData extends Omit<TreeResponse, 'started' | 'children'> {
   started: Date | null;
-  children: { [id: string]: ITreeChildData };
+  children: TreeChildren;
   ids: string[];
 }
+
 
 export interface ITreeChildData extends Omit<TreeChildResponse, 'started'> {
   started: Date | null;
 }
+
+export type TreeChildren =  { [id: string]: ITreeChildData };
 
 /**
  * Looks after the 'tree' of tiers. Idea is to match the file structure of a cassini project. Because asking the server to generate this tree is
