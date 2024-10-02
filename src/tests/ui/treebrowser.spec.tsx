@@ -1,8 +1,6 @@
-// import * as React from 'react'
 import { signalToPromise } from '@jupyterlab/testutils';
-import { screen, render } from '@testing-library/react'
 
-import { BrowserComponent } from '../../ui/treeview';
+import { TierBrowser } from '../../ui/treeview';
 import { TierBrowserModel } from '../../models';
 import { TreeManager } from '../../core';
 
@@ -23,14 +21,12 @@ beforeEach(() => {
 test('construct', async () => {
     const model = new TierBrowserModel();
     
-    const widget = new BrowserComponent({ 
-        model: model, 
-        onCreateChild: jest.fn(), 
-        onTierSelected: jest.fn(), 
-        onTierLaunched: jest.fn(), 
-    });
-
-    render(widget.render())
+    const widget = new TierBrowser( 
+        model, 
+        jest.fn(), 
+        jest.fn(), 
+        jest.fn(), 
+    );
 
     const updated = signalToPromise(model.currentPath.changed);
     const childrenUpdated = signalToPromise(model.childrenUpdated);
@@ -39,7 +35,5 @@ test('construct', async () => {
     await childrenUpdated;
     await updated;
 
-    await screen.findByText('WP1')
-    //expect(mockSetState).toBeCalled();
-    expect(widget.state.children).toMatchObject(TreeManager._treeResponseToData(HOME_TREE, []))
+    expect(widget.tierChildren).toMatchObject(TreeManager._treeResponseToData(HOME_TREE, []).children)
 })
