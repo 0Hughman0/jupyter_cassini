@@ -345,6 +345,7 @@ export class TierBrowserModel {
     this.currentPath.changed.connect(() => {
       this.treeManager.get(this.sCurrentPath).then((value) => {
         this._current = value;
+        this._currentUpdated.emit(this._current)
         if (value?.children) {
           this._childrenUpdated.emit(value.children);
         }})
@@ -372,6 +373,12 @@ export class TierBrowserModel {
 
   public get childrenUpdated(): ISignal<this, TreeChildren | null> {
     return this._childrenUpdated;
+  }
+
+  private _currentUpdated = new Signal<this, ITreeData | null>(this);
+
+  public get currentUpdated(): ISignal<this, ITreeData | null> {
+    return this._currentUpdated;
   }
 
   /**
