@@ -89,7 +89,9 @@ export class MarkdownEditor extends Panel {
 
     this.editor = new CodeEditorWrapper({
       model: new CodeEditor.Model({ mimeType: 'text/x-markdown' }),
-      factory: cassini.contentFactory?.newInlineEditor || new CodeMirrorEditorFactory().newInlineEditor,
+      factory:
+        cassini.contentFactory?.newInlineEditor ||
+        new CodeMirrorEditorFactory().newInlineEditor,
       editorOptions: { config: { lineNumbers: false } }
     });
     this.editor.addClass('cas-markdown-editor-content');

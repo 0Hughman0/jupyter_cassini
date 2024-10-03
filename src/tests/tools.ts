@@ -1,5 +1,5 @@
 import { JSONObject } from '@lumino/coreutils';
-import { CommandRegistry } from '@lumino/commands'
+import { CommandRegistry } from '@lumino/commands';
 
 import { URLExt } from '@jupyterlab/coreutils';
 import {
@@ -15,24 +15,23 @@ import { Cassini, cassini } from '../core';
 import { paths } from '../schema/schema';
 import { CassiniServerError } from '../schema/types';
 
-
-let cassiniMocked = false
+let cassiniMocked = false;
 
 export function mockCassini(): Cassini {
   cassini.tierModelManager.cache = {};
   cassini.treeManager.cache = {};
 
   if (cassiniMocked) {
-    return cassini
+    return cassini;
   }
 
   cassini.contentService = new ServiceManagerMock();
   cassini.contentFactory = new CodeMirrorEditorFactory();
   cassini.rendermimeRegistry = defaultRenderMime();
   cassini.commandRegistry = new CommandRegistry();
-  
-  cassiniMocked = true
-  return cassini
+
+  cassiniMocked = true;
+  return cassini;
 }
 
 export interface IFile {
@@ -44,8 +43,8 @@ export async function createTierFiles(files: IFile[]): Promise<{
   manager: ServiceManager.IManager;
   files: Contents.IModel[];
 }> {
-  mockCassini()
-  const manager = cassini.contentService
+  mockCassini();
+  const manager = cassini.contentService;
 
   const filesOut: Contents.IModel[] = [];
 

@@ -389,7 +389,7 @@ export class TierBrowserModel {
   }
 
   get childMetas(): Set<string> {
-    const children = this.current?.children
+    const children = this.current?.children;
     const childMetas = new Set<string>();
 
     if (children) {
@@ -398,9 +398,8 @@ export class TierBrowserModel {
           childMetas.add(key);
         }
       }
-      
-    } 
-    return childMetas
+    }
+    return childMetas;
   }
 
   /**

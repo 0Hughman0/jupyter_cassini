@@ -647,15 +647,15 @@ export class TierTreeBrowser extends ReactWidget {
   }
 
   get tierChildren(): TreeChildren {
-    return this.model?.current?.children || {}
+    return this.model?.current?.children || {};
   }
 
   get childMetas(): Set<string> {
-    return this.model.childMetas
+    return this.model.childMetas;
   }
 
   handleCurrentChanged(model: TierBrowserModel) {
-    const current = model.current
+    const current = model.current;
     if (current) {
       this.currentTier = current;
       this.currentPath = model.currentPath;
