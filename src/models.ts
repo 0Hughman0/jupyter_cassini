@@ -372,10 +372,6 @@ export class TierBrowserModel {
     };
   }
 
-  get current(): ITreeData | null {
-    return this._current;
-  }
-
   private _childrenUpdated = new Signal<this, TreeChildren | null>(this);
 
   public get childrenUpdated(): ISignal<this, TreeChildren | null> {
@@ -386,6 +382,25 @@ export class TierBrowserModel {
 
   public get currentUpdated(): ISignal<this, ITreeData | null> {
     return this._currentUpdated;
+  }
+
+  get current(): ITreeData | null {
+    return this._current;
+  }
+
+  get childMetas(): Set<string> {
+    const children = this.current?.children
+    const childMetas = new Set<string>();
+
+    if (children) {
+      for (const child of Object.values(children)) {
+        for (const key of Object.keys(child.additionalMeta || {})) {
+          childMetas.add(key);
+        }
+      }
+      
+    } 
+    return childMetas
   }
 
   /**

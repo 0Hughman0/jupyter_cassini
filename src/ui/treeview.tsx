@@ -178,7 +178,7 @@ export interface IBrowserProps {
   currentTier: ITreeData;
   currentPath: ObservableList<string>;
   children: TreeChildren;
-  childMetas: string[];
+  childMetas: Set<string>;
   additionalColumns: Set<string>;
   onAdditionalColumnsSet: (names: Set<string>) => void;
   onTierSelected: (casPath: string[], name: string) => void;
@@ -609,13 +609,11 @@ export interface ITierSelectedSignal {
  *
  * Has the children table for heading into the tree.
  */
-export class TierBrowser extends ReactWidget {
+export class TierTreeBrowser extends ReactWidget {
   model: TierBrowserModel;
 
   currentPath: ObservableList<string>;
-  currentTier: ITreeData;
-  tierChildren: TreeChildren;
-  childMetas: string[];
+  currentTier: ITreeData | null;
   additionalColumns: Set<string>;
   onTierSelected: (path: string[], name: string) => void;
   onTierLaunched: (branch: ILaunchable) => void;
@@ -629,6 +627,9 @@ export class TierBrowser extends ReactWidget {
   ) {
     super();
     this.model = model;
+    this.currentPath = model.currentPath;
+    this.currentTier = model.current;
+
     this.onTierSelected = onTierSelected;
     this.onTierLaunched = onTierLaunched;
     this.onCreateChild = onCreateChild;
@@ -636,38 +637,36 @@ export class TierBrowser extends ReactWidget {
     this.addClass('cas-TierBrowser');
 
     model.childrenUpdated.connect((model, children) => {
-      this.handleChildrenUpdated(children);
+      this.handleChildrenUpdated(model);
       this.handleAdditionalColumnsSet(model.additionalColumns);
     }, this);
 
     model.currentUpdated.connect((model, current) => {
-      this.handleCurrentChanged(current);
+      this.handleCurrentChanged(model);
     }, this);
   }
 
-  handleCurrentChanged(current: ITreeData | null) {
+  get tierChildren(): TreeChildren {
+    return this.model?.current?.children || {}
+  }
+
+  get childMetas(): Set<string> {
+    return this.model.childMetas
+  }
+
+  handleCurrentChanged(model: TierBrowserModel) {
+    const current = model.current
     if (current) {
       this.currentTier = current;
-      this.currentPath = this.model.currentPath;
-      this.additionalColumns = this.model.additionalColumns;
-      this.handleChildrenUpdated(current.children);
+      this.currentPath = model.currentPath;
+      this.handleChildrenUpdated(model);
     }
 
     this.update();
   }
 
-  handleChildrenUpdated(children: TreeChildren | null) {
-    this.tierChildren = children || {};
-    const childMetas = new Set<string>();
-
-    if (children) {
-      for (const child of Object.values(children)) {
-        for (const key of Object.keys(child.additionalMeta || {})) {
-          childMetas.add(key);
-        }
-      }
-      this.childMetas = Array.from(childMetas.keys());
-    }
+  handleChildrenUpdated(model: TierBrowserModel) {
+    this.additionalColumns = model.additionalColumns;
     this.update();
   }
 

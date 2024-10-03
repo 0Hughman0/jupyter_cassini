@@ -1,4 +1,5 @@
 import { JSONObject } from '@lumino/coreutils';
+import { CommandRegistry } from '@lumino/commands'
 
 import { URLExt } from '@jupyterlab/coreutils';
 import {
@@ -7,10 +8,32 @@ import {
   ServerConnection
 } from '@jupyterlab/services';
 import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
+import { CodeMirrorEditorFactory } from '@jupyterlab/codemirror';
+import { defaultRenderMime } from '@jupyterlab/testutils';
 
-import { cassini } from '../core';
+import { Cassini, cassini } from '../core';
 import { paths } from '../schema/schema';
 import { CassiniServerError } from '../schema/types';
+
+
+let cassiniMocked = false
+
+export function mockCassini(): Cassini {
+  cassini.tierModelManager.cache = {};
+  cassini.treeManager.cache = {};
+
+  if (cassiniMocked) {
+    return cassini
+  }
+
+  cassini.contentService = new ServiceManagerMock();
+  cassini.contentFactory = new CodeMirrorEditorFactory();
+  cassini.rendermimeRegistry = defaultRenderMime();
+  cassini.commandRegistry = new CommandRegistry();
+  
+  cassiniMocked = true
+  return cassini
+}
 
 export interface IFile {
   path: string;
@@ -21,8 +44,8 @@ export async function createTierFiles(files: IFile[]): Promise<{
   manager: ServiceManager.IManager;
   files: Contents.IModel[];
 }> {
-  const manager = new ServiceManagerMock();
-  cassini.contentService = manager;
+  mockCassini()
+  const manager = cassini.contentService
 
   const filesOut: Contents.IModel[] = [];
 
@@ -89,6 +112,6 @@ export function mockServerAPI(calls: MockAPICalls): void {
       }
     }
 
-    throw TypeError('No mocked responses found for this query');
+    throw TypeError(`No mocked responses found for this query, ${url}`);
   }) as jest.Mocked<typeof ServerConnection.makeRequest>;
 }

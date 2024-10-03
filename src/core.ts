@@ -16,7 +16,7 @@ import {
   TierInfo
 } from './schema/types';
 
-import { BrowserPanel } from './ui/browser';
+import { TierBrowser } from './ui/browser';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
@@ -380,7 +380,7 @@ export class Cassini {
       return;
     }
 
-    const browser = new BrowserPanel(ids);
+    const browser = new TierBrowser(ids);
 
     const content = browser;
 

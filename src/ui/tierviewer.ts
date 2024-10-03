@@ -18,6 +18,7 @@ import {
 import { IMimeBundle } from '@jupyterlab/nbformat';
 
 import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
+import { CodeMirrorEditorFactory } from '@jupyterlab/codemirror';
 
 import { cassini } from '../core';
 import { TierModel } from '../models';
@@ -88,7 +89,7 @@ export class MarkdownEditor extends Panel {
 
     this.editor = new CodeEditorWrapper({
       model: new CodeEditor.Model({ mimeType: 'text/x-markdown' }),
-      factory: cassini.contentFactory.newInlineEditor,
+      factory: cassini.contentFactory?.newInlineEditor || new CodeMirrorEditorFactory().newInlineEditor,
       editorOptions: { config: { lineNumbers: false } }
     });
     this.editor.addClass('cas-markdown-editor-content');

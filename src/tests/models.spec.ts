@@ -271,4 +271,12 @@ describe('TierBrowserModel', () => {
 
     expect(model.additionalColumns).toEqual(new Set());
   });
+
+  test('childMetas', async () => {
+    const changed = signalToPromise(model.currentUpdated);
+    model.currentPath.clear();
+    await changed;
+
+    expect(model.childMetas).toEqual(new Set(['Fishes', 'Crabs']));
+  });
 });
