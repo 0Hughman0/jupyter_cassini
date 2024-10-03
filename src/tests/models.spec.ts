@@ -3,7 +3,11 @@ import { FolderTierInfo } from '../schema/types';
 import { ServiceManager } from '@jupyterlab/services';
 import { signalToPromise } from '@jupyterlab/testutils';
 
-import { TierBrowserModel, NotebookTierModel, FolderTierModel } from '../models';
+import {
+  TierBrowserModel,
+  NotebookTierModel,
+  FolderTierModel
+} from '../models';
 import { TreeManager, cassini } from '../core';
 
 import { CassiniServer } from '../services';

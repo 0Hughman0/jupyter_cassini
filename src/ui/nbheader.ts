@@ -76,7 +76,7 @@ export class TierNotebookHeaderTB extends BoxPanel {
     const tierName = PathExt.basename(context.path, '.ipynb');
 
     return cassini.tierModelManager.get(tierName).then(tierModel => {
-      if (tierModel && tierModel instanceof NotebookTierModel ) {
+      if (tierModel && tierModel instanceof NotebookTierModel) {
         const widget = new TierNotebookHeaderTB(tierModel);
 
         panel.contentHeader.addWidget(widget);

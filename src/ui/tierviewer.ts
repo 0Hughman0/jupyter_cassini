@@ -276,7 +276,9 @@ export class TierViewer extends BoxPanel {
     return this._modelChanged;
   }
 
-  private _modelChanged = new Signal<TierViewer, NotebookTierModel.ModelChange>(this);
+  private _modelChanged = new Signal<TierViewer, NotebookTierModel.ModelChange>(
+    this
+  );
 
   get model(): NotebookTierModel | null {
     return this._model;

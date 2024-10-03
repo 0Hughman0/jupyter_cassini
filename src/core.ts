@@ -242,7 +242,9 @@ export class TreeManager {
   }
 }
 
-export type ITierModelTreeCache = { [id: string]: NotebookTierModel | FolderTierModel };
+export type ITierModelTreeCache = {
+  [id: string]: NotebookTierModel | FolderTierModel;
+};
 
 /**
  * Manages instances of TierModels. There should only ever be one instance per tier, or all hell will break loose.
@@ -285,18 +287,18 @@ export class TierModelTreeManager {
 
   _insertNewTierModel(name: string, tierInfo: TierInfo) {
     let model: TierModel;
-    
+
     switch (tierInfo.tierType) {
       case 'notebook': {
         model = new NotebookTierModel(tierInfo);
-        break
+        break;
       }
       case 'folder': {
         model = new FolderTierModel(tierInfo);
-        break
+        break;
       }
     }
-    
+
     this.cache[name] = model;
 
     return model;

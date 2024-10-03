@@ -20,17 +20,20 @@ import {
   ITreeData,
   TreeManager
 } from './core';
-import { MetaSchema, FolderTierInfo, NotebookTierInfo, IChange } from './schema/types';
-
+import {
+  MetaSchema,
+  FolderTierInfo,
+  NotebookTierInfo,
+  IChange
+} from './schema/types';
 
 export type TierModel = FolderTierModel | NotebookTierModel;
-
 
 export class FolderTierModel {
   readonly name: string;
   readonly ids: string[];
   readonly children: string[] | null;
-  
+
   constructor(options: FolderTierInfo) {
     this.name = options.name;
     this.ids = options.ids;
@@ -328,7 +331,10 @@ export class NotebookTierModel {
 }
 
 export namespace NotebookTierModel {
-  export type ModelChange = IChange<NotebookTierModel | null, NotebookTierModel | null>;
+  export type ModelChange = IChange<
+    NotebookTierModel | null,
+    NotebookTierModel | null
+  >;
 }
 
 export interface IAdditionalColumnsStore {

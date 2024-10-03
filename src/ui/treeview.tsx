@@ -35,6 +35,11 @@ import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
 import { ObservableList } from '@jupyterlab/observables';
 
+
+export interface ICasSearchProps {
+  model: TierBrowserModel;
+}
+
 /**
  * Widget for searching through tiers. Currently can only get a tier by name.
  *
@@ -164,6 +169,7 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps> {
                 onClick={() => {
                   tier && onTierSelected([...path], tier.name);
                 }}
+                enabled={Boolean(tier?.metaPath)}
                 tooltip={`Preview ${tier?.name}`}
               />
             </span>
@@ -280,10 +286,6 @@ export class BrowserComponent extends React.Component<IBrowserProps> {
       </div>
     );
   }
-}
-
-export interface ICasSearchProps {
-  model: TierBrowserModel;
 }
 
 interface IChildrenTableProps {
@@ -466,6 +468,7 @@ function ChildrenTable(props: IChildrenTableProps) {
                       ? onTierSelected([...path, id], tierLaunchData.name)
                       : null;
                   }}
+                  enabled={Boolean(tierChildData.metaPath)}
                   tooltip={`Preview ${tierLaunchData.name}`}
                 />
               </span>
@@ -574,6 +577,7 @@ function ChildrenTable(props: IChildrenTableProps) {
                   icon={addIcon}
                   onClick={() => onCreateChild(props.currentTier)}
                   tooltip={`Create new child of ${props.currentTier.name}`}
+                  enabled={Boolean(props.currentTier.childClsInfo)}
                 />
               </td>
             </tr>

@@ -289,7 +289,10 @@ export class MetaEditor extends Panel {
     );
   }
 
-  private _updateTableWidget(table: MetaTableWidget, model: NotebookTierModel): void {
+  private _updateTableWidget(
+    table: MetaTableWidget,
+    model: NotebookTierModel
+  ): void {
     const onSetMetaValue = (
       attribute: string,
       newValue: JSONValue | undefined
