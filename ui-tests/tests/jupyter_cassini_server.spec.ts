@@ -2,8 +2,6 @@ import { expect, test, galata } from '@jupyterlab/galata';
 import { ContentsHelper } from '@jupyterlab/galata/lib/contents';
 import * as path from 'path';
 
-import { cassini } from '../../src/core';
-
 /**
  * Don't load JupyterLab webpage before running the tests.
  * This is required to ensure we capture all log messages.
@@ -128,15 +126,17 @@ test.describe('Cassini-Browser', async () => {
   test('navigation, remembering additional columns', async ({ page }) => {
     await page.getByRole('button', { name: 'Edit columns' }).click();
     await page.getByRole('menu').getByText('Extra Meta').click();
-    await expect(page.locator('th', {hasText: 'Extra Meta'})).toBeVisible();
+    await expect(page.locator('th', { hasText: 'Extra Meta' })).toBeVisible();
 
     await page.getByText('WP1').click();
-    await expect(page.locator('th', {hasText: 'Extra Meta'})).not.toBeVisible()
-    
+    await expect(
+      page.locator('th', { hasText: 'Extra Meta' })
+    ).not.toBeVisible();
+
     await page.getByRole('button', { name: 'Go Home' }).click();
-    
-    await expect(page.locator('th', {hasText: 'Extra Meta'})).toBeVisible()
-  })
+
+    await expect(page.locator('th', { hasText: 'Extra Meta' })).toBeVisible();
+  });
 
   test('create-child-dialogue', async ({ page }) => {
     await page
