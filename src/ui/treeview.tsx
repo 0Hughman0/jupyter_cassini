@@ -191,9 +191,7 @@ export interface IBrowserProps {
  *
  *
  */
-export class BrowserComponent extends React.Component<
-  IBrowserProps
-> {
+export class BrowserComponent extends React.Component<IBrowserProps> {
   constructor(props: IBrowserProps) {
     super(props);
   }
@@ -663,7 +661,7 @@ export class TierTreeBrowser extends ReactWidget {
 
   handleAdditionalColumnsSet(additionalColumns: Set<string>): void {
     const newColumns = new Set(additionalColumns);
-    
+
     this.model.additionalColumns.clear();
 
     for (const column of newColumns) {

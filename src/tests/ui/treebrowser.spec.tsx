@@ -61,9 +61,8 @@ describe('tier browser', () => {
 
     await signalToPromise(widget.viewer.modelChanged);
     expect(widget.viewer.tierTitle.node.textContent).toEqual('WP1');
-    
-  })
-})
+  });
+});
 
 describe('tree browser', () => {
   test('construct', async () => {
