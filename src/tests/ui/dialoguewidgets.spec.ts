@@ -14,6 +14,12 @@ import {
   ValidatingInput
 } from '../../ui/dialogwidgets';
 
+import { mockCassini } from '../tools';
+
+beforeEach(() => {
+  mockCassini();
+})
+
 test('InputBooleanDialog', () => {
   let dialog = new InputBooleanDialog({ title: '', value: false });
   expect(dialog.input.type).toEqual('checkbox');

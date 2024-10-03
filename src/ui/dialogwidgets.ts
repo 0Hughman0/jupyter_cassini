@@ -11,7 +11,6 @@ import { Widget } from '@lumino/widgets';
 import { Styling, InputDialog } from '@jupyterlab/apputils';
 import { JSONObject } from '@lumino/coreutils';
 import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
-import { CodeMirrorEditorFactory } from '@jupyterlab/codemirror';
 
 import { cassini } from '../core';
 
@@ -457,9 +456,7 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
     super({});
     const editor = (this.editor = new CodeEditorWrapper({
       model: new CodeEditor.Model({ mimeType: 'application/json' }),
-      factory:
-        cassini.contentFactory?.newInlineEditor ||
-        new CodeMirrorEditorFactory().newInlineEditor,
+      factory: cassini.contentFactory.newInlineEditor,
       editorOptions: { config: { lineNumbers: false }, inline: true }
     }));
 
