@@ -1,3 +1,8 @@
+import 'jest';
+import { FolderTierInfo } from '../schema/types';
+import { ServiceManager } from '@jupyterlab/services';
+import { signalToPromise } from '@jupyterlab/testutils';
+
 import { TierModel, TierBrowserModel } from '../models';
 import { TreeManager, cassini } from '../core';
 
@@ -11,10 +16,6 @@ import {
   WP1_INFO
 } from './test_cases';
 import { createTierFiles } from './tools';
-
-import 'jest';
-import { FolderTierInfo } from '../schema/types';
-import { ServiceManager } from '@jupyterlab/services';
 
 describe('TierModel', () => {
   let theManager: ServiceManager.IManager;
@@ -222,25 +223,32 @@ describe('TierBrowserModel', () => {
   });
 
   test('initial', async () => {
-    model.currentPath.clear();
+    expect(Array.from(model.currentPath)).toEqual([]);
+    expect(model.current).toBeNull();
 
-    await expect(model.current).resolves.toMatchObject(
+    const changed = signalToPromise(model.currentUpdated);
+    model.currentPath.clear();
+    await changed;
+
+    expect(model.current).toMatchObject(
       TreeManager._treeResponseToData(HOME_TREE, [])
     );
 
-    await expect(model.getChildren()).resolves.toMatchObject(
+    expect(model.current?.children).toMatchObject(
       TreeManager._treeResponseToData(HOME_TREE, ['1']).children
     );
   });
 
-  test('updating', () => {
+  test('updating', async () => {
     const ids = ['1', '1'];
+
+    const changed = signalToPromise(model.currentUpdated);
     model.currentPath.pushAll(ids);
+    await changed;
 
     const childReponse = Object.assign(HOME_TREE);
-    childReponse.name = 'WP1.1';
 
-    expect(model.current).resolves.toMatchObject(
+    expect(model.current).toMatchObject(
       TreeManager._treeResponseToData(childReponse, ['1', '1'])
     );
     expect(CassiniServer.tree).lastCalledWith(ids);
@@ -262,5 +270,19 @@ describe('TierBrowserModel', () => {
     model.currentPath.pushAll(['b', 'd']);
 
     expect(model.additionalColumns).toEqual(new Set());
+
+    model.currentPath.clear();
+    model.currentPath.pushAll(['a']);
+
+    // should remember.
+    expect(model.additionalColumns).toEqual(new Set(['new Col']));
+  });
+
+  test('childMetas', async () => {
+    const changed = signalToPromise(model.currentUpdated);
+    model.currentPath.clear();
+    await changed;
+
+    expect(model.childMetas).toEqual(new Set(['Fishes', 'Crabs']));
   });
 });

@@ -123,6 +123,21 @@ test.describe('Cassini-Browser', async () => {
     await expect(page.getByRole('button', { name: 'Open Tier' })).toBeVisible();
   });
 
+  test('navigation, remembering additional columns', async ({ page }) => {
+    await page.getByRole('button', { name: 'Edit columns' }).click();
+    await page.getByRole('menu').getByText('Extra Meta').click();
+    await expect(page.locator('th', { hasText: 'Extra Meta' })).toBeVisible();
+
+    await page.getByText('WP1').click();
+    await expect(
+      page.locator('th', { hasText: 'Extra Meta' })
+    ).not.toBeVisible();
+
+    await page.getByRole('button', { name: 'Go Home' }).click();
+
+    await expect(page.locator('th', { hasText: 'Extra Meta' })).toBeVisible();
+  });
+
   test('create-child-dialogue', async ({ page }) => {
     await page
       .getByRole('button', { name: 'Create new child of Home' })

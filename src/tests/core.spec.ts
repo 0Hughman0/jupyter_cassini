@@ -1,5 +1,4 @@
 import 'jest';
-//import { ServiceManager } from '@jupyterlab/services';
 
 import { ITreeData, TreeManager, TierModelTreeManager, Cassini } from '../core';
 import { TierModel } from '../models';

@@ -15,10 +15,14 @@ import {
   MetaEditor
 } from '../../ui/metaeditor';
 
-import { mockServerAPI, createTierFiles } from '../tools';
+import { mockServerAPI, createTierFiles, mockCassini } from '../tools';
 import { WP1_INFO, TEST_META_CONTENT, WP1_1_INFO } from '../test_cases';
 import { MetaTableWidget } from '../../ui/metatable';
 import { MetaSchema } from '../../schema/types';
+
+beforeEach(() => {
+  mockCassini();
+});
 
 describe('createMetaInput', () => {
   test('items MetaInput', () => {

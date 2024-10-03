@@ -1,3 +1,5 @@
+import { signalToPromise } from '@jupyterlab/testutils';
+
 import { TierBrowserModel, TierModel } from '../models';
 import { createTierFiles, mockServerAPI } from './tools';
 import {
@@ -111,14 +113,19 @@ describe('tree-model', () => {
 
     browserModel.currentPath.changed.connect(pathSentinal);
 
+    const pathChanged = signalToPromise(browserModel.currentPath.changed);
+    const childrenChanged = signalToPromise(browserModel.childrenUpdated);
     browserModel.currentPath.push('1');
+
+    await pathChanged;
+    await childrenChanged;
 
     expect(pathSentinal).toBeCalledTimes(1);
     expect(childrenSentinal).toBeCalledTimes(1);
 
     await browserModel.refresh();
 
-    expect(childrenSentinal).toBeCalledTimes(3); // honestly not that sure why this is 3...
+    expect(childrenSentinal).toBeCalledTimes(2);
     expect(pathSentinal).toBeCalledTimes(1);
   });
 });

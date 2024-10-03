@@ -2,9 +2,10 @@
 import { SplitPanel } from '@lumino/widgets';
 
 import { cassini, ILaunchable } from '../core';
-import { TierBrowserModel as TierTreeModel } from '../models';
-import { TierBrowser as TierTree } from './treeview';
+import { TierBrowserModel } from '../models';
+import { TierTreeBrowser } from './treeview';
 import { TierViewer } from './tierviewer';
+import { openNewChildDialog } from './newchilddialog';
 
 /**
  * BrowserPanel contains a TierBrowser, and TierViewer.
@@ -17,9 +18,9 @@ import { TierViewer } from './tierviewer';
  *
  *
  */
-export class BrowserPanel extends SplitPanel {
-  model: TierTreeModel;
-  browser: TierTree;
+export class TierBrowser extends SplitPanel {
+  model: TierBrowserModel;
+  browser: TierTreeBrowser;
   viewer: TierViewer;
 
   constructor(identifiers?: string[]) {
@@ -29,40 +30,35 @@ export class BrowserPanel extends SplitPanel {
 
     this.id = `cas-container-${ids}`;
 
-    const treeModel = (this.model = new TierTreeModel());
+    const treeModel = (this.model = new TierBrowserModel());
 
     console.log(this);
+
+    const browser = (this.browser = new TierTreeBrowser(
+      treeModel,
+      (path: string[], name: string) => this.previewTier(name),
+      this.launchTier,
+      currentTier => openNewChildDialog(currentTier)
+    ));
+
+    this.addWidget(browser);
+    SplitPanel.setStretch(browser, 0);
+
+    const tierContent = (this.viewer = new TierViewer());
+
+    this.addWidget(tierContent);
+    SplitPanel.setStretch(tierContent, 1);
+
+    this.setRelativeSizes([3, 1]);
 
     cassini.treeManager.get(ids).then(tier => {
       if (!tier) {
         return;
       }
 
-      const browser = (this.browser = new TierTree(treeModel));
-
-      browser.tierSelected.connect((sender, tierSelectedSignal) => {
-        this.previewTier(tierSelectedSignal.name);
-      }, this);
-      browser.tierLaunched.connect((sender, tierData) => {
-        this.launchTier(tierData);
-      }, this);
-
-      this.addWidget(browser);
-      SplitPanel.setStretch(browser, 0);
-
-      const tierContent = (this.viewer = new TierViewer());
-
-      this.addWidget(tierContent);
-      SplitPanel.setStretch(tierContent, 1);
-
-      this.setRelativeSizes([3, 1]);
-
-      browser.renderPromise?.then(val => {
-        // browser.renderPromise is undefined until the react widget is attached to the window... I think!
-        treeModel.currentPath.clear();
-        treeModel.currentPath.pushAll(ids);
-        this.previewTier(tier.name);
-      });
+      treeModel.currentPath.clear();
+      treeModel.currentPath.pushAll(ids);
+      this.previewTier(tier.name);
     });
   }
 

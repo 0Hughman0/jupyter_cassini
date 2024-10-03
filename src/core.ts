@@ -16,7 +16,7 @@ import {
   TierInfo
 } from './schema/types';
 
-import { BrowserPanel } from './ui/browser';
+import { TierBrowser } from './ui/browser';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
@@ -34,13 +34,15 @@ export interface ILaunchable {
  */
 export interface ITreeData extends Omit<TreeResponse, 'started' | 'children'> {
   started: Date | null;
-  children: { [id: string]: ITreeChildData };
+  children: TreeChildren;
   ids: string[];
 }
 
 export interface ITreeChildData extends Omit<TreeChildResponse, 'started'> {
   started: Date | null;
 }
+
+export type TreeChildren = { [id: string]: ITreeChildData };
 
 /**
  * Looks after the 'tree' of tiers. Idea is to match the file structure of a cassini project. Because asking the server to generate this tree is
@@ -378,7 +380,7 @@ export class Cassini {
       return;
     }
 
-    const browser = new BrowserPanel(ids);
+    const browser = new TierBrowser(ids);
 
     const content = browser;
 
@@ -448,4 +450,3 @@ export class Cassini {
  * @global cassini - the global instance of cassini
  */
 export const cassini = new Cassini();
-export const ajv = new Ajv();
