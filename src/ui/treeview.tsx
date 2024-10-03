@@ -35,7 +35,6 @@ import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
 import { ObservableList } from '@jupyterlab/observables';
 
-
 export interface ICasSearchProps {
   model: TierBrowserModel;
 }
