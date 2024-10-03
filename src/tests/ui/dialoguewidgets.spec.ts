@@ -18,7 +18,7 @@ import { mockCassini } from '../tools';
 
 beforeEach(() => {
   mockCassini();
-})
+});
 
 test('InputBooleanDialog', () => {
   let dialog = new InputBooleanDialog({ title: '', value: false });
