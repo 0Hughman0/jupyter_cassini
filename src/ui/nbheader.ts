@@ -10,7 +10,7 @@ import { treeViewIcon } from '@jupyterlab/ui-components';
 
 import { cassini } from '../core';
 import { MarkdownEditor } from './tierviewer';
-import { TierModel } from '../models';
+import { FolderTierModel, NotebookTierModel } from '../models';
 import { ChildrenSummaryWidget } from './nbheadercomponents';
 import { openNewChildDialog } from './newchilddialog';
 
@@ -25,10 +25,10 @@ import { openNewChildDialog } from './newchilddialog';
  */
 export class TierNotebookHeaderTB extends BoxPanel {
   toolbar: Toolbar;
-  protected model: TierModel;
+  protected model: NotebookTierModel;
   nameLabel: Widget;
 
-  constructor(tierModel: TierModel) {
+  constructor(tierModel: NotebookTierModel) {
     super();
 
     this.model = tierModel;
@@ -75,9 +75,9 @@ export class TierNotebookHeaderTB extends BoxPanel {
   ): Promise<TierNotebookHeaderTB | undefined> {
     const tierName = PathExt.basename(context.path, '.ipynb');
 
-    return cassini.tierModelManager.get(tierName).then(TierModel => {
-      if (TierModel) {
-        const widget = new TierNotebookHeaderTB(TierModel);
+    return cassini.tierModelManager.get(tierName).then(tierModel => {
+      if (tierModel && tierModel instanceof NotebookTierModel ) {
+        const widget = new TierNotebookHeaderTB(tierModel);
 
         panel.contentHeader.addWidget(widget);
 
@@ -120,14 +120,14 @@ export class TierNotebookHeaderTB extends BoxPanel {
  */
 export class TierNotebookHeader extends Panel {
   _path: string;
-  model: TierModel;
+  model: NotebookTierModel;
   content: SplitPanel;
 
   descriptionEditor: MarkdownEditor;
   conclusionEditor: MarkdownEditor;
   childrenSummary: ChildrenSummaryWidget;
 
-  constructor(tierModel: TierModel) {
+  constructor(tierModel: NotebookTierModel) {
     super();
 
     this.addClass('cas-TierNotebookHeader');
@@ -228,8 +228,8 @@ export class RMHeader extends Panel implements IRenderMime.IRenderer {
    * Construct a new output widget.
    */
   protected _path: string;
-  protected model: TierModel;
-  private fetchModel: Promise<TierModel | undefined>;
+  protected model: NotebookTierModel;
+  private fetchModel: Promise<NotebookTierModel | undefined>;
 
   constructor(options: IRenderMime.IRendererOptions) {
     super();
@@ -242,7 +242,7 @@ export class RMHeader extends Panel implements IRenderMime.IRenderer {
     this.fetchModel = cassini.tierModelManager
       .get(this.name)
       .then(tierModel => {
-        if (!tierModel) {
+        if (!tierModel || tierModel instanceof FolderTierModel) {
           return;
         }
 

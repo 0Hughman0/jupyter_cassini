@@ -19,6 +19,7 @@ import { mockServerAPI, createTierFiles, mockCassini } from '../tools';
 import { WP1_INFO, TEST_META_CONTENT, WP1_1_INFO } from '../test_cases';
 import { MetaTableWidget } from '../../ui/metatable';
 import { MetaSchema } from '../../schema/types';
+import { NotebookTierModel } from '../../models';
 
 beforeEach(() => {
   mockCassini();
@@ -247,7 +248,7 @@ describe('metaeditor widget', () => {
   });
 
   test('construct', async () => {
-    const model = await cassini.tierModelManager.get('WP1');
+    const model = await cassini.tierModelManager.get('WP1') as NotebookTierModel;
     await model.ready;
 
     expect(model.publicMetaSchema).not.toBeUndefined();
@@ -266,7 +267,7 @@ describe('metaeditor widget', () => {
   });
 
   test('model changes content', async () => {
-    const model = await cassini.tierModelManager.get('WP1');
+    const model = await cassini.tierModelManager.get('WP1') as NotebookTierModel;
     await model.ready;
 
     const widget = new MetaEditor(model);
@@ -280,7 +281,7 @@ describe('metaeditor widget', () => {
   });
 
   test('new model', async () => {
-    const model = await cassini.tierModelManager.get('WP1');
+    const model = await cassini.tierModelManager.get('WP1') as NotebookTierModel;
     await model.ready;
 
     const widget = new MetaEditor(model);
@@ -288,7 +289,7 @@ describe('metaeditor widget', () => {
     const table = widget.table as MetaTableWidget;
     expect(Object.keys(table.values)).not.toContain('WP1.1Meta');
 
-    const newModel = await cassini.tierModelManager.get('WP1.1');
+    const newModel = await cassini.tierModelManager.get('WP1.1') as NotebookTierModel;
     await newModel.ready;
 
     widget.model = newModel;
@@ -297,7 +298,7 @@ describe('metaeditor widget', () => {
   });
 
   test('old model events disconnected', async () => {
-    const model = await cassini.tierModelManager.get('WP1');
+    const model = await cassini.tierModelManager.get('WP1') as NotebookTierModel;
     await model.ready;
 
     const widget = new MetaEditor(model);
@@ -305,7 +306,7 @@ describe('metaeditor widget', () => {
     const table = widget.table as MetaTableWidget;
     expect(Object.keys(table.values)).not.toContain('WP1.1Meta');
 
-    const newModel = await cassini.tierModelManager.get('WP1.1');
+    const newModel = await cassini.tierModelManager.get('WP1.1') as NotebookTierModel;
     await newModel.ready;
 
     widget.model = newModel;
@@ -322,7 +323,7 @@ describe('metaeditor widget', () => {
 
     expect(widget.table).toBeNull();
 
-    const model = await cassini.tierModelManager.get('WP1');
+    const model = await cassini.tierModelManager.get('WP1') as NotebookTierModel;
     await model.ready;
 
     widget.model = model;
@@ -334,7 +335,7 @@ describe('metaeditor widget', () => {
   });
 
   test('to null model', async () => {
-    const model = await cassini.tierModelManager.get('WP1');
+    const model = await cassini.tierModelManager.get('WP1') as NotebookTierModel;
     await model.ready;
 
     const widget = new MetaEditor(model);
@@ -348,7 +349,7 @@ describe('metaeditor widget', () => {
   });
 
   test('update meta value', async () => {
-    const model = await cassini.tierModelManager.get('WP1');
+    const model = await cassini.tierModelManager.get('WP1') as NotebookTierModel;
     await model.ready;
 
     const widget = new MetaEditor(model);
@@ -365,7 +366,7 @@ describe('metaeditor widget', () => {
   });
 
   test('delete meta key', async () => {
-    const model = await cassini.tierModelManager.get('WP1');
+    const model = await cassini.tierModelManager.get('WP1') as NotebookTierModel;
     await model.ready;
 
     const widget = new MetaEditor(model);
@@ -379,7 +380,7 @@ describe('metaeditor widget', () => {
   });
 
   test('add a new meta key', async () => {
-    const model = await cassini.tierModelManager.get('WP1');
+    const model = await cassini.tierModelManager.get('WP1') as NotebookTierModel;
     await model.ready;
 
     const widget = new MetaEditor(model);

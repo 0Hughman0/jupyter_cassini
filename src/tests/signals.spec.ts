@@ -1,6 +1,6 @@
 import { signalToPromise } from '@jupyterlab/testutils';
 
-import { TierBrowserModel, TierModel } from '../models';
+import { NotebookTierModel, TierBrowserModel } from '../models';
 import { createTierFiles, mockServerAPI } from './tools';
 import {
   TEST_HLT_CONTENT,
@@ -24,7 +24,7 @@ describe('tier-model', () => {
   });
 
   test('model-ready-no-hlts', async () => {
-    const tier = new TierModel(WP1_INFO);
+    const tier = new NotebookTierModel(WP1_INFO);
     expect(tier.metaFile?.isReady).toBe(false);
 
     expect(tier.description).toBe('');
@@ -37,7 +37,7 @@ describe('tier-model', () => {
   });
 
   test('model-ready-hlts', async () => {
-    const tier = new TierModel(WP1_INFO);
+    const tier = new NotebookTierModel(WP1_INFO);
     expect(tier.metaFile?.isReady).toBe(false);
     // expect(tier.hltsFile?.isReady).toBe(false) // doesn't work because hlts file is set in a callback... hmmm
 
@@ -54,7 +54,7 @@ describe('tier-model', () => {
   });
 
   test('changed', async () => {
-    const tier = await new TierModel(WP1_INFO).ready;
+    const tier = await new NotebookTierModel(WP1_INFO).ready;
     const sentinal = jest.fn();
 
     tier.changed.connect(sentinal);
