@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { signalToPromise } from '@jupyterlab/testutils';
 
+import { TierBrowser } from '../../ui/browser';
 import { TierTreeBrowser } from '../../ui/treeview';
 import { TierBrowserModel } from '../../models';
 import { TreeManager } from '../../core';
@@ -13,6 +14,7 @@ import {
   TEST_META_CONTENT
 } from '../test_cases';
 import { TreeResponse } from '../../schema/types';
+import { TierViewer } from '../../ui/tierviewer';
 
 let home_tree: TreeResponse;
 let wp1_tree: TreeResponse;
@@ -46,6 +48,22 @@ beforeEach(async () => {
   });
   createTierFiles([{ path: WP1_INFO.metaPath, content: TEST_META_CONTENT }]);
 });
+
+describe('tier browser', () => {
+  test('construct', async () => {
+    const widget = new TierBrowser(['1']);
+
+    expect(widget.browser).toBeInstanceOf(TierTreeBrowser);
+    expect(widget.viewer).toBeInstanceOf(TierViewer);
+
+    await signalToPromise(widget.model.childrenUpdated);
+    expect(widget.browser.currentTier?.name).toEqual('WP1');
+
+    await signalToPromise(widget.viewer.modelChanged);
+    expect(widget.viewer.tierTitle.node.textContent).toEqual('WP1');
+    
+  })
+})
 
 describe('tree browser', () => {
   test('construct', async () => {
