@@ -186,25 +186,16 @@ export interface IBrowserProps {
   onCreateChild: (currentTier: ITreeData) => void;
 }
 
-export interface IBrowserState {
-  additionalColumns: Set<string>;
-}
-
 /**
  * Widget for navigating the tier tree. Wraps the ChildrenTable
  *
  *
  */
 export class BrowserComponent extends React.Component<
-  IBrowserProps,
-  IBrowserState
+  IBrowserProps
 > {
   constructor(props: IBrowserProps) {
     super(props);
-
-    this.state = {
-      additionalColumns: props.additionalColumns
-    };
   }
 
   /**
@@ -214,7 +205,7 @@ export class BrowserComponent extends React.Component<
    */
   openContextMenu(event: React.MouseEvent | null): void {
     const allColumns = new Set([
-      ...this.state.additionalColumns,
+      ...this.props.additionalColumns,
       ...this.props.childMetas
     ]);
 
@@ -230,7 +221,7 @@ export class BrowserComponent extends React.Component<
     const commands = new CommandRegistry();
 
     for (const columnName of allColumns) {
-      const icon = this.state.additionalColumns.has(columnName)
+      const icon = this.props.additionalColumns.has(columnName)
         ? checkIcon
         : undefined;
       commands.addCommand(columnName, {
@@ -238,7 +229,7 @@ export class BrowserComponent extends React.Component<
         icon: icon,
         execute: args =>
           this.setState((state, props) => {
-            const newColumns = state.additionalColumns;
+            const newColumns = props.additionalColumns;
 
             if (newColumns.has(columnName)) {
               newColumns.delete(columnName);
@@ -274,7 +265,7 @@ export class BrowserComponent extends React.Component<
     const onCreateChild = this.props.onCreateChild;
     const openContextMenu = this.openContextMenu.bind(this);
 
-    const additionalColumns = this.state.additionalColumns;
+    const additionalColumns = this.props.additionalColumns;
 
     return (
       <div data-jp-suppress-context-menu>
@@ -671,13 +662,15 @@ export class TierTreeBrowser extends ReactWidget {
   }
 
   handleAdditionalColumnsSet(additionalColumns: Set<string>): void {
+    const newColumns = new Set(additionalColumns);
+    
     this.model.additionalColumns.clear();
 
-    for (const column of additionalColumns) {
+    for (const column of newColumns) {
       this.model.additionalColumns.add(column);
     }
 
-    this.additionalColumns = new Set(additionalColumns);
+    this.additionalColumns = newColumns;
 
     this.update();
   }

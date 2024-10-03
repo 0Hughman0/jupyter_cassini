@@ -270,6 +270,12 @@ describe('TierBrowserModel', () => {
     model.currentPath.pushAll(['b', 'd']);
 
     expect(model.additionalColumns).toEqual(new Set());
+
+    model.currentPath.clear()
+    model.currentPath.pushAll(['a']);
+    
+    // should remember.
+    expect(model.additionalColumns).toEqual(new Set(['new Col']))
   });
 
   test('childMetas', async () => {

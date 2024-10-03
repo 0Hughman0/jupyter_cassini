@@ -104,7 +104,7 @@ describe('tree browser', () => {
     expect(widget.childMetas).toEqual(new Set());
   });
 
-  test('children updated', async () => {
+  test('children updated and refresh', async () => {
     const model = new TierBrowserModel();
     const widget = new TierTreeBrowser(model, jest.fn(), jest.fn(), jest.fn());
 
