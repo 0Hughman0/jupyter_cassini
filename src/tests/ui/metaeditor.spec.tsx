@@ -1,3 +1,10 @@
+// import * as React from 'react'
+import { render, screen, within } from '@testing-library/react';
+import '@testing-library/jest-dom'
+import userEvent from '@testing-library/user-event'
+
+import { InputDialog } from '@jupyterlab/apputils';
+
 import { cassini } from '../../core';
 import {
   InputBooleanDialog,
@@ -16,7 +23,7 @@ import {
 } from '../../ui/metaeditor';
 
 import { mockServerAPI, createTierFiles, mockCassini } from '../tools';
-import { WP1_INFO, TEST_META_CONTENT, WP1_1_INFO } from '../test_cases';
+import { WP1_INFO, TEST_META_CONTENT, WP1_1_INFO, BLANK_META_SCHEMA } from '../test_cases';
 import { MetaTableWidget } from '../../ui/metatable';
 import { MetaSchema } from '../../schema/types';
 import { NotebookTierModel } from '../../models';
@@ -415,3 +422,95 @@ describe('metaeditor widget', () => {
     expect(Object.keys(table.values)).toContain('newKey');
   });
 });
+
+
+describe('rendering', () => {
+  let widget: MetaTableWidget
+  let onSetMetaValue: jest.Mock;
+  let onRemoveMetaKey: jest.Mock;
+  let handleNewMetaKey: jest.Mock;
+
+  beforeEach(() => {
+    const schema = BLANK_META_SCHEMA;
+    schema['properties']['a key'] = {
+      type: 'string'
+    }
+
+    const values = {'a key': 'a key value', 'additional key': 'additional value'}
+    onSetMetaValue = jest.fn();
+    onRemoveMetaKey = jest.fn();
+
+    widget = new MetaTableWidget(schema, values, onSetMetaValue, onRemoveMetaKey);
+    handleNewMetaKey = widget.handleNewMetaKey = jest.fn();
+  })
+
+  test('render', async () => {
+    render(widget.render())
+
+    const rows = await screen.findAllByRole('row')
+
+    expect(rows.map(elem => elem.textContent)).toContain('a key')
+    expect(rows.map(elem => elem.textContent)).toContain('a key value')
+    expect(rows.map(elem => elem.textContent)).toContain('additional key')
+    expect(rows.map(elem => elem.textContent)).toContain('additional value')
+  })
+
+  test('edit value', async () => {
+    render(widget.render())
+    const user = userEvent.setup()
+
+    const row = screen.getByRole('row', {name: /a key/})
+    const textbox = within(row).getByRole('textbox')
+    const applyButton = within(row).getByTitle('Apply changes')
+    
+    await user.click(textbox);
+    await user.clear(textbox); // clear the contents before writing
+    await user.keyboard('new key value')
+
+    await user.click(applyButton)
+
+    expect(onSetMetaValue).toBeCalledWith('a key', 'new key value');
+  })
+
+  test('delete schema key', async () => {
+    render(widget.render())
+    const user = userEvent.setup()
+
+    const row = screen.getByRole('row', {name: /a key/})
+    const deleteButton = within(row).getByTitle(/Delete/)
+    
+    await user.click(deleteButton);
+    
+    expect(onRemoveMetaKey).toBeCalledWith('a key');
+  })
+
+  test('delete additional key', async () => {
+    render(widget.render())
+    const user = userEvent.setup()
+
+    const row = screen.getByRole('row', {name: /additional key/})
+    const deleteButton = within(row).getByTitle(/Delete/)
+    
+    await user.click(deleteButton);
+    
+    expect(onRemoveMetaKey).toBeCalledWith('additional key');
+  })
+
+  test('new meta', async () => {
+    render(widget.render())
+
+    const user = userEvent.setup()
+
+    const newMetaButton = screen.getByRole('button', { name: 'Add a new meta attribute' })
+
+    const getTextMock = InputDialog.getText = jest.fn()
+    const sendValue = new Promise((resolve) => {
+      resolve({value: 'new meta'})
+    })
+    getTextMock.mockReturnValue(sendValue);
+    
+    await user.click(newMetaButton);
+
+    expect(handleNewMetaKey).toBeCalledWith('new meta');
+  })
+})

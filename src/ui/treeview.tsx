@@ -303,13 +303,12 @@ interface IChildrenTableProps {
  * @param props
  * @returns
  */
-function ChildrenTable(props: IChildrenTableProps) {
+export function ChildrenTable(props: IChildrenTableProps) {
   const onTierLaunched = props.onTierLaunched;
   const onTierSelected = props.onTierSelected;
   const onCreateChild = props.onCreateChild;
   const path = props.currentPath;
-
-  // const [currentTier, updateCurrentTier] = useState<ITreeData | null>(null);
+  const currentTier = props.currentTier;
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -467,7 +466,7 @@ function ChildrenTable(props: IChildrenTableProps) {
                       ? onTierSelected([...path, id], tierLaunchData.name)
                       : null;
                   }}
-                  enabled={Boolean(tierChildData.metaPath)}
+                  enabled={Boolean(currentTier.childClsInfo?.tierType === 'notebook')}
                   tooltip={`Preview ${tierLaunchData.name}`}
                 />
               </span>
