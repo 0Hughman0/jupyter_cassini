@@ -460,14 +460,16 @@ describe('rendering', () => {
     render(widget.render());
 
     const rows = await screen.findAllByRole('row');
-    
-    expect(within(rows[1]).getByRole('cell', {name: 'a key'})).toBeVisible();
+
+    expect(within(rows[1]).getByRole('cell', { name: 'a key' })).toBeVisible();
     expect(within(rows[1]).getByDisplayValue('a key value')).toBeVisible();
 
-    expect(within(rows[2]).getByRole('cell', {name: 'additional key'})).toBeVisible();
+    expect(
+      within(rows[2]).getByRole('cell', { name: 'additional key' })
+    ).toBeVisible();
     /*  // tricky because it's a mirror code editor thingy
     expect(await within(rows[2]).findByText('"additional value"')).toBeVisible();
-    */ 
+    */
   });
 
   test('edit value', async () => {

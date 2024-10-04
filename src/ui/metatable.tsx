@@ -51,7 +51,7 @@ export function MetaTable(props: IMetaTableProps) {
   const onNewMetaKey = props.onNewMetaKey;
 
   const data = useMemo(() => props.metas, [props.metas]);
-  data.sort((rowA, rowB) => rowA.name > rowB.name ? 1 : -1) // sort em!
+  data.sort((rowA, rowB) => (rowA.name > rowB.name ? 1 : -1)); // sort em!
 
   const askNewAttribute = () =>
     InputDialog.getText({
