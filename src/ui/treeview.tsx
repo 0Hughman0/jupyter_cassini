@@ -466,7 +466,9 @@ export function ChildrenTable(props: IChildrenTableProps) {
                       ? onTierSelected([...path, id], tierLaunchData.name)
                       : null;
                   }}
-                  enabled={Boolean(currentTier.childClsInfo?.tierType === 'notebook')}
+                  enabled={Boolean(
+                    currentTier.childClsInfo?.tierType === 'notebook'
+                  )}
                   tooltip={`Preview ${tierLaunchData.name}`}
                 />
               </span>

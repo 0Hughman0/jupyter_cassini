@@ -1,11 +1,15 @@
 import * as React from 'react';
-import { render, screen } from '@testing-library/react'
-import '@testing-library/jest-dom'
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 
 import { signalToPromise } from '@jupyterlab/testutils';
 
 import { TierBrowser } from '../../ui/browser';
-import { CassiniCrumbs, TierTreeBrowser, ChildrenTable } from '../../ui/treeview';
+import {
+  CassiniCrumbs,
+  TierTreeBrowser,
+  ChildrenTable
+} from '../../ui/treeview';
 import { TierBrowserModel } from '../../models';
 import { TreeManager } from '../../core';
 
@@ -166,47 +170,50 @@ describe('crumbs', () => {
     onTierSelected = jest.fn();
     onRefreshTree = jest.fn();
     onTierLaunched = jest.fn();
-    onCreateChild = jest.fn();  
-  })
+    onCreateChild = jest.fn();
+  });
 
   test('preview button notebooktier', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
 
-    const currentPath = new ObservableList<string>()
-    const currentTier = TreeManager._treeResponseToData(WP1_TREE, ['1'])
-  
-    render(<CassiniCrumbs
-      currentPath={currentPath} 
-      currentTier={currentTier} 
-      onRefreshTree={onRefreshTree}
-      onCreateChild={onCreateChild}
-      onTierLaunched={onTierLaunched}
-      onTierSelected={onTierSelected}
-    ></CassiniCrumbs>)
+    const currentPath = new ObservableList<string>();
+    const currentTier = TreeManager._treeResponseToData(WP1_TREE, ['1']);
 
-    await user.click(screen.getByRole('button', { name: 'Preview WP1' }))
+    render(
+      <CassiniCrumbs
+        currentPath={currentPath}
+        currentTier={currentTier}
+        onRefreshTree={onRefreshTree}
+        onCreateChild={onCreateChild}
+        onTierLaunched={onTierLaunched}
+        onTierSelected={onTierSelected}
+      ></CassiniCrumbs>
+    );
 
-    expect(onTierSelected).toBeCalledWith([], 'WP1')
-  })
+    await user.click(screen.getByRole('button', { name: 'Preview WP1' }));
+
+    expect(onTierSelected).toBeCalledWith([], 'WP1');
+  });
 
   test('cannot preview folder tier in crumbs', async () => {
-    const currentPath = new ObservableList<string>()
-    const currentTier = TreeManager._treeResponseToData(HOME_TREE, [])
-  
-    render(<CassiniCrumbs
-      currentPath={currentPath} 
-      currentTier={currentTier} 
-      onRefreshTree={onRefreshTree}
-      onCreateChild={onCreateChild}
-      onTierLaunched={onTierLaunched}
-      onTierSelected={onTierSelected}
-    ></CassiniCrumbs>)
+    const currentPath = new ObservableList<string>();
+    const currentTier = TreeManager._treeResponseToData(HOME_TREE, []);
+
+    render(
+      <CassiniCrumbs
+        currentPath={currentPath}
+        currentTier={currentTier}
+        onRefreshTree={onRefreshTree}
+        onCreateChild={onCreateChild}
+        onTierLaunched={onTierLaunched}
+        onTierSelected={onTierSelected}
+      ></CassiniCrumbs>
+    );
 
     expect(screen.getByRole('button', { name: 'Preview Home' })).toBeDisabled();
-    expect(onTierSelected).not.toBeCalledWith([], 'Home')
-  })
-})
-
+    expect(onTierSelected).not.toBeCalledWith([], 'Home');
+  });
+});
 
 describe('tree browser component', () => {
   let onTierSelected: jest.Mock;
@@ -217,33 +224,34 @@ describe('tree browser component', () => {
   beforeEach(() => {
     onTierSelected = jest.fn();
     onTierLaunched = jest.fn();
-    onCreateChild = jest.fn(); 
-    onSelectMetas = jest.fn(); 
-  })
+    onCreateChild = jest.fn();
+    onSelectMetas = jest.fn();
+  });
 
   test('folder tier preview disabled', async () => {
-    const currentPath = new ObservableList<string>()
-    const currentTier = TreeManager._treeResponseToData(WP1_TREE, ['1'])
+    const currentPath = new ObservableList<string>();
+    const currentTier = TreeManager._treeResponseToData(WP1_TREE, ['1']);
     currentTier.childClsInfo = {
       tierType: 'folder',
       idRegex: '(d+)',
       namePartTemplate: '{}',
       name: 'A Folder Tier'
-    }
-  
-    render(<ChildrenTable
-      currentPath={currentPath}
-      currentTier={currentTier}
-      children={currentTier.children}
-      additionalColumns={new Set()}
-      onTierLaunched={onTierLaunched}
-      onTierSelected={onTierSelected}
-      onCreateChild={onCreateChild}
-      onSelectMetas={onSelectMetas}
-      ></ChildrenTable>)
+    };
 
-    const previewButton = screen.getByRole('button', { name: 'Preview WP1.1' })
+    render(
+      <ChildrenTable
+        currentPath={currentPath}
+        currentTier={currentTier}
+        children={currentTier.children}
+        additionalColumns={new Set()}
+        onTierLaunched={onTierLaunched}
+        onTierSelected={onTierSelected}
+        onCreateChild={onCreateChild}
+        onSelectMetas={onSelectMetas}
+      ></ChildrenTable>
+    );
+
+    const previewButton = screen.getByRole('button', { name: 'Preview WP1.1' });
     expect(previewButton).toBeDisabled();
-  })
-})
-
+  });
+});

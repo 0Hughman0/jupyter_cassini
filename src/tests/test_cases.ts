@@ -227,10 +227,9 @@ export const TEST_HLT_CONTENT = {
   cos: [{ data: { 'text/markdown': '## cos' }, metadata: {}, transient: {} }]
 };
 
-
 export const BLANK_META_SCHEMA: MetaSchema = {
   properties: {},
   $defs: { JsonValue: {} },
   additionalProperties: { $ref: '#/$defs/JsonValue' },
   type: 'object'
-}
+};
