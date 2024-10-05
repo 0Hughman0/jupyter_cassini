@@ -35,6 +35,10 @@ import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
 import { ObservableList } from '@jupyterlab/observables';
 
+export interface ICasSearchProps {
+  model: TierBrowserModel;
+}
+
 /**
  * Widget for searching through tiers. Currently can only get a tier by name.
  *
@@ -164,6 +168,7 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps> {
                 onClick={() => {
                   tier && onTierSelected([...path], tier.name);
                 }}
+                enabled={Boolean(tier?.metaPath)}
                 tooltip={`Preview ${tier?.name}`}
               />
             </span>
@@ -282,10 +287,6 @@ export class BrowserComponent extends React.Component<IBrowserProps> {
   }
 }
 
-export interface ICasSearchProps {
-  model: TierBrowserModel;
-}
-
 interface IChildrenTableProps {
   currentTier: ITreeData;
   currentPath: ObservableList<string>;
@@ -302,13 +303,12 @@ interface IChildrenTableProps {
  * @param props
  * @returns
  */
-function ChildrenTable(props: IChildrenTableProps) {
+export function ChildrenTable(props: IChildrenTableProps) {
   const onTierLaunched = props.onTierLaunched;
   const onTierSelected = props.onTierSelected;
   const onCreateChild = props.onCreateChild;
   const path = props.currentPath;
-
-  // const [currentTier, updateCurrentTier] = useState<ITreeData | null>(null);
+  const currentTier = props.currentTier;
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -466,6 +466,9 @@ function ChildrenTable(props: IChildrenTableProps) {
                       ? onTierSelected([...path, id], tierLaunchData.name)
                       : null;
                   }}
+                  enabled={Boolean(
+                    currentTier.childClsInfo?.tierType === 'notebook'
+                  )}
                   tooltip={`Preview ${tierLaunchData.name}`}
                 />
               </span>
@@ -574,6 +577,7 @@ function ChildrenTable(props: IChildrenTableProps) {
                   icon={addIcon}
                   onClick={() => onCreateChild(props.currentTier)}
                   tooltip={`Create new child of ${props.currentTier.name}`}
+                  enabled={Boolean(props.currentTier.childClsInfo)}
                 />
               </td>
             </tr>

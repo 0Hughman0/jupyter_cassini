@@ -20,7 +20,7 @@ import { IMimeBundle } from '@jupyterlab/nbformat';
 import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
 
 import { cassini } from '../core';
-import { TierModel } from '../models';
+import { NotebookTierModel } from '../models';
 import { MetaEditor } from './metaeditor';
 
 export function createElementWidget(
@@ -187,13 +187,13 @@ export class TierViewer extends BoxPanel {
   concCell: MarkdownEditor;
   highlightsBox: Panel | undefined;
   metaView: MetaEditor;
-  _model: TierModel | null;
+  _model: NotebookTierModel | null;
   toolbar: Toolbar;
   launchButton: ToolbarButton;
 
   protected hltsRenderPromise: Promise<boolean>;
 
-  constructor(model: TierModel | null = null) {
+  constructor(model: NotebookTierModel | null = null) {
     super();
 
     this.modelChanged.connect(
@@ -272,23 +272,25 @@ export class TierViewer extends BoxPanel {
     content.addWidget(metaView);
   }
 
-  get modelChanged(): ISignal<TierViewer, TierModel.ModelChange> {
+  get modelChanged(): ISignal<TierViewer, NotebookTierModel.ModelChange> {
     return this._modelChanged;
   }
 
-  private _modelChanged = new Signal<TierViewer, TierModel.ModelChange>(this);
+  private _modelChanged = new Signal<TierViewer, NotebookTierModel.ModelChange>(
+    this
+  );
 
-  get model(): TierModel | null {
+  get model(): NotebookTierModel | null {
     return this._model;
   }
 
-  set model(model: TierModel | null) {
+  set model(model: NotebookTierModel | null) {
     const oldModel = this._model;
     this._model = model;
     this._modelChanged.emit({ old: oldModel, new: model });
   }
 
-  onModelChanged(change: TierModel.ModelChange): void {
+  onModelChanged(change: NotebookTierModel.ModelChange): void {
     if (change.old) {
       Signal.disconnectBetween(change.old, this);
       Signal.disconnectSender(this.descriptionCell);
@@ -352,7 +354,7 @@ export class TierViewer extends BoxPanel {
     this.renderHighlights(this.model);
   }
 
-  private renderHighlights(model: TierModel) {
+  private renderHighlights(model: NotebookTierModel) {
     if (!this.highlightsBox) {
       return true;
     }
@@ -388,7 +390,9 @@ export class TierViewer extends BoxPanel {
     cassini.tierModelManager
       .get(this.model?.name || '', true)
       .then(tierModel => {
-        this.model = tierModel;
+        if (tierModel instanceof NotebookTierModel) {
+          this.model = tierModel;
+        }
       });
   }
 }

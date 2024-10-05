@@ -2,7 +2,8 @@ import {
   TreeResponse,
   FolderTierInfo,
   NotebookTierInfo,
-  NewChildInfo
+  NewChildInfo,
+  MetaSchema
 } from '../schema/types';
 
 export const HOME_TREE: TreeResponse = {
@@ -224,4 +225,11 @@ export const TEST_META_CONTENT = {
 
 export const TEST_HLT_CONTENT = {
   cos: [{ data: { 'text/markdown': '## cos' }, metadata: {}, transient: {} }]
+};
+
+export const BLANK_META_SCHEMA: MetaSchema = {
+  properties: {},
+  $defs: { JsonValue: {} },
+  additionalProperties: { $ref: '#/$defs/JsonValue' },
+  type: 'object'
 };

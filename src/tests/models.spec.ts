@@ -3,7 +3,11 @@ import { FolderTierInfo } from '../schema/types';
 import { ServiceManager } from '@jupyterlab/services';
 import { signalToPromise } from '@jupyterlab/testutils';
 
-import { TierModel, TierBrowserModel } from '../models';
+import {
+  TierBrowserModel,
+  NotebookTierModel,
+  FolderTierModel
+} from '../models';
 import { TreeManager, cassini } from '../core';
 
 import { CassiniServer } from '../services';
@@ -31,19 +35,19 @@ describe('TierModel', () => {
 
   describe('complete-meta', () => {
     test('meta', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.meta).toEqual(TEST_META_CONTENT);
     });
 
     test('name', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.name).toBe('WP1');
     });
 
     test('description', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.description).toBe(TEST_META_CONTENT['description']);
 
@@ -54,7 +58,7 @@ describe('TierModel', () => {
     });
 
     test('conclusion', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.conclusion).toBe(TEST_META_CONTENT['conclusion']);
 
@@ -65,20 +69,20 @@ describe('TierModel', () => {
     });
 
     test('additionalMeta', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.additionalMeta).toEqual({ temperature: 273 });
     });
 
     test('addingInvalidMeta', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.setMetaValue('description', 'new')).toEqual(true);
       expect(tier.setMetaValue('description', 15)).toEqual(false);
     });
 
     test('treeData', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
 
       await cassini.treeManager.cacheTreeData(
@@ -105,30 +109,15 @@ describe('TierModel', () => {
         tierType: 'folder'
       };
 
-      const tier = new TierModel(noMeta);
+      const tier = new FolderTierModel(noMeta);
 
       expect(tier.name).toBe('No meta Yoo');
-
-      expect(tier.meta).toEqual({});
-
-      expect(tier.description).toBe('');
-      expect(tier.conclusion).toBe('');
-
-      expect(() => {
-        tier.description = 'new';
-      }).toThrow('Tier has no meta, cannot store description');
-      expect(tier.description).toBe('');
-
-      expect(() => {
-        tier.conclusion = 'new';
-      }).toThrow('Tier has no meta, cannot store conclusion');
-      expect(tier.conclusion).toBe('');
     });
 
     test('missing description', async () => {
       const { description, ...noDescription } = TEST_META_CONTENT;
 
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
 
       await tier.ready;
 
@@ -144,7 +133,7 @@ describe('TierModel', () => {
 
       expect(tierInfo.hltsPath).toBeUndefined();
 
-      const tier = new TierModel(tierInfo);
+      const tier = new NotebookTierModel(tierInfo);
       await tier.ready;
 
       expect(tier.hltsFile).toBe(undefined);
@@ -154,7 +143,7 @@ describe('TierModel', () => {
     test('init', async () => {
       expect(WP1_INFO.hltsPath).toBeDefined();
 
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
 
       expect(tier.hltsFile).not.toEqual(undefined);
@@ -172,7 +161,7 @@ describe('TierModel', () => {
 
   describe('io', () => {
     test('save', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
 
       expect(tier.dirty).toBe(false);

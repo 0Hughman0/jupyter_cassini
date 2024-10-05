@@ -4,7 +4,7 @@ import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
 import { RenderMimeRegistry } from '@jupyterlab/rendermime';
 import { PathExt } from '@jupyterlab/coreutils';
 
-import { TierModel } from '../models';
+import { FolderTierModel, NotebookTierModel } from '../models';
 import { MetaTableWidget } from './metatable';
 import { JSONObject, JSONValue } from '@lumino/coreutils';
 import { Signal, ISignal } from '@lumino/signaling';
@@ -190,35 +190,35 @@ export function createValidatedInput(
  * Widget for modifying the meta of a TierModel.
  */
 export class MetaEditor extends Panel {
-  protected _model: TierModel | null;
+  protected _model: NotebookTierModel | null;
   table: MetaTableWidget | null;
 
-  constructor(tierModel: TierModel | null) {
+  constructor(tierModel: NotebookTierModel | null) {
     super();
     this.table = null;
     this._model = tierModel;
     this.handleModelChanged(null, tierModel);
   }
 
-  get model(): TierModel | null {
+  get model(): NotebookTierModel | null {
     return this._model;
   }
 
-  set model(newModel: TierModel | null) {
+  set model(newModel: NotebookTierModel | null) {
     const oldModel = this._model;
     this._model = newModel;
     this.handleModelChanged(oldModel, newModel);
   }
 
-  handleModelUpdate(model: TierModel): void {
+  handleModelUpdate(model: NotebookTierModel): void {
     if (this.table) {
       this._updateTableWidget(this.table, model);
     }
   }
 
   handleModelChanged(
-    oldModel: TierModel | null,
-    newModel: TierModel | null
+    oldModel: NotebookTierModel | null,
+    newModel: NotebookTierModel | null
   ): void {
     if (oldModel) {
       Signal.disconnectBetween(oldModel, this);
@@ -265,7 +265,7 @@ export class MetaEditor extends Panel {
     this.table.update();
   }
 
-  private _createTableWidget(model: TierModel): MetaTableWidget | null {
+  private _createTableWidget(model: NotebookTierModel): MetaTableWidget | null {
     if (!model.publicMetaSchema) {
       return null;
     }
@@ -289,7 +289,10 @@ export class MetaEditor extends Panel {
     );
   }
 
-  private _updateTableWidget(table: MetaTableWidget, model: TierModel): void {
+  private _updateTableWidget(
+    table: MetaTableWidget,
+    model: NotebookTierModel
+  ): void {
     const onSetMetaValue = (
       attribute: string,
       newValue: JSONValue | undefined
@@ -325,9 +328,9 @@ export class RenderMimeMetaEditor
   implements IRenderMime.IRenderer
 {
   protected _path: string;
-  protected _model: TierModel | null;
+  protected _model: NotebookTierModel | null;
   protected editor: MetaEditor;
-  private fetchModel: Promise<TierModel | undefined>;
+  private fetchModel: Promise<NotebookTierModel | undefined>;
 
   /**
    * Strange thing is that the data from the rendermime are not passed at initialisation, but during renderModel, hence we have to be ready for that.
@@ -353,7 +356,7 @@ export class RenderMimeMetaEditor
     this.fetchModel = cassini.tierModelManager
       .get(this.name)
       .then(tierModel => {
-        if (!tierModel) {
+        if (!tierModel || tierModel instanceof FolderTierModel) {
           return;
         }
 
@@ -370,17 +373,17 @@ export class RenderMimeMetaEditor
     });
   }
 
-  get modelChanged(): ISignal<this, TierModel | null> {
+  get modelChanged(): ISignal<this, NotebookTierModel | null> {
     return this._modelChanged;
   }
 
-  private _modelChanged = new Signal<this, TierModel | null>(this);
+  private _modelChanged = new Signal<this, NotebookTierModel | null>(this);
 
-  get model(): TierModel | null {
+  get model(): NotebookTierModel | null {
     return this._model;
   }
 
-  set model(model: TierModel | null) {
+  set model(model: NotebookTierModel | null) {
     this._model = model;
     this._modelChanged.emit(model);
   }

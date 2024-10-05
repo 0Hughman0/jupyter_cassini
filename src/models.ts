@@ -20,7 +20,26 @@ import {
   ITreeData,
   TreeManager
 } from './core';
-import { MetaSchema, TierInfo, IChange } from './schema/types';
+import {
+  MetaSchema,
+  FolderTierInfo,
+  NotebookTierInfo,
+  IChange
+} from './schema/types';
+
+export type TierModel = FolderTierModel | NotebookTierModel;
+
+export class FolderTierModel {
+  readonly name: string;
+  readonly ids: string[];
+  readonly children: string[] | null;
+
+  constructor(options: FolderTierInfo) {
+    this.name = options.name;
+    this.ids = options.ids;
+    this.children = options.children || null;
+  }
+}
 
 /**
  * Browser-side model of a cassini tier.
@@ -44,29 +63,25 @@ import { MetaSchema, TierInfo, IChange } from './schema/types';
  * Note that before any values are got from the model, model.ready should be waited for. In future might be worth decorating all values to help with this.
  *
  */
-export class TierModel {
+export class NotebookTierModel {
   readonly name: string;
   readonly ids: string[];
-  readonly notebookPath: string | undefined;
+  readonly notebookPath: string;
   readonly started: Date;
-  readonly metaSchema: MetaSchema | undefined;
-  readonly publicMetaSchema: MetaSchema | undefined;
+  readonly metaSchema: MetaSchema;
+  readonly publicMetaSchema: MetaSchema;
   readonly metaValidator: ValidateFunction<MetaSchema>;
 
   readonly hltsPath: string | undefined;
 
-  metaFile?: Context<DocumentRegistry.ICodeModel>;
+  metaFile: Context<DocumentRegistry.ICodeModel>;
   hltsFile?: Context<DocumentRegistry.ICodeModel>;
 
   protected _required: Promise<any>[];
 
-  constructor(options: TierInfo) {
+  constructor(options: NotebookTierInfo) {
     this.name = options.name;
     this.ids = options.ids;
-
-    if (options.tierType === 'folder') {
-      return;
-    }
 
     this.notebookPath = options.notebookPath;
     this.hltsPath = options.hltsPath;
@@ -135,9 +150,9 @@ export class TierModel {
     return publicMetaSchema;
   }
 
-  private _changed = new Signal<TierModel, void>(this);
+  private _changed = new Signal<NotebookTierModel, void>(this);
 
-  get changed(): ISignal<TierModel, void> {
+  get changed(): ISignal<NotebookTierModel, void> {
     return this._changed;
   }
 
@@ -146,7 +161,7 @@ export class TierModel {
    *
    * Models should not be considered in a valid state until this happens... although the readonly attributes are probably fine...
    */
-  get ready(): Promise<TierModel> {
+  get ready(): Promise<NotebookTierModel> {
     return Promise.all(this._required).then(() => {
       this._changed.emit();
       return this;
@@ -315,8 +330,11 @@ export class TierModel {
   }
 }
 
-export namespace TierModel {
-  export type ModelChange = IChange<TierModel | null, TierModel | null>;
+export namespace NotebookTierModel {
+  export type ModelChange = IChange<
+    NotebookTierModel | null,
+    NotebookTierModel | null
+  >;
 }
 
 export interface IAdditionalColumnsStore {

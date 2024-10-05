@@ -2,7 +2,7 @@
 import { SplitPanel } from '@lumino/widgets';
 
 import { cassini, ILaunchable } from '../core';
-import { TierBrowserModel } from '../models';
+import { NotebookTierModel, TierBrowserModel } from '../models';
 import { TierTreeBrowser } from './treeview';
 import { TierViewer } from './tierviewer';
 import { openNewChildDialog } from './newchilddialog';
@@ -69,7 +69,9 @@ export class TierBrowser extends SplitPanel {
    */
   previewTier(name: string): void {
     cassini.tierModelManager.get(name).then(tierModel => {
-      this.viewer.model = tierModel;
+      if (tierModel instanceof NotebookTierModel) {
+        this.viewer.model = tierModel;
+      }
     });
   }
 

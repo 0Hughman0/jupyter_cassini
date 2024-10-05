@@ -1,7 +1,7 @@
 import 'jest';
 
 import { ITreeData, TreeManager, TierModelTreeManager, Cassini } from '../core';
-import { TierModel } from '../models';
+import { NotebookTierModel } from '../models';
 import { TreeResponse } from '../schema/types';
 
 import {
@@ -177,7 +177,7 @@ describe('TreeModelManager', () => {
   test('initialise', async () => {
     const first = await modelManager.get('WP1');
 
-    expect(first).toBeInstanceOf(TierModel);
+    expect(first).toBeInstanceOf(NotebookTierModel);
 
     const cachedFirst = await modelManager.get('WP1');
 

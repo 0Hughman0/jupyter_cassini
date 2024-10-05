@@ -8,7 +8,7 @@ import { IEditorFactoryService } from '@jupyterlab/codeeditor';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { CassiniServer } from './services';
-import { TierModel } from './models';
+import { FolderTierModel, NotebookTierModel, TierModel } from './models';
 import {
   TreeResponse,
   TreeChildResponse,
@@ -242,7 +242,9 @@ export class TreeManager {
   }
 }
 
-export type ITierModelTreeCache = { [id: string]: TierModel };
+export type ITierModelTreeCache = {
+  [id: string]: NotebookTierModel | FolderTierModel;
+};
 
 /**
  * Manages instances of TierModels. There should only ever be one instance per tier, or all hell will break loose.
@@ -284,7 +286,18 @@ export class TierModelTreeManager {
   }
 
   _insertNewTierModel(name: string, tierInfo: TierInfo) {
-    const model = new TierModel(tierInfo);
+    let model: TierModel;
+
+    switch (tierInfo.tierType) {
+      case 'notebook': {
+        model = new NotebookTierModel(tierInfo);
+        break;
+      }
+      case 'folder': {
+        model = new FolderTierModel(tierInfo);
+        break;
+      }
+    }
 
     this.cache[name] = model;
 
