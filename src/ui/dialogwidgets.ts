@@ -453,7 +453,7 @@ export class InputJSONDialog extends InputDialogBase<JSONObject | undefined> {
   }
 
   constructor(options: IJSONOptions) {
-    super({});
+    super(options);
     const editor = (this.editor = new CodeEditorWrapper({
       model: new CodeEditor.Model({ mimeType: 'application/json' }),
       factory: cassini.contentFactory.newInlineEditor,

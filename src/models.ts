@@ -86,7 +86,7 @@ export class NotebookTierModel {
     this.notebookPath = options.notebookPath;
     this.hltsPath = options.hltsPath;
     this.metaSchema = options.metaSchema;
-    this.publicMetaSchema = this.createPublicMetaSchema(this.metaSchema);
+    this.publicMetaSchema = NotebookTierModel.createPublicMetaSchema(this.metaSchema);
 
     this.metaValidator = cassini.ajv.compile<MetaSchema>(this.metaSchema);
 
@@ -136,7 +136,7 @@ export class NotebookTierModel {
     }
   }
 
-  private createPublicMetaSchema(schema: MetaSchema): MetaSchema {
+  static createPublicMetaSchema(schema: MetaSchema): MetaSchema {
     const publicMetaSchema = structuredClone(schema);
     const names = Object.keys(publicMetaSchema.properties);
 
