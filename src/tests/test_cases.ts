@@ -45,6 +45,7 @@ export const HOME_TREE: TreeResponse = {
     templates: ['WorkPackage.tmplt.ipynb'],
     idRegex: '(\\d+)',
     namePartTemplate: 'WP{}',
+    additionalMetaKeys: ['Fishes', 'Crabs'],
     metaSchema: {
       properties: {
         crabs: { type: 'string' },
@@ -82,6 +83,7 @@ export const WP1_TREE: TreeResponse = {
     templates: ['Experiment.tmplt.ipynb'],
     idRegex: '(\\d+)',
     namePartTemplate: '.{}',
+    additionalMetaKeys: [],
     metaSchema: {
       properties: {
         crabs: { type: 'string' },
@@ -119,6 +121,7 @@ export const WP1_1_TREE: TreeResponse = {
     templates: ['Sample.tmplt.ipynb'],
     idRegex: '([^0-9^-][^-]*)',
     namePartTemplate: '{}',
+    additionalMetaKeys: [],
     metaSchema: {
       properties: {},
       additionalProperties: {},

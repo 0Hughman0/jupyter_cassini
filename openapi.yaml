@@ -163,9 +163,14 @@ components:
             type: string
         metaSchema:
             $ref: "#/components/schemas/metaSchema"
+        additionalMetaKeys:
+          type: array
+          items:
+            type: string
       required:
         - templates
         - metaSchema
+        - additionalMetaKeys
 
     TreeChildResponse:
       type: object

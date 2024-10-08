@@ -1,5 +1,5 @@
 from pathlib import Path
-import datetime
+
 from typing import Set, Union
 from .schema.models import (
     ChildClsInfo, 
@@ -113,6 +113,11 @@ def serialize_branch(tier: TierABC) -> TreeResponse:
         child_metas.discard("description")
         child_metas.discard("conclusion")
 
+        schema = child_cls.__meta_manager__.build_model().model_json_schema()
+
+        for name in schema['properties']:
+            child_metas.discard(name)
+
         child_templates = [
             template.name for template in child_cls.get_templates(env.project)
         ]
@@ -123,7 +128,8 @@ def serialize_branch(tier: TierABC) -> TreeResponse:
             idRegex=child_cls.id_regex,
             namePartTemplate=child_cls.name_part_template,
             templates=child_templates,
-            metaSchema=MetaSchema.model_validate(child_cls.__meta_manager__.build_model().model_json_schema())
+            metaSchema=MetaSchema.model_validate(schema),
+            additionalMetaKeys=list(child_metas)
         )
     else:
         child_templates = []

@@ -389,7 +389,7 @@ describe('metaeditor widget', () => {
       TEST_META_CONTENT['temperature']
     );
 
-    table.handleSetMetaValue('temperature', 500);
+    table.handleSetMetaValue && table.handleSetMetaValue('temperature', 500);
 
     expect(table.values['temperature']).toEqual(500);
     expect(model.meta['temperature']).toEqual(500);
@@ -406,7 +406,7 @@ describe('metaeditor widget', () => {
 
     expect(Object.keys(table.values)).toContain('temperature');
 
-    table.handleRemoveMetaKey('temperature');
+    table.handleRemoveMetaKey && table.handleRemoveMetaKey('temperature');
 
     expect(Object.keys(table.values)).not.toContain('temperature');
   });

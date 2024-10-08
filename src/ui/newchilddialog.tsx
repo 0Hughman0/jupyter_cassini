@@ -9,9 +9,11 @@ import {
   InputTextAreaDialog,
   ValidatingInput
 } from './dialogwidgets';
+import { NotebookTierModel } from '../models';
 
-import { createValidatedInput } from './metaeditor';
+//import { createValidatedInput } from './metaeditor';
 import { JSONValue } from '@lumino/coreutils';
+import { MetaTableWidget } from './metatable';
 
 /**
  * A widget that creates a dialog for creating a new tier child.
@@ -24,6 +26,8 @@ export class NewChildWidget extends Widget {
   templateSelector: InputItemsDialog;
 
   subInputs: { [name: string]: ValidatingInput<any> | IDialogueInput<any> };
+
+  metaTable?: MetaTableWidget;
 
   constructor(tier: Required<ITreeData>) {
     super();
@@ -40,7 +44,15 @@ export class NewChildWidget extends Widget {
         label: 'Identifier',
         nameTemplate: nameTemplate
       }),
-      (value: string | undefined) => idRegex.test(value ?? '')
+      (value: string | undefined) => {
+        if (value) {
+          return (
+            idRegex.test(value) && !Object.keys(tier.children).includes(value)
+          );
+        } else {
+          return false;
+        }
+      }
     ));
 
     this.subInputs = {
@@ -70,19 +82,17 @@ export class NewChildWidget extends Widget {
       this.subInputs.description = descriptionInput;
       this.subInputs.template = templateSelector;
 
-      for (const [name, info] of Object.entries(
-        tier.childClsInfo.metaSchema.properties
-      )) {
-        if (['private', 'core'].includes(info['x-cas-field'] ?? '')) {
-          continue;
-        }
+      const metaTable = (this.metaTable = new MetaTableWidget(
+        NotebookTierModel.createPublicMetaSchema(tier.childClsInfo.metaSchema),
+        Object.fromEntries(
+          tier.childClsInfo.additionalMetaKeys.map(v => [v, undefined])
+        ),
+        undefined,
+        undefined,
+        false
+      ));
 
-        const vinput = createValidatedInput(info, undefined, name);
-
-        this.subInputs[name] = vinput;
-
-        layout.addWidget(vinput.wrappedInput);
-      }
+      layout.addWidget(metaTable);
     }
   }
 
@@ -92,6 +102,7 @@ export class NewChildWidget extends Widget {
    */
   getValue() {
     const values: { [name: string]: JSONValue } = {};
+
     for (const name in this.subInputs) {
       const value = this.subInputs[name].getValue();
       if (value !== undefined) {
@@ -99,6 +110,11 @@ export class NewChildWidget extends Widget {
       }
     }
     values['parent'] = this.parentName;
+
+    if (this.metaTable) {
+      Object.assign(values, this.metaTable.getValue());
+    }
+
     return values;
   }
 }

@@ -273,6 +273,7 @@ export interface components {
     ChildClsNotebookInfo: {
       templates: string[];
       metaSchema: components['schemas']['metaSchema'];
+      additionalMetaKeys: string[];
     } & (components['schemas']['CommonChildClsInfo'] & {
       /**
        * @description discriminator enum property added by openapi-typescript
