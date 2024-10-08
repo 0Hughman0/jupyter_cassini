@@ -208,6 +208,12 @@ export class MetaEditor extends Panel {
     return this._model;
   }
 
+  set model(newModel: NotebookTierModel | null) {
+    const oldModel = this._model;
+    this._model = newModel;
+    this.handleModelChanged(oldModel, newModel);
+  }
+
   get onlyDisplay(): string[] | null {
     return this._onlyDisplay;
   }
@@ -217,12 +223,6 @@ export class MetaEditor extends Panel {
     if (this.model) {
       this.handleModelUpdate(this.model);
     }
-  }
-
-  set model(newModel: NotebookTierModel | null) {
-    const oldModel = this._model;
-    this._model = newModel;
-    this.handleModelChanged(oldModel, newModel);
   }
 
   handleModelUpdate(model: NotebookTierModel): void {
