@@ -86,7 +86,10 @@ export class NewChildWidget extends Widget {
         NotebookTierModel.createPublicMetaSchema(tier.childClsInfo.metaSchema),
         Object.fromEntries(
           tier.childClsInfo.additionalMetaKeys.map(v => [v, undefined])
-        )
+        ),
+        undefined,
+        undefined,
+        false
       ));
 
       layout.addWidget(metaTable);

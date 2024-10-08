@@ -197,6 +197,7 @@ export class MetaTableWidget extends ReactWidget {
   values: { [name: string]: JSONValue | undefined };
   handleSetMetaValue?: (attribute: string, newValue: JSONValue) => void;
   handleRemoveMetaKey?: (attribute: string) => void;
+  allowNewMetaKeys: boolean;
 
   inputs: { [name: string]: ValidatingInput<JSONValue> };
 
@@ -204,13 +205,16 @@ export class MetaTableWidget extends ReactWidget {
     schema: MetaSchema,
     values: { [name: string]: JSONValue | undefined },
     onSetMetaValue?: (attribute: string, newValue: JSONValue) => void,
-    onRemoveMetaKey?: (attribute: string) => void
+    onRemoveMetaKey?: (attribute: string) => void,
+    allowNewMetaKeys: boolean = true
   ) {
     super();
     this.schema = schema;
     this.values = values;
     this.handleSetMetaValue = onSetMetaValue;
     this.handleRemoveMetaKey = onRemoveMetaKey;
+    this.allowNewMetaKeys = allowNewMetaKeys;
+
     this.inputs = {};
   }
 
@@ -269,7 +273,7 @@ export class MetaTableWidget extends ReactWidget {
       <MetaTable
         metas={metas}
         onMetaUpdate={this.handleSetMetaValue}
-        onNewMetaKey={onNewMetaKey}
+        onNewMetaKey={this.allowNewMetaKeys ? onNewMetaKey : undefined}
         onRemoveMeta={this.handleRemoveMetaKey}
       ></MetaTable>
     );
