@@ -48,11 +48,12 @@ describe('newChildDialog', () => {
       'template'
     ]);
 
-    expect(widget.metaTable?.values).toMatchObject({'Crabs': undefined, 'Fishes': undefined})
-    
-    expect(
-      (widget.identifierInput).wrappedInput
-    ).toBeInstanceOf(InputTextDialog);
+    expect(widget.metaTable?.values).toMatchObject({
+      Crabs: undefined,
+      Fishes: undefined
+    });
+
+    expect(widget.identifierInput.wrappedInput).toBeInstanceOf(InputTextDialog);
     expect(widget.descriptionInput).toBeInstanceOf(InputTextAreaDialog);
     expect(widget.templateSelector).toBeInstanceOf(InputItemsDialog);
   });
@@ -77,8 +78,8 @@ describe('newChildDialog', () => {
     clsInfo.templates = ['Template 1', 'Template 2'];
 
     const widget = new NewChildWidget(tier);
-    widget.metaTable?.render()  // inputs not set until render called!
-  
+    widget.metaTable?.render(); // inputs not set until render called!
+
     widget.identifierInput.wrappedInput._setValue('1');
     widget.descriptionInput._setValue('Description');
     widget.templateSelector._setValue('Template 2');

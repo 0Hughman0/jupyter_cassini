@@ -86,7 +86,9 @@ export class NotebookTierModel {
     this.notebookPath = options.notebookPath;
     this.hltsPath = options.hltsPath;
     this.metaSchema = options.metaSchema;
-    this.publicMetaSchema = NotebookTierModel.createPublicMetaSchema(this.metaSchema);
+    this.publicMetaSchema = NotebookTierModel.createPublicMetaSchema(
+      this.metaSchema
+    );
 
     this.metaValidator = cassini.ajv.compile<MetaSchema>(this.metaSchema);
 

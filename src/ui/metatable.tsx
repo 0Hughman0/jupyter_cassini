@@ -34,9 +34,8 @@ export interface IMetaTableProps {
   metas: MetaTableRow[];
   onMetaUpdate?: (attribute: string, newValue: string) => void;
   onNewMetaKey?: ((attribute: string) => void) | null;
-  onRemoveMeta?: ((attribute: string) => void);
+  onRemoveMeta?: (attribute: string) => void;
 }
-
 
 /**
  * Table that displays meta of a tier.
@@ -52,7 +51,9 @@ export function MetaTable(props: IMetaTableProps) {
   const onNewMetaKey = props.onNewMetaKey;
 
   const data = useMemo(() => props.metas, [props.metas]);
-  data.sort((rowA, rowB) => (rowA.name.toLowerCase() > rowB.name.toLowerCase() ? 1 : -1)); // sort em!
+  data.sort((rowA, rowB) =>
+    rowA.name.toLowerCase() > rowB.name.toLowerCase() ? 1 : -1
+  ); // sort em!
 
   const askNewAttribute = () =>
     InputDialog.getText({
@@ -101,26 +102,26 @@ export function MetaTable(props: IMetaTableProps) {
           const row = data[props.row.index];
           return (
             <span className="cas-row-icon-area">
-              {
-                onRemoveMeta && (
+              {onRemoveMeta && (
                 <ToolbarButtonComponent
                   icon={closeIcon}
                   onClick={() => onRemoveMeta(row.name)}
                   tooltip={`Delete (${row.name})`}
-                />)
-              }
-              {
-                onMetaUpdate && (
+                />
+              )}
+              {onMetaUpdate && (
                 <ToolbarButtonComponent
                   icon={checkIcon}
-                  onClick={() => onMetaUpdate(row.name, row.editor().getValue())}
+                  onClick={() =>
+                    onMetaUpdate(row.name, row.editor().getValue())
+                  }
                   tooltip="Apply changes"
-                />)
-              }
+                />
+              )}
             </span>
           );
         }
-      })
+      });
 
       columns.push(iconColumn);
     }
@@ -162,7 +163,7 @@ export function MetaTable(props: IMetaTableProps) {
             </tr>
           ))}
         </tbody>
-        {onNewMetaKey && 
+        {onNewMetaKey && (
           <tfoot>
             <span>
               <tr>
@@ -176,7 +177,7 @@ export function MetaTable(props: IMetaTableProps) {
               </tr>
             </span>
           </tfoot>
-        }
+        )}
       </table>
     </div>
   );
@@ -193,15 +194,15 @@ export function MetaTable(props: IMetaTableProps) {
  */
 export class MetaTableWidget extends ReactWidget {
   schema: MetaSchema;
-  values: {[name: string]: (JSONValue | undefined) };
+  values: { [name: string]: JSONValue | undefined };
   handleSetMetaValue?: (attribute: string, newValue: JSONValue) => void;
   handleRemoveMetaKey?: (attribute: string) => void;
 
-  inputs: {[name: string]: ValidatingInput<JSONValue>}
+  inputs: { [name: string]: ValidatingInput<JSONValue> };
 
   constructor(
     schema: MetaSchema,
-    values: {[name: string]: (JSONValue | undefined) },
+    values: { [name: string]: JSONValue | undefined },
     onSetMetaValue?: (attribute: string, newValue: JSONValue) => void,
     onRemoveMetaKey?: (attribute: string) => void
   ) {
@@ -225,14 +226,14 @@ export class MetaTableWidget extends ReactWidget {
     this.update();
   }
 
-  getValue(): {[name: string]: JSONValue | undefined } {
-    const values: {[key: string]: JSONValue | undefined } = {}
+  getValue(): { [name: string]: JSONValue | undefined } {
+    const values: { [key: string]: JSONValue | undefined } = {};
 
     for (const [key, editor] of Object.entries(this.inputs)) {
       values[key] = editor.getValue();
     }
 
-    return values
+    return values;
   }
 
   render() {
@@ -266,11 +267,11 @@ export class MetaTableWidget extends ReactWidget {
 
     return (
       <MetaTable
-      metas={metas}
-      onMetaUpdate={this.handleSetMetaValue}
-      onNewMetaKey={onNewMetaKey}
-      onRemoveMeta={this.handleRemoveMetaKey}
-    ></MetaTable>
-    )
+        metas={metas}
+        onMetaUpdate={this.handleSetMetaValue}
+        onNewMetaKey={onNewMetaKey}
+        onRemoveMeta={this.handleRemoveMetaKey}
+      ></MetaTable>
+    );
   }
 }

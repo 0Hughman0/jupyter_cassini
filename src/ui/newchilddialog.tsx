@@ -46,9 +46,11 @@ export class NewChildWidget extends Widget {
       }),
       (value: string | undefined) => {
         if (value) {
-          return idRegex.test(value) && !Object.keys(tier.children).includes(value)
+          return (
+            idRegex.test(value) && !Object.keys(tier.children).includes(value)
+          );
         } else {
-          return false
+          return false;
         }
       }
     ));
@@ -80,10 +82,12 @@ export class NewChildWidget extends Widget {
       this.subInputs.description = descriptionInput;
       this.subInputs.template = templateSelector;
 
-      const metaTable = this.metaTable = new MetaTableWidget(
-        NotebookTierModel.createPublicMetaSchema(tier.childClsInfo.metaSchema), 
-        Object.fromEntries(tier.childClsInfo.additionalMetaKeys.map((v) => [v, undefined]))
-      )
+      const metaTable = (this.metaTable = new MetaTableWidget(
+        NotebookTierModel.createPublicMetaSchema(tier.childClsInfo.metaSchema),
+        Object.fromEntries(
+          tier.childClsInfo.additionalMetaKeys.map(v => [v, undefined])
+        )
+      ));
 
       layout.addWidget(metaTable);
     }
@@ -103,9 +107,9 @@ export class NewChildWidget extends Widget {
       }
     }
     values['parent'] = this.parentName;
-    
+
     if (this.metaTable) {
-      Object.assign(values, this.metaTable.getValue())
+      Object.assign(values, this.metaTable.getValue());
     }
 
     return values;
