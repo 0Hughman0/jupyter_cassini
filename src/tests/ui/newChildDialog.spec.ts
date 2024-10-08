@@ -43,7 +43,7 @@ describe('newChildDialog', () => {
       type: 'object'
     };
 
-    clsInfo.additionalMetaKeys = ['Oysters']
+    clsInfo.additionalMetaKeys = ['Oysters'];
 
     const widget = new NewChildWidget(tier);
     widget.metaTable?.render();
@@ -54,12 +54,12 @@ describe('newChildDialog', () => {
       'template'
     ]);
 
-    const inputs = widget.metaTable?.inputs || {}
+    const inputs = widget.metaTable?.inputs || {};
 
-    expect(Object.keys(inputs)).toEqual(['Crabs', 'Fishes', 'Oysters'])
-    
+    expect(Object.keys(inputs)).toEqual(['Crabs', 'Fishes', 'Oysters']);
+
     expect(inputs['Oysters'].wrappedInput).toBeInstanceOf(InputJSONDialog);
-    
+
     expect(widget.identifierInput.wrappedInput).toBeInstanceOf(InputTextDialog);
     expect(widget.descriptionInput).toBeInstanceOf(InputTextAreaDialog);
     expect(widget.templateSelector).toBeInstanceOf(InputItemsDialog);
@@ -83,7 +83,7 @@ describe('newChildDialog', () => {
     };
 
     clsInfo.templates = ['Template 1', 'Template 2'];
-    clsInfo.additionalMetaKeys = ['Oysters']
+    clsInfo.additionalMetaKeys = ['Oysters'];
 
     const widget = new NewChildWidget(tier);
     widget.metaTable?.render(); // inputs not set until render called!
