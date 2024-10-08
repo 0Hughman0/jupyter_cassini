@@ -434,14 +434,14 @@ describe('metaeditor widget', () => {
     await model.ready;
 
     model.setMetaValue('A', 'a');
-    model.setMetaValue('B', 'b');    
+    model.setMetaValue('B', 'b');
 
     const widget = new MetaEditor(model, ['temperature']);
     const table = widget.table as MetaTableWidget;
 
-    expect(table.values).toEqual({'temperature': 273});
+    expect(table.values).toEqual({ temperature: 273 });
     expect(table.schema.properties).toEqual({});
-  })
+  });
 });
 
 describe('rendering', () => {
