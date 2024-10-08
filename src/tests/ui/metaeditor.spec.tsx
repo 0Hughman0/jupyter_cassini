@@ -426,6 +426,45 @@ describe('metaeditor widget', () => {
 
     expect(Object.keys(table.values)).toContain('newKey');
   });
+
+  test('only display keys', async () => {
+    const model = (await cassini.tierModelManager.get(
+      'WP1'
+    )) as NotebookTierModel;
+    await model.ready;
+
+    model.setMetaValue('A', 'a');
+    model.setMetaValue('B', 'b');
+
+    model.metaSchema.properties = { B: { type: 'string' } };
+
+    const widget = new MetaEditor(model, ['temperature']);
+    const table = widget.table as MetaTableWidget;
+
+    expect(table.values).toEqual({ temperature: 273 });
+    expect(table.schema.properties).toEqual({});
+  });
+
+  test('update only display keys', async () => {
+    const model = (await cassini.tierModelManager.get(
+      'WP1'
+    )) as NotebookTierModel;
+    await model.ready;
+
+    model.setMetaValue('A', 'a');
+    model.setMetaValue('B', 'b');
+    model.publicMetaSchema.properties = { B: { type: 'string' } };
+
+    const widget = new MetaEditor(model, ['temperature']);
+    const table = widget.table as MetaTableWidget;
+
+    expect(table.values).toEqual({ temperature: 273 });
+
+    widget.onlyDisplay = ['B'];
+
+    expect(table.values).toEqual({ B: 'b' });
+    expect(table.schema.properties).toEqual({ B: { type: 'string' } });
+  });
 });
 
 describe('rendering', () => {
