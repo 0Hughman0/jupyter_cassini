@@ -206,7 +206,7 @@ export class MetaTableWidget extends ReactWidget {
     values: { [name: string]: JSONValue | undefined },
     onSetMetaValue?: (attribute: string, newValue: JSONValue) => void,
     onRemoveMetaKey?: (attribute: string) => void,
-    allowNewMetaKeys: boolean = true
+    allowNewMetaKeys = true
   ) {
     super();
     this.schema = schema;
