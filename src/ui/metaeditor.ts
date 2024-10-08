@@ -199,7 +199,7 @@ export class MetaEditor extends Panel {
     super();
     this.table = null;
     this._onlyDisplay = onlyDisplay || null;
-    
+
     this._model = tierModel;
     this.handleModelChanged(null, tierModel);
   }
@@ -209,11 +209,11 @@ export class MetaEditor extends Panel {
   }
 
   get onlyDisplay(): string[] | null {
-    return this._onlyDisplay
+    return this._onlyDisplay;
   }
 
   set onlyDisplay(value: string[] | null) {
-    this._onlyDisplay = value
+    this._onlyDisplay = value;
     if (this.model) {
       this.handleModelUpdate(this.model);
     }
@@ -242,7 +242,7 @@ export class MetaEditor extends Panel {
     if (!newModel) {
       if (this.table) {
         this.table.values = {};
-        this.table.schema = {properties: {}, additionalProperties: {}}; // find a way!
+        this.table.schema = { properties: {}, additionalProperties: {} }; // find a way!
         this.table.update();
       }
 
@@ -262,26 +262,33 @@ export class MetaEditor extends Panel {
     newModel.changed.connect(this.handleModelUpdate, this);
   }
 
-  private static _getSelectMeta(schema: MetaSchema, values: JSONObject, includes: string[]): {schema: MetaSchema, values: JSONObject} {
-    const newSchema: MetaSchema = { properties: {}, additionalProperties: schema.additionalProperties, $defs: schema.$defs};
-    const newValues: JSONObject = {}
+  private static _getSelectMeta(
+    schema: MetaSchema,
+    values: JSONObject,
+    includes: string[]
+  ): { schema: MetaSchema; values: JSONObject } {
+    const newSchema: MetaSchema = {
+      properties: {},
+      additionalProperties: schema.additionalProperties,
+      $defs: schema.$defs
+    };
+    const newValues: JSONObject = {};
 
     for (const include of includes) {
       if (Object.keys(schema.properties).includes(include)) {
-        newSchema.properties[include] = schema.properties[include]
+        newSchema.properties[include] = schema.properties[include];
       }
 
-      newValues[include] = values[include]
+      newValues[include] = values[include];
     }
 
-    return {schema: newSchema, values: newValues}
+    return { schema: newSchema, values: newValues };
   }
 
   private _createTableWidget(model: NotebookTierModel): MetaTableWidget | null {
     if (!model) {
       return null;
     }
-    
 
     const onSetMetaValue = (
       attribute: string,
@@ -299,9 +306,11 @@ export class MetaEditor extends Panel {
 
     if (this.onlyDisplay !== null) {
       const { schema, values } = MetaEditor._getSelectMeta(
-        model.publicMetaSchema, model.additionalMeta, this.onlyDisplay
-      )
-      
+        model.publicMetaSchema,
+        model.additionalMeta,
+        this.onlyDisplay
+      );
+
       newSchema = schema;
       additionalMeta = values;
     }
@@ -333,9 +342,11 @@ export class MetaEditor extends Panel {
 
     if (this.onlyDisplay !== null) {
       const { schema, values } = MetaEditor._getSelectMeta(
-        model.publicMetaSchema, model.additionalMeta, this.onlyDisplay
-      )
-      
+        model.publicMetaSchema,
+        model.additionalMeta,
+        this.onlyDisplay
+      );
+
       newSchema = schema;
       additionalMeta = values;
     }
@@ -455,7 +466,7 @@ export class RenderMimeMetaEditor
     }
 
     this.ready().then(() => {
-      this.editor.onlyDisplay = attributes;
+      this.editor.onlyDisplay = attributes || null;
     });
 
     return Promise.resolve();
