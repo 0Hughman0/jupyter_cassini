@@ -1,13 +1,14 @@
 import { NewChildWidget } from '../../ui/newchilddialog';
 import { ITreeData, cassini } from '../../core';
 
-import { mockServerAPI } from '../tools';
+import { mockCassini, mockServerAPI } from '../tools';
 import { HOME_TREE, WP1_TREE } from '../test_cases';
 
 import 'jest';
 import { ChildClsNotebookInfo } from '../../schema/types';
 import {
   InputItemsDialog,
+  InputJSONDialog,
   InputTextAreaDialog,
   InputTextDialog,
   ValidatingInput
@@ -15,6 +16,8 @@ import {
 
 describe('newChildDialog', () => {
   beforeEach(() => {
+    mockCassini();
+
     mockServerAPI({
       '/tree': [
         { query: { 'ids[]': '' }, response: HOME_TREE },
@@ -40,7 +43,10 @@ describe('newChildDialog', () => {
       type: 'object'
     };
 
+    clsInfo.additionalMetaKeys = ['Oysters']
+
     const widget = new NewChildWidget(tier);
+    widget.metaTable?.render();
 
     expect(Object.keys(widget.subInputs)).toEqual([
       'id',
@@ -48,11 +54,12 @@ describe('newChildDialog', () => {
       'template'
     ]);
 
-    expect(widget.metaTable?.values).toMatchObject({
-      Crabs: undefined,
-      Fishes: undefined
-    });
+    const inputs = widget.metaTable?.inputs || {}
 
+    expect(Object.keys(inputs)).toEqual(['Crabs', 'Fishes', 'Oysters'])
+    
+    expect(inputs['Oysters'].wrappedInput).toBeInstanceOf(InputJSONDialog);
+    
     expect(widget.identifierInput.wrappedInput).toBeInstanceOf(InputTextDialog);
     expect(widget.descriptionInput).toBeInstanceOf(InputTextAreaDialog);
     expect(widget.templateSelector).toBeInstanceOf(InputItemsDialog);
@@ -76,6 +83,7 @@ describe('newChildDialog', () => {
     };
 
     clsInfo.templates = ['Template 1', 'Template 2'];
+    clsInfo.additionalMetaKeys = ['Oysters']
 
     const widget = new NewChildWidget(tier);
     widget.metaTable?.render(); // inputs not set until render called!
@@ -91,12 +99,17 @@ describe('newChildDialog', () => {
       widget.metaTable?.inputs['Fishes'] as ValidatingInput<number>
     ).wrappedInput._setValue('10');
 
+    (
+      widget.metaTable?.inputs['Oysters'] as ValidatingInput<number>
+    ).wrappedInput._setValue('100');
+
     expect(widget.getValue()).toMatchObject({
       id: '1',
       description: 'Description',
       template: 'Template 2',
       Crabs: 'A',
-      Fishes: 10
+      Fishes: 10,
+      Oysters: 100
     });
   });
 
@@ -132,5 +145,6 @@ describe('newChildDialog', () => {
     expect(Object.keys(widget.getValue())).not.toContain('Crabs');
     expect(Object.keys(widget.getValue())).not.toContain('template');
     expect(Object.keys(widget.getValue())).not.toContain('Fishes');
+    expect(Object.keys(widget.getValue())).not.toContain('Oysters');
   });
 });
