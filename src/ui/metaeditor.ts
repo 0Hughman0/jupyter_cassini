@@ -22,7 +22,7 @@ import {
   InputDialogBase,
   ValidatingInput
 } from './dialogwidgets';
-import { ObjectDef } from '../schema/types';
+import { MetaSchema, ObjectDef } from '../schema/types';
 
 export function createMetaInput(
   propertySchema: ObjectDef,
@@ -193,15 +193,30 @@ export class MetaEditor extends Panel {
   protected _model: NotebookTierModel | null;
   table: MetaTableWidget | null;
 
-  constructor(tierModel: NotebookTierModel | null) {
+  _onlyDisplay: string[] | null;
+
+  constructor(tierModel: NotebookTierModel | null, onlyDisplay?: string[]) {
     super();
     this.table = null;
+    this._onlyDisplay = onlyDisplay || null;
+    
     this._model = tierModel;
     this.handleModelChanged(null, tierModel);
   }
 
   get model(): NotebookTierModel | null {
     return this._model;
+  }
+
+  get onlyDisplay(): string[] | null {
+    return this._onlyDisplay
+  }
+
+  set onlyDisplay(value: string[] | null) {
+    this._onlyDisplay = value
+    if (this.model) {
+      this.handleModelUpdate(this.model);
+    }
   }
 
   set model(newModel: NotebookTierModel | null) {
@@ -227,7 +242,7 @@ export class MetaEditor extends Panel {
     if (!newModel) {
       if (this.table) {
         this.table.values = {};
-        //this.table.schema = {}; // find a way!
+        this.table.schema = {properties: {}, additionalProperties: {}}; // find a way!
         this.table.update();
       }
 
@@ -247,28 +262,26 @@ export class MetaEditor extends Panel {
     newModel.changed.connect(this.handleModelUpdate, this);
   }
 
-  render(attributes: string[]) {
-    /**
-     * Asks the widget to re-render with the attributes provided. This is a bit odd, but is kinda needed because of how mimetype renders.
-     */
-    if (!this.model || !this.table) {
-      return;
-    }
-    const meta: { [name: string]: JSONValue } = {};
+  private static _getSelectMeta(schema: MetaSchema, values: JSONObject, includes: string[]): {schema: MetaSchema, values: JSONObject} {
+    const newSchema: MetaSchema = { properties: {}, additionalProperties: schema.additionalProperties, $defs: schema.$defs};
+    const newValues: JSONObject = {}
 
-    for (const key of attributes) {
-      const val = this.model.additionalMeta[key];
-      meta[key] = val;
+    for (const include of includes) {
+      if (Object.keys(schema.properties).includes(include)) {
+        newSchema.properties[include] = schema.properties[include]
+      }
+
+      newValues[include] = values[include]
     }
 
-    this.table.values = meta;
-    this.table.update();
+    return {schema: newSchema, values: newValues}
   }
 
   private _createTableWidget(model: NotebookTierModel): MetaTableWidget | null {
-    if (!model.publicMetaSchema) {
+    if (!model) {
       return null;
     }
+    
 
     const onSetMetaValue = (
       attribute: string,
@@ -281,9 +294,21 @@ export class MetaEditor extends Panel {
       model.removeMeta(attribute);
     };
 
+    let newSchema: MetaSchema = model.publicMetaSchema;
+    let additionalMeta: JSONObject = model.additionalMeta;
+
+    if (this.onlyDisplay !== null) {
+      const { schema, values } = MetaEditor._getSelectMeta(
+        model.publicMetaSchema, model.additionalMeta, this.onlyDisplay
+      )
+      
+      newSchema = schema;
+      additionalMeta = values;
+    }
+
     return new MetaTableWidget(
-      model.publicMetaSchema,
-      model.additionalMeta,
+      newSchema,
+      additionalMeta,
       onSetMetaValue.bind(this),
       onRemoveMetaKey.bind(this)
     );
@@ -303,11 +328,20 @@ export class MetaEditor extends Panel {
       model.removeMeta(attribute);
     };
 
-    table.values = model.additionalMeta;
+    let newSchema: MetaSchema = model.publicMetaSchema;
+    let additionalMeta: JSONObject = model.additionalMeta;
 
-    if (model.publicMetaSchema) {
-      table.schema = model.publicMetaSchema;
+    if (this.onlyDisplay !== null) {
+      const { schema, values } = MetaEditor._getSelectMeta(
+        model.publicMetaSchema, model.additionalMeta, this.onlyDisplay
+      )
+      
+      newSchema = schema;
+      additionalMeta = values;
     }
+
+    table.values = additionalMeta;
+    table.schema = newSchema;
 
     table.handleSetMetaValue = onSetMetaValue.bind(this);
     table.handleRemoveMetaKey = onRemoveMetaKey.bind(this);
@@ -361,7 +395,6 @@ export class RenderMimeMetaEditor
         }
 
         this.model = tierModel;
-        console.log(this.model);
         return this.model;
       });
 
@@ -415,14 +448,14 @@ export class RenderMimeMetaEditor
     // mimedata seems to have to be an Object, or it won't be save properly
     const data = model.data[this._mimeType] as any as IMetaEditorRendorMimeData;
 
-    let attributes = data['values'] as string | string[];
+    let attributes = data['values'];
 
     if (typeof attributes === 'string') {
       attributes = [attributes];
     }
 
     this.ready().then(() => {
-      this.editor.render(attributes as string[]);
+      this.editor.onlyDisplay = attributes;
     });
 
     return Promise.resolve();
