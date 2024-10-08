@@ -95,6 +95,7 @@ export class NewChildWidget extends Widget {
    */
   getValue() {
     const values: { [name: string]: JSONValue } = {};
+
     for (const name in this.subInputs) {
       const value = this.subInputs[name].getValue();
       if (value !== undefined) {

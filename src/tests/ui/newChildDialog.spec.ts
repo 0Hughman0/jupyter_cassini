@@ -8,7 +8,6 @@ import 'jest';
 import { ChildClsNotebookInfo } from '../../schema/types';
 import {
   InputItemsDialog,
-  InputNumberDialog,
   InputTextAreaDialog,
   InputTextDialog,
   ValidatingInput
@@ -46,21 +45,16 @@ describe('newChildDialog', () => {
     expect(Object.keys(widget.subInputs)).toEqual([
       'id',
       'description',
-      'template',
-      'Crabs',
-      'Fishes'
+      'template'
     ]);
+
+    expect(widget.metaTable?.values).toMatchObject({'Crabs': undefined, 'Fishes': undefined})
+    
     expect(
-      (widget.subInputs['id'] as ValidatingInput<string>).wrappedInput
+      (widget.identifierInput).wrappedInput
     ).toBeInstanceOf(InputTextDialog);
-    expect(widget.subInputs['description']).toBeInstanceOf(InputTextAreaDialog);
-    expect(widget.subInputs['template']).toBeInstanceOf(InputItemsDialog);
-    expect(
-      (widget.subInputs['Crabs'] as ValidatingInput<string>).wrappedInput
-    ).toBeInstanceOf(InputTextDialog);
-    expect(
-      (widget.subInputs['Fishes'] as ValidatingInput<number>).wrappedInput
-    ).toBeInstanceOf(InputNumberDialog);
+    expect(widget.descriptionInput).toBeInstanceOf(InputTextAreaDialog);
+    expect(widget.templateSelector).toBeInstanceOf(InputItemsDialog);
   });
 
   test('full-serialisation', async () => {
@@ -83,16 +77,17 @@ describe('newChildDialog', () => {
     clsInfo.templates = ['Template 1', 'Template 2'];
 
     const widget = new NewChildWidget(tier);
-
+    widget.metaTable?.render()  // inputs not set until render called!
+  
     widget.identifierInput.wrappedInput._setValue('1');
     widget.descriptionInput._setValue('Description');
     widget.templateSelector._setValue('Template 2');
 
     (
-      widget.subInputs['Crabs'] as ValidatingInput<string>
+      widget.metaTable?.inputs['Crabs'] as ValidatingInput<string>
     ).wrappedInput._setValue('A');
     (
-      widget.subInputs['Fishes'] as ValidatingInput<number>
+      widget.metaTable?.inputs['Fishes'] as ValidatingInput<number>
     ).wrappedInput._setValue('10');
 
     expect(widget.getValue()).toMatchObject({

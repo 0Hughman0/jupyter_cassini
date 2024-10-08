@@ -33,7 +33,7 @@ export type MetaTableRow = {
 export interface IMetaTableProps {
   metas: MetaTableRow[];
   onMetaUpdate?: (attribute: string, newValue: string) => void;
-  onNewMetaKey: ((attribute: string) => void) | null;
+  onNewMetaKey?: ((attribute: string) => void) | null;
   onRemoveMeta?: ((attribute: string) => void);
 }
 
@@ -162,21 +162,21 @@ export function MetaTable(props: IMetaTableProps) {
             </tr>
           ))}
         </tbody>
-        <tfoot>
-          <span>
-            <tr>
-              <td colSpan={3}>
-                {onNewMetaKey && (
+        {onNewMetaKey && 
+          <tfoot>
+            <span>
+              <tr>
+                <td colSpan={3}>
                   <ToolbarButtonComponent
                     icon={addIcon}
                     onClick={askNewAttribute}
                     tooltip={'Add a new meta attribute'}
                   />
-                )}
-              </td>
-            </tr>
-          </span>
-        </tfoot>
+                </td>
+              </tr>
+            </span>
+          </tfoot>
+        }
       </table>
     </div>
   );
@@ -221,7 +221,7 @@ export class MetaTableWidget extends ReactWidget {
    * @param key
    */
   handleNewMetaKey(key: string) {
-    this.values[key] = null;
+    this.values[key] = undefined;
     this.update();
   }
 
