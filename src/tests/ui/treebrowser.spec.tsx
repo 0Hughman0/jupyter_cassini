@@ -11,7 +11,7 @@ import {
   ChildrenTable
 } from '../../ui/treeview';
 import { TierBrowserModel } from '../../models';
-import { TreeManager } from '../../core';
+import { treeResponseToData } from '../../utils';
 
 import { mockServerAPI, createTierFiles, mockCassini } from '../tools';
 import {
