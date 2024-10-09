@@ -8,7 +8,8 @@ import {
   NotebookTierModel,
   FolderTierModel
 } from '../models';
-import { TreeManager, cassini } from '../core';
+import { cassini } from '../core';
+import { treeResponseToData } from '../utils';
 
 import { CassiniServer } from '../services';
 
@@ -87,14 +88,14 @@ describe('TierModel', () => {
 
       await cassini.treeManager.cacheTreeData(
         ['1'],
-        TreeManager._treeResponseToData(WP1_TREE, ['1'])
+        treeResponseToData(WP1_TREE, ['1'])
       );
 
       await expect(tier.treeData).resolves.toEqual(
-        TreeManager._treeResponseToData(WP1_TREE, ['1'])
+        treeResponseToData(WP1_TREE, ['1'])
       );
       await expect(tier.children).resolves.toEqual(
-        TreeManager._treeResponseToData(WP1_TREE, ['1']).children
+        treeResponseToData(WP1_TREE, ['1']).children
       );
     });
   });
@@ -220,11 +221,11 @@ describe('TierBrowserModel', () => {
     await changed;
 
     expect(model.current).toMatchObject(
-      TreeManager._treeResponseToData(HOME_TREE, [])
+      treeResponseToData(HOME_TREE, [])
     );
 
     expect(model.current?.children).toMatchObject(
-      TreeManager._treeResponseToData(HOME_TREE, ['1']).children
+      treeResponseToData(HOME_TREE, ['1']).children
     );
   });
 
@@ -238,7 +239,7 @@ describe('TierBrowserModel', () => {
     const childReponse = Object.assign(HOME_TREE);
 
     expect(model.current).toMatchObject(
-      TreeManager._treeResponseToData(childReponse, ['1', '1'])
+      treeResponseToData(childReponse, ['1', '1'])
     );
     expect(CassiniServer.tree).lastCalledWith(ids);
   });

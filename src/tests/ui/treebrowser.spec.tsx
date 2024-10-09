@@ -100,7 +100,7 @@ describe('tree browser', () => {
     expect(widget?.currentTier?.name).toBe('Home');
     expect(widget.currentTier).toBe(model.current);
     expect(widget.tierChildren).toMatchObject(
-      TreeManager._treeResponseToData(HOME_TREE, []).children
+      treeResponseToData(HOME_TREE, []).children
     );
     expect(widget.currentPath).toBe(model.currentPath);
     expect(widget.childMetas).toEqual(new Set(['Fishes', 'Crabs']));
@@ -122,10 +122,10 @@ describe('tree browser', () => {
     expect(Array.from(widget.currentPath)).toEqual(['1']);
     expect(widget.currentTier?.name).toEqual('WP1');
     expect(widget.currentTier).toEqual(
-      TreeManager._treeResponseToData(WP1_TREE, ['1'])
+      treeResponseToData(WP1_TREE, ['1'])
     );
     expect(widget.tierChildren).toEqual(
-      TreeManager._treeResponseToData(WP1_TREE, ['1']).children
+      treeResponseToData(WP1_TREE, ['1']).children
     );
     expect(widget.childMetas).toEqual(new Set());
   });
@@ -139,7 +139,7 @@ describe('tree browser', () => {
     await first;
 
     expect(widget.tierChildren).toEqual(
-      TreeManager._treeResponseToData(HOME_TREE, []).children
+      treeResponseToData(HOME_TREE, []).children
     );
     expect(widget.childMetas).toEqual(new Set(['Fishes', 'Crabs']));
 
@@ -152,7 +152,7 @@ describe('tree browser', () => {
     await model.refresh();
 
     expect(widget.tierChildren).not.toEqual(
-      TreeManager._treeResponseToData(HOME_TREE, []).children
+      treeResponseToData(HOME_TREE, []).children
     );
 
     expect(Object.keys(widget.tierChildren)).toContain('3');
@@ -177,7 +177,7 @@ describe('crumbs', () => {
     const user = userEvent.setup();
 
     const currentPath = new ObservableList<string>();
-    const currentTier = TreeManager._treeResponseToData(WP1_TREE, ['1']);
+    const currentTier = treeResponseToData(WP1_TREE, ['1']);
 
     render(
       <CassiniCrumbs
@@ -197,7 +197,7 @@ describe('crumbs', () => {
 
   test('cannot preview folder tier in crumbs', async () => {
     const currentPath = new ObservableList<string>();
-    const currentTier = TreeManager._treeResponseToData(HOME_TREE, []);
+    const currentTier = treeResponseToData(HOME_TREE, []);
 
     render(
       <CassiniCrumbs
@@ -230,7 +230,7 @@ describe('tree browser component', () => {
 
   test('folder tier preview disabled', async () => {
     const currentPath = new ObservableList<string>();
-    const currentTier = TreeManager._treeResponseToData(WP1_TREE, ['1']);
+    const currentTier = treeResponseToData(WP1_TREE, ['1']);
     currentTier.childClsInfo = {
       tierType: 'folder',
       idRegex: '(d+)',

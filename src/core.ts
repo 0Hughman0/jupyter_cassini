@@ -15,6 +15,7 @@ import {
   NewChildInfo,
   TierInfo
 } from './schema/types';
+import { treeResponseToData } from './utils'
 
 import { TierBrowser } from './ui/browser';
 import Ajv from 'ajv';
@@ -188,57 +189,13 @@ export class TreeManager {
   fetchTierData(ids: string[]): Promise<ITreeData | null> {
     return CassiniServer.tree(ids)
       .then(treeResponse => {
-        const newTree = TreeManager._treeResponseToData(treeResponse, ids);
+        const newTree = treeResponseToData(treeResponse, ids);
 
         return this.cacheTreeData(ids, newTree) as ITreeData;
       })
       .catch(reason => {
         return null;
       });
-  }
-
-  /**
-   * Convenience method for converting between ITreeRepsonse to ITreeData.
-   *
-   * This does a bit of basic parsing of the ITreeReponse, which can only be JSON, into an Object.
-   *
-   * Currently just parses started into an actual Date object.
-   */
-  static _treeResponseToData(
-    treeResponse: TreeResponse,
-    ids: string[]
-  ): ITreeData {
-    const { started, children, ...rest } = treeResponse;
-
-    const newTree: ITreeData = {
-      started: null,
-      children: {},
-      ids: ids,
-      ...rest
-    };
-
-    if (started) {
-      newTree.started = new Date(started);
-    }
-
-    for (const id of Object.keys(children)) {
-      const child = children[id];
-
-      const { started, ...rest } = child;
-
-      const newChild: ITreeChildData = {
-        started: null,
-        ...rest
-      };
-
-      if (child.started) {
-        newChild['started'] = new Date(child.started);
-      }
-
-      newTree.children[id] = newChild;
-    }
-
-    return newTree;
   }
 }
 
@@ -276,20 +233,24 @@ export class TierModelTreeManager {
    * I wanted this to be synchronus, but an alternative, which is probably sensible is to use the treeManager.lookup.
    */
   get(name: string, forceRefresh?: boolean): Promise<TierModel> {
-    if (Object.keys(this.cache).includes(name) && !forceRefresh) {
+    const inCache = Object.keys(this.cache).includes(name)
+    if (inCache && !forceRefresh) {
       return Promise.resolve(this.cache[name]);
     }
 
     return CassiniServer.lookup(name).then(tierInfo => {
-      const oldModel = this.cache[name];
-      
-      const newModel = this._insertNewTierModel(name, tierInfo)   
+      if (inCache) {
+        const oldModel = this.cache[name];
+        if (oldModel instanceof NotebookTierModel && tierInfo.tierType == 'notebook') {
+          oldModel.refresh(tierInfo);
+        }
 
-      if (oldModel instanceof NotebookTierModel) {
-        oldModel.sendRefreshed(newModel as NotebookTierModel);
+        return oldModel
+      } else {
+        const newModel = this._insertNewTierModel(name, tierInfo)   
+
+        return newModel
       }
-
-      return newModel
     });
   }
 

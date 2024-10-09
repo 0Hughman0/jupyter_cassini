@@ -188,20 +188,19 @@ export class TierNotebookHeader extends Panel {
     childrenLabel.textContent = 'Children';
     childrenBox.addWidget(new Widget({ node: childrenLabel }));
 
-    this.model.children.then(children => {
-      const childrenSummary = (this.childrenSummary = new ChildrenSummaryWidget(
+    const children = this.model.children
+    
+    const childrenSummary = (this.childrenSummary = new ChildrenSummaryWidget(
         children ? Object.entries(children) : [],
         data => data && cassini.launchTier(data),
         (data, id) => cassini.launchTierBrowser([...this.model.ids, id]),
         () => this.model.treeData.then(data => data && openNewChildDialog(data))
-      ));
-      childrenBox.addWidget(childrenSummary);
+    ));
 
-      content.addWidget(childrenBox);
-    });
-
-    this.model.changed.connect(() => this.onContentChanged(), this);
-    this.model.ready.then(() => this.onContentChanged());
+    childrenBox.addWidget(childrenSummary);
+    content.addWidget(childrenBox);
+  
+    this.model.changed.connect(this.onModelChanged, this);
   }
 
   showInBrowser() {
@@ -211,12 +210,21 @@ export class TierNotebookHeader extends Panel {
   /**
    * Update content of the widget when the model changes
    */
-  onContentChanged() {
-    this.descriptionEditor.source = this.model.description;
-    this.conclusionEditor.source = this.model.conclusion;
-    this.model.children.then(children => {
-      this.childrenSummary.data = children ? Object.entries(children) : [];
-    });
+  onModelChanged(model: NotebookTierModel, change: NotebookTierModel.ModelChange2) {
+    switch (change.type) {
+      case 'ready':
+      case 'meta': {
+        this.descriptionEditor.source = this.model.description;
+        this.conclusionEditor.source = this.model.conclusion;
+        break
+      }
+      case 'ready':
+      case 'children': {
+        const children = this.model.children
+        this.childrenSummary.data = children ? Object.entries(children) : [];
+        break
+      }
+    }
   }
 }
 

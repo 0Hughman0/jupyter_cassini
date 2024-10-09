@@ -241,20 +241,12 @@ export class MetaEditor extends Panel {
 
   handleModelChange(model: NotebookTierModel, update: MetaEditor.Update): void {
     switch (update.type) {
+      case 'ready':
+      case 'onlyDisplay':
       case 'meta': {
         const { schema, values } = this.getSchemaValues();
         this.table.values = values;
         this.table.schema = schema
-        break
-      }
-      case 'onlyDisplay': {
-        const { schema, values } = this.getSchemaValues();
-        this.table.values = values;
-        this.table.schema = schema
-        break
-      }
-      case 'refresh': {
-        this.handleNewModel(model, update.newModel)
         break
       }
     }
