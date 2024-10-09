@@ -186,22 +186,35 @@ export function createValidatedInput(
   return validatedInput;
 }
 
+
+export namespace MetaEditor {
+  export type Update = NotebookTierModel.ModelChange2 | {'type': 'onlyDisplay', 'values': string[] | null }
+}
+
 /**
  * Widget for modifying the meta of a TierModel.
  */
 export class MetaEditor extends Panel {
   protected _model: NotebookTierModel | null;
-  table: MetaTableWidget | null;
+  table: MetaTableWidget;
 
   _onlyDisplay: string[] | null;
 
   constructor(tierModel: NotebookTierModel | null, onlyDisplay?: string[]) {
     super();
-    this.table = null;
     this._onlyDisplay = onlyDisplay || null;
-
     this._model = tierModel;
-    this.handleModelChanged(null, tierModel);
+
+    this.table = new MetaTableWidget(
+      { properties: {}, additionalProperties: {} },
+      {},
+      () => {},
+      () => {}
+    )
+
+    this.addWidget(this.table);
+    
+    this.handleNewModel(null, tierModel);
   }
 
   get model(): NotebookTierModel | null {
@@ -211,27 +224,45 @@ export class MetaEditor extends Panel {
   set model(newModel: NotebookTierModel | null) {
     const oldModel = this._model;
     this._model = newModel;
-    this.handleModelChanged(oldModel, newModel);
+    this.handleNewModel(oldModel, newModel);
   }
 
   get onlyDisplay(): string[] | null {
     return this._onlyDisplay;
   }
 
-  set onlyDisplay(value: string[] | null) {
-    this._onlyDisplay = value;
+  set onlyDisplay(values: string[] | null) {
+    this._onlyDisplay = values;
+    
     if (this.model) {
-      this.handleModelUpdate(this.model);
+      this.handleModelChange(this.model, {'type': 'onlyDisplay', 'values': values });
     }
   }
 
-  handleModelUpdate(model: NotebookTierModel): void {
-    if (this.table) {
-      this._updateTableWidget(this.table, model);
+  handleModelChange(model: NotebookTierModel, update: MetaEditor.Update): void {
+    switch (update.type) {
+      case 'meta': {
+        const { schema, values } = this.getSchemaValues();
+        this.table.values = values;
+        this.table.schema = schema
+        break
+      }
+      case 'onlyDisplay': {
+        const { schema, values } = this.getSchemaValues();
+        this.table.values = values;
+        this.table.schema = schema
+        break
+      }
+      case 'refresh': {
+        this.handleNewModel(model, update.newModel)
+        break
+      }
     }
+
+    this.table.update()
   }
 
-  handleModelChanged(
+  handleNewModel(
     oldModel: NotebookTierModel | null,
     newModel: NotebookTierModel | null
   ): void {
@@ -240,26 +271,46 @@ export class MetaEditor extends Panel {
     }
 
     if (!newModel) {
-      if (this.table) {
-        this.table.values = {};
-        this.table.schema = { properties: {}, additionalProperties: {} }; // find a way!
-        this.table.update();
-      }
+      this.table.values = {};
+      this.table.schema = { properties: {}, additionalProperties: {} };
+      this.table.handleRemoveMetaKey = () => {};
+      this.table.handleSetMetaValue = () => {};
 
+      this.table.update();
       return;
     }
 
-    if (this.table) {
-      this._updateTableWidget(this.table, newModel);
-    } else {
-      this.table = this._createTableWidget(newModel);
+    const onSetMetaValue = (
+      attribute: string,
+      newValue: JSONValue | undefined
+    ) => {
+      newValue && newModel.setMetaValue(attribute, newValue);
+    };
+    const onRemoveMetaKey = (attribute: string) => {
+      newModel.removeMeta(attribute);
+    };
 
-      if (this.table) {
-        this.addWidget(this.table);
-      }
+    this.table.handleSetMetaValue = onSetMetaValue.bind(this);
+    this.table.handleRemoveMetaKey = onRemoveMetaKey.bind(this);
+
+    this.handleModelChange(newModel, { 'type': 'meta' });
+    newModel.changed.connect(this.handleModelChange, this);
+  }
+
+  private getSchemaValues() {
+    if (!this.model) {
+      return { schema: { properties: {}, additionalProperties: {} }, values: {} }
     }
 
-    newModel.changed.connect(this.handleModelUpdate, this);
+    if (this.onlyDisplay === null) {
+      return { schema: this.model.publicMetaSchema, values: this.model.additionalMeta }
+    } else {
+      return MetaEditor._getSelectMeta(
+        this.model.publicMetaSchema,
+        this.model.additionalMeta,
+        this.onlyDisplay
+      );
+    }
   }
 
   private static _getSelectMeta(
@@ -283,81 +334,6 @@ export class MetaEditor extends Panel {
     }
 
     return { schema: newSchema, values: newValues };
-  }
-
-  private _createTableWidget(model: NotebookTierModel): MetaTableWidget | null {
-    if (!model) {
-      return null;
-    }
-
-    const onSetMetaValue = (
-      attribute: string,
-      newValue: JSONValue | undefined
-    ) => {
-      newValue && model.setMetaValue(attribute, newValue);
-    };
-
-    const onRemoveMetaKey = (attribute: string) => {
-      model.removeMeta(attribute);
-    };
-
-    let newSchema: MetaSchema = model.publicMetaSchema;
-    let additionalMeta: JSONObject = model.additionalMeta;
-
-    if (this.onlyDisplay !== null) {
-      const { schema, values } = MetaEditor._getSelectMeta(
-        model.publicMetaSchema,
-        model.additionalMeta,
-        this.onlyDisplay
-      );
-
-      newSchema = schema;
-      additionalMeta = values;
-    }
-
-    return new MetaTableWidget(
-      newSchema,
-      additionalMeta,
-      onSetMetaValue.bind(this),
-      onRemoveMetaKey.bind(this)
-    );
-  }
-
-  private _updateTableWidget(
-    table: MetaTableWidget,
-    model: NotebookTierModel
-  ): void {
-    const onSetMetaValue = (
-      attribute: string,
-      newValue: JSONValue | undefined
-    ) => {
-      newValue && model.setMetaValue(attribute, newValue);
-    };
-    const onRemoveMetaKey = (attribute: string) => {
-      model.removeMeta(attribute);
-    };
-
-    let newSchema: MetaSchema = model.publicMetaSchema;
-    let additionalMeta: JSONObject = model.additionalMeta;
-
-    if (this.onlyDisplay !== null) {
-      const { schema, values } = MetaEditor._getSelectMeta(
-        model.publicMetaSchema,
-        model.additionalMeta,
-        this.onlyDisplay
-      );
-
-      newSchema = schema;
-      additionalMeta = values;
-    }
-
-    table.values = additionalMeta;
-    table.schema = newSchema;
-
-    table.handleSetMetaValue = onSetMetaValue.bind(this);
-    table.handleRemoveMetaKey = onRemoveMetaKey.bind(this);
-
-    table.update();
   }
 }
 

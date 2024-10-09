@@ -280,9 +280,17 @@ export class TierModelTreeManager {
       return Promise.resolve(this.cache[name]);
     }
 
-    return CassiniServer.lookup(name).then(tierInfo =>
-      this._insertNewTierModel(name, tierInfo)
-    );
+    return CassiniServer.lookup(name).then(tierInfo => {
+      const oldModel = this.cache[name];
+      
+      const newModel = this._insertNewTierModel(name, tierInfo)   
+
+      if (oldModel instanceof NotebookTierModel) {
+        oldModel.sendRefreshed(newModel as NotebookTierModel);
+      }
+
+      return newModel
+    });
   }
 
   _insertNewTierModel(name: string, tierInfo: TierInfo) {

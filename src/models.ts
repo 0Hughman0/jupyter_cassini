@@ -92,11 +92,11 @@ export class NotebookTierModel {
 
     this.metaValidator = cassini.ajv.compile<MetaSchema>(this.metaSchema);
 
-    cassini.treeManager.changed.connect((sender, { ids, data }) => {
+    /* cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.ids.toString()) {
-        this._changed.emit();
+        this._changed.emit('');
       }
-    }, this);
+    }, this); */
 
     this._required = [];
 
@@ -111,10 +111,10 @@ export class NotebookTierModel {
 
       metaFile.initialize(false);
       metaFile.ready.then(() => {
-        metaFile.model.contentChanged.connect(() => this._changed.emit(), this);
+        metaFile.model.contentChanged.connect(() => this._changed.emit({'type': 'meta'}), this);
         metaFile.model.stateChanged.connect((sender, change) => {
           if (change.name === 'dirty') {
-            this._changed.emit(); // the dirtiness of the metaFile is also part of the state of this model.
+            this._changed.emit({'type': 'dirty'}); // the dirtiness of the metaFile is also part of the state of this model.
           }
         }, this);
       });
@@ -132,7 +132,7 @@ export class NotebookTierModel {
 
       this.hltsFile.ready.then(() => {
         this.hltsFile?.model.contentChanged.connect(() => {
-          this._changed.emit();
+          this._changed.emit({'type': 'hlts'});
         }, this);
       });
     }
@@ -152,10 +152,15 @@ export class NotebookTierModel {
     return publicMetaSchema;
   }
 
-  private _changed = new Signal<NotebookTierModel, void>(this);
+  private _changed = new Signal<NotebookTierModel, NotebookTierModel.ModelChange2>(this);
 
-  get changed(): ISignal<NotebookTierModel, void> {
+  get changed(): ISignal<NotebookTierModel, NotebookTierModel.ModelChange2> {
     return this._changed;
+  }
+
+  sendRefreshed(newModel: NotebookTierModel): NotebookTierModel {
+    this._changed.emit({'type': 'refresh', 'newModel': newModel})
+    return newModel
   }
 
   /**
@@ -165,7 +170,7 @@ export class NotebookTierModel {
    */
   get ready(): Promise<NotebookTierModel> {
     return Promise.all(this._required).then(() => {
-      this._changed.emit();
+      this._changed.emit({'type': 'ready'});
       return this;
     });
   }
@@ -242,7 +247,7 @@ export class NotebookTierModel {
     const newMeta = this.meta;
     newMeta[key] = value;
     const outcome = this.updateMeta(newMeta);
-    this._changed.emit();
+    this._changed.emit({'type': 'meta'});
     return outcome;
   }
 
@@ -250,7 +255,7 @@ export class NotebookTierModel {
     const newMeta = this.meta;
     delete newMeta[key];
     this.updateMeta(newMeta);
-    this._changed.emit();
+    this._changed.emit({'type': 'meta'});
   }
 
   get description(): string {
@@ -258,10 +263,6 @@ export class NotebookTierModel {
   }
 
   set description(value: string) {
-    if (!this.metaFile) {
-      throw 'Tier has no meta, cannot store description';
-    }
-
     this.setMetaValue('description', value);
   }
 
@@ -337,6 +338,13 @@ export namespace NotebookTierModel {
     NotebookTierModel | null,
     NotebookTierModel | null
   >;
+
+  export type ModelChange2 = {
+    'type': 'meta' | 'hlts' | 'dirty' | 'ready'
+  } | {
+  'type': 'refresh',
+  'newModel': NotebookTierModel
+  }
 }
 
 export interface IAdditionalColumnsStore {
