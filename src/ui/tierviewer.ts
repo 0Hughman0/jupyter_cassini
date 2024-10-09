@@ -272,11 +272,11 @@ export class TierViewer extends BoxPanel {
     content.addWidget(metaView);
   }
 
-  get modelChanged(): ISignal<TierViewer, NotebookTierModel.ModelChange> {
+  get modelChanged(): ISignal<TierViewer, NotebookTierModel.NewModel> {
     return this._modelChanged;
   }
 
-  private _modelChanged = new Signal<TierViewer, NotebookTierModel.ModelChange>(
+  private _modelChanged = new Signal<TierViewer, NotebookTierModel.NewModel>(
     this
   );
 
@@ -294,7 +294,7 @@ export class TierViewer extends BoxPanel {
    * Handle the model changing and update the contents of the widget.
    * @returns
    */
-  handleModelChanged(model: NotebookTierModel, change: NotebookTierModel.ModelChange2): void {
+  handleModelChanged(model: NotebookTierModel, change: NotebookTierModel.ModelChange): void {
     switch (change.type) {
       case 'ready':
       case 'meta': {
@@ -316,7 +316,7 @@ export class TierViewer extends BoxPanel {
     }
   }
 
-  handleNewModel(change: NotebookTierModel.ModelChange): void {
+  handleNewModel(change: NotebookTierModel.NewModel): void {
     if (change.old) {
       Signal.disconnectBetween(change.old, this);
       Signal.disconnectSender(this.descriptionCell);

@@ -153,9 +153,9 @@ export class NotebookTierModel implements IDisposable {
     return this._hltsFile
   }
 
-  private _changed = new Signal<NotebookTierModel, NotebookTierModel.ModelChange2>(this);
+  private _changed = new Signal<NotebookTierModel, NotebookTierModel.ModelChange>(this);
 
-  get changed(): ISignal<NotebookTierModel, NotebookTierModel.ModelChange2> {
+  get changed(): ISignal<NotebookTierModel, NotebookTierModel.ModelChange> {
     return this._changed;
   }
 
@@ -365,12 +365,12 @@ export class NotebookTierModel implements IDisposable {
 }
 
 export namespace NotebookTierModel {
-  export type ModelChange = IChange<
+  export type NewModel = IChange<
     NotebookTierModel | null,
     NotebookTierModel | null
   >;
 
-  export type ModelChange2 = {
+  export type ModelChange = {
     'type': 'meta' | 'hlts' | 'dirty' | 'ready' | 'children'
   }
 }

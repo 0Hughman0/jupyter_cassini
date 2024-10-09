@@ -188,7 +188,7 @@ export function createValidatedInput(
 
 
 export namespace MetaEditor {
-  export type Update = NotebookTierModel.ModelChange2 | {'type': 'onlyDisplay', 'values': string[] | null }
+  export type Update = NotebookTierModel.ModelChange | {'type': 'onlyDisplay', 'values': string[] | null }
 }
 
 /**

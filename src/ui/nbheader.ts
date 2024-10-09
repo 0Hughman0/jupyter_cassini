@@ -210,7 +210,7 @@ export class TierNotebookHeader extends Panel {
   /**
    * Update content of the widget when the model changes
    */
-  onModelChanged(model: NotebookTierModel, change: NotebookTierModel.ModelChange2) {
+  onModelChanged(model: NotebookTierModel, change: NotebookTierModel.ModelChange) {
     switch (change.type) {
       case 'ready':
       case 'meta': {
