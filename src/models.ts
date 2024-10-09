@@ -404,12 +404,15 @@ export class TierBrowserModel {
     this.treeManager = cassini.treeManager;
     this._current = null;
 
-    this.currentPath.changed.connect(() => {
+    this.currentPath.changed.connect((path) => {
+      this._changed.emit({'type': 'path', 'path': path })
+      
       this.treeManager.get(this.sCurrentPath).then(value => {
         this._current = value;
-        this._currentUpdated.emit(this._current);
+        this._changed.emit({'type': 'current', 'current': value})
+        
         if (value?.children) {
-          this._childrenUpdated.emit(value.children);
+          this._changed.emit({'type': 'children', 'children': value.children })
         }
       });
     }, this);
@@ -417,7 +420,7 @@ export class TierBrowserModel {
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.sCurrentPath.toString()) {
         if (this.current?.children) {
-          this._childrenUpdated.emit(this.current?.children);
+          this._changed.emit({ 'type': 'refresh' })
         }
       }
     }, this);
@@ -428,16 +431,10 @@ export class TierBrowserModel {
     };
   }
 
-  private _childrenUpdated = new Signal<this, TreeChildren | null>(this);
+  private _changed = new Signal<this, TierBrowserModel.ModelChange>(this);
 
-  public get childrenUpdated(): ISignal<this, TreeChildren | null> {
-    return this._childrenUpdated;
-  }
-
-  private _currentUpdated = new Signal<this, ITreeData | null>(this);
-
-  public get currentUpdated(): ISignal<this, ITreeData | null> {
-    return this._currentUpdated;
+  get changed(): ISignal<this, TierBrowserModel.ModelChange> {
+    return this._changed;
   }
 
   get current(): ITreeData | null {
@@ -494,5 +491,21 @@ export class TierBrowserModel {
    */
   refresh(): Promise<ITreeData | null> {
     return this.treeManager.fetchTierData(this.sCurrentPath);
+  }
+}
+
+
+export namespace TierBrowserModel {
+  export type ModelChange = {
+    'type': 'path',
+    'path': ObservableList<string>
+  } | {
+    'type': 'current'
+    'current': ITreeData | null
+  } | {
+    'type': 'children',
+    'children': TreeChildren | null
+  } | {
+    'type': 'refresh'
   }
 }

@@ -629,14 +629,7 @@ export class TierTreeBrowser extends ReactWidget {
 
     this.addClass('cas-TierBrowser');
 
-    model.childrenUpdated.connect((model, children) => {
-      this.handleChildrenUpdated(model);
-      this.handleAdditionalColumnsSet(model.additionalColumns);
-    }, this);
-
-    model.currentUpdated.connect((model, current) => {
-      this.handleCurrentChanged(model);
-    }, this);
+    model.changed.connect(this.handleModelChanged, this);
   }
 
   get tierChildren(): TreeChildren {
@@ -647,19 +640,20 @@ export class TierTreeBrowser extends ReactWidget {
     return this.model.childMetas;
   }
 
-  handleCurrentChanged(model: TierBrowserModel) {
-    const current = model.current;
-    if (current) {
-      this.currentTier = current;
-      this.currentPath = model.currentPath;
-      this.handleChildrenUpdated(model);
+  handleModelChanged(model: TierBrowserModel, change: TierBrowserModel.ModelChange) {
+    switch (change.type) {
+      case 'current': {
+        this.currentTier = change.current;
+        break
+      }
+      case 'path': {
+        this.currentPath = change.path;
+        break
+      }
+      case 'children': {
+        this.additionalColumns = model.additionalColumns;
+      }
     }
-
-    this.update();
-  }
-
-  handleChildrenUpdated(model: TierBrowserModel) {
-    this.additionalColumns = model.additionalColumns;
     this.update();
   }
 
