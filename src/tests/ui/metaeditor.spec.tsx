@@ -345,8 +345,6 @@ describe('metaeditor widget', () => {
   test('from null model', async () => {
     const widget = new MetaEditor(null);
 
-    expect(widget.table).toBeNull();
-
     const model = (await cassini.tierModelManager.get(
       'WP1'
     )) as NotebookTierModel;

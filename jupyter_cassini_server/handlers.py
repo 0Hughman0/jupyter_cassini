@@ -10,7 +10,7 @@ from cassini import env
 from cassini.core import NotebookTierBase
 
 from jupyter_cassini_server.safety import needs_project, with_types
-from jupyter_cassini_server.serialisation import serialize_branch, encode_path
+from jupyter_cassini_server.serialisation import serialize_branch, serialize_child, encode_path
 from jupyter_cassini_server.schema.models import (
     NewChildInfo,
     TreeResponse,
@@ -60,7 +60,7 @@ class LookupHandler(APIHandler):
                 metaPath=encode_path(tier.meta_file, project),
                 hltsPath=hlts_path,
                 started=started,
-                children=[child.name for child in tier],
+                children={child.id: serialize_child(child) for child in tier},
                 metaSchema=MetaSchema.model_validate(tier.__meta_manager__.build_model().model_json_schema())
             ))
         else:
@@ -68,7 +68,7 @@ class LookupHandler(APIHandler):
                 tierType='folder',
                 name=tier.name,
                 ids=list(tier.identifiers),
-                children=[child.name for child in tier]
+                children={child.id: serialize_child(child) for child in tier}
             ))
 
 

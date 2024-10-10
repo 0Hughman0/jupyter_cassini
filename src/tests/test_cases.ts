@@ -133,13 +133,14 @@ export const WP1_1_TREE: TreeResponse = {
 export const HOME_INFO: FolderTierInfo = {
   name: 'Home',
   ids: [],
-  children: ['WP1'],
+  children: HOME_TREE.children,
   tierType: 'folder'
 };
+
 export const WP1_INFO: NotebookTierInfo = {
   name: 'WP1',
   ids: ['1'],
-  children: [],
+  children: WP1_TREE.children,
   started: '2024-08-31T19:36:58.587310Z',
   notebookPath: 'WorkPackages/WP1.ipynb',
   metaPath: 'WorkPackages/.wps/WP1.json',
@@ -177,7 +178,7 @@ export const WP1_INFO: NotebookTierInfo = {
 export const WP1_1_INFO: NotebookTierInfo = {
   name: 'WP1.1',
   ids: ['1', '1'],
-  children: [],
+  children: {},
   started: '2024-08-31T20:54:15.719157Z',
   notebookPath: 'WorkPackages/WP1/WP1.1.ipynb',
   metaPath: 'WorkPackages/WP1/.exps/WP1.1.json',

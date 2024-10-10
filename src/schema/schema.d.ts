@@ -211,7 +211,9 @@ export interface components {
     CommonTierInfo: {
       name: string;
       ids: string[];
-      children?: string[];
+      children?: {
+        [key: string]: components['schemas']['TreeChildResponse'];
+      };
     };
     FolderTierInfo: components['schemas']['CommonTierInfo'] & {
       /**

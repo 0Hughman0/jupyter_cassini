@@ -197,7 +197,7 @@ export class TierViewer extends BoxPanel {
     super();
 
     this.modelChanged.connect(
-      (sender, model) => this.onModelChanged(model),
+      (sender, model) => this.handleNewModel(model),
       this
     );
     this.model = model;
@@ -272,11 +272,11 @@ export class TierViewer extends BoxPanel {
     content.addWidget(metaView);
   }
 
-  get modelChanged(): ISignal<TierViewer, NotebookTierModel.ModelChange> {
+  get modelChanged(): ISignal<TierViewer, NotebookTierModel.NewModel> {
     return this._modelChanged;
   }
 
-  private _modelChanged = new Signal<TierViewer, NotebookTierModel.ModelChange>(
+  private _modelChanged = new Signal<TierViewer, NotebookTierModel.NewModel>(
     this
   );
 
@@ -290,7 +290,39 @@ export class TierViewer extends BoxPanel {
     this._modelChanged.emit({ old: oldModel, new: model });
   }
 
-  onModelChanged(change: NotebookTierModel.ModelChange): void {
+  /**
+   * Handle the model changing and update the contents of the widget.
+   * @returns
+   */
+  handleModelChanged(
+    model: NotebookTierModel,
+    change: NotebookTierModel.ModelChange
+  ): void {
+    switch (change.type) {
+      case 'ready': {
+        this.descriptionCell.source = model.description;
+        this.concCell.source = model.conclusion;
+        this.renderHighlights(model);
+        this.tierTitle.node.textContent = model.name + (model.dirty ? '*' : '');
+        break;
+      }
+      case 'meta': {
+        this.descriptionCell.source = model.description;
+        this.concCell.source = model.conclusion;
+        break;
+      }
+      case 'hlts': {
+        this.renderHighlights(model);
+        break;
+      }
+      case 'dirty': {
+        this.tierTitle.node.textContent = model.name + (model.dirty ? '*' : '');
+        break;
+      }
+    }
+  }
+
+  handleNewModel(change: NotebookTierModel.NewModel): void {
     if (change.old) {
       Signal.disconnectBetween(change.old, this);
       Signal.disconnectSender(this.descriptionCell);
@@ -305,8 +337,7 @@ export class TierViewer extends BoxPanel {
 
     console.log(model);
 
-    model.ready.then(() => this.onContentChanged());
-    model.changed.connect(this.onContentChanged, this);
+    model.changed.connect(this.handleModelChanged, this);
 
     this.descriptionCell.contentChanged.connect((sender, description) => {
       model.description = description;
@@ -322,36 +353,7 @@ export class TierViewer extends BoxPanel {
 
     this.metaView.model = model;
 
-    this.onContentChanged();
-  }
-
-  /**
-   * Handle the model changing and update the contents of the widget.
-   * @returns
-   */
-  onContentChanged(): void {
-    if (!this.model) {
-      return;
-    }
-
-    if (!this.model.metaFile) {
-      return;
-    }
-
-    if (this.model.dirty) {
-      this.tierTitle.node.textContent = this.model.name + '*';
-    } else {
-      this.tierTitle.node.textContent = this.model.name;
-    }
-
-    this.descriptionCell.source = this.model.description;
-
-    this.concCell.source = this.model.conclusion;
-
-    // the update could be new meta
-    // this.metaView.render(Object.keys(this.model.additionalMeta));
-
-    this.renderHighlights(this.model);
+    this.handleModelChanged(model, { type: 'ready' });
   }
 
   private renderHighlights(model: NotebookTierModel) {

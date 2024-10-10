@@ -1,6 +1,10 @@
 /* eslint-disable prettier/prettier */
 import { ValidateFunction } from 'ajv';
 
+import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
+import { Signal, ISignal } from '@lumino/signaling';
+import { IDisposable } from '@lumino/disposable';
+
 import { ObservableList } from '@jupyterlab/observables';
 import {
   DocumentRegistry,
@@ -8,36 +12,34 @@ import {
   TextModelFactory
 } from '@jupyterlab/docregistry';
 import { IOutput } from '@jupyterlab/nbformat';
-
-import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
-import { Signal, ISignal } from '@lumino/signaling';
 import { Notification } from '@jupyterlab/apputils';
 
-import {
-  cassini,
-  TreeChildren,
-  ITreeChildData,
-  ITreeData,
-  TreeManager
-} from './core';
-import {
-  MetaSchema,
-  FolderTierInfo,
-  NotebookTierInfo,
-  IChange
-} from './schema/types';
+import { cassini, TreeChildren, ITreeData, TreeManager } from './core';
+import { MetaSchema, FolderTierInfo, NotebookTierInfo } from './schema/types';
+import { treeChildrenToData } from './utils';
+
+export interface INewModel<Old, New> {
+  old: Old;
+  new: New;
+}
+
+export interface IModelChange {
+  type: string;
+}
 
 export type TierModel = FolderTierModel | NotebookTierModel;
 
 export class FolderTierModel {
   readonly name: string;
   readonly ids: string[];
-  readonly children: string[] | null;
+  readonly children: TreeChildren | null;
 
   constructor(options: FolderTierInfo) {
     this.name = options.name;
     this.ids = options.ids;
-    this.children = options.children || null;
+    this.children = options.children
+      ? treeChildrenToData(options.children)
+      : null;
   }
 }
 
@@ -63,28 +65,29 @@ export class FolderTierModel {
  * Note that before any values are got from the model, model.ready should be waited for. In future might be worth decorating all values to help with this.
  *
  */
-export class NotebookTierModel {
+export class NotebookTierModel implements IDisposable {
   readonly name: string;
   readonly ids: string[];
+
   readonly notebookPath: string;
-  readonly started: Date;
+
   readonly metaSchema: MetaSchema;
   readonly publicMetaSchema: MetaSchema;
   readonly metaValidator: ValidateFunction<MetaSchema>;
 
-  readonly hltsPath: string | undefined;
+  readonly metaFile: Context<DocumentRegistry.ICodeModel>;
 
-  metaFile: Context<DocumentRegistry.ICodeModel>;
-  hltsFile?: Context<DocumentRegistry.ICodeModel>;
+  protected _hltsFile?: Context<DocumentRegistry.ICodeModel>;
+  protected _children: TreeChildren | null;
 
   protected _required: Promise<any>[];
+  protected _isDisposed: boolean;
 
   constructor(options: NotebookTierInfo) {
     this.name = options.name;
     this.ids = options.ids;
-
     this.notebookPath = options.notebookPath;
-    this.hltsPath = options.hltsPath;
+
     this.metaSchema = options.metaSchema;
     this.publicMetaSchema = NotebookTierModel.createPublicMetaSchema(
       this.metaSchema
@@ -92,50 +95,45 @@ export class NotebookTierModel {
 
     this.metaValidator = cassini.ajv.compile<MetaSchema>(this.metaSchema);
 
-    cassini.treeManager.changed.connect((sender, { ids, data }) => {
-      if (ids.toString() === this.ids.toString()) {
-        this._changed.emit();
-      }
-    }, this);
+    this._children = options.children
+      ? treeChildrenToData(options.children)
+      : null;
 
+    this._isDisposed = false;
     this._required = [];
 
-    if (options.metaPath) {
-      const metaFile = (this.metaFile =
-        new Context<DocumentRegistry.ICodeModel>({
-          manager: cassini.contentService,
-          factory: new TextModelFactory(),
-          path: options.metaPath as string
-        }));
-      this._required.push(metaFile.ready);
+    const metaFile = (this.metaFile = new Context<DocumentRegistry.ICodeModel>({
+      manager: cassini.contentService,
+      factory: new TextModelFactory(),
+      path: options.metaPath as string
+    }));
 
-      metaFile.initialize(false);
-      metaFile.ready.then(() => {
-        metaFile.model.contentChanged.connect(() => this._changed.emit(), this);
-        metaFile.model.stateChanged.connect((sender, change) => {
-          if (change.name === 'dirty') {
-            this._changed.emit(); // the dirtiness of the metaFile is also part of the state of this model.
-          }
-        }, this);
-      });
-    }
+    metaFile.model.contentChanged.connect(
+      () => this._changed.emit({ type: 'meta' }),
+      this
+    );
+    metaFile.model.stateChanged.connect((sender, change) => {
+      if (change.name === 'dirty') {
+        this._changed.emit({ type: 'dirty' }); // the dirtiness of the metaFile is also part of the state of this model.
+      }
+    }, this);
+    this._required.push(metaFile.initialize(false));
 
     if (options.hltsPath) {
-      const hltsFile = (this.hltsFile = new Context({
+      const hltsFile = (this._hltsFile = new Context({
         manager: cassini.contentService,
         factory: new TextModelFactory(),
         path: options.hltsPath as string
       }));
-      this._required.push(hltsFile.ready);
 
-      hltsFile.initialize(false);
+      hltsFile.model.contentChanged.connect(() => {
+        this._changed.emit({ type: 'hlts' });
+      }, this);
 
-      this.hltsFile.ready.then(() => {
-        this.hltsFile?.model.contentChanged.connect(() => {
-          this._changed.emit();
-        }, this);
-      });
+      this._required.push(hltsFile.initialize(false));
     }
+
+    this.ready.then(() => this._changed.emit({ type: 'ready' }));
   }
 
   static createPublicMetaSchema(schema: MetaSchema): MetaSchema {
@@ -152,9 +150,20 @@ export class NotebookTierModel {
     return publicMetaSchema;
   }
 
-  private _changed = new Signal<NotebookTierModel, void>(this);
+  get children() {
+    return this._children;
+  }
 
-  get changed(): ISignal<NotebookTierModel, void> {
+  get hltsFile() {
+    return this._hltsFile;
+  }
+
+  private _changed = new Signal<
+    NotebookTierModel,
+    NotebookTierModel.ModelChange
+  >(this);
+
+  get changed(): ISignal<NotebookTierModel, NotebookTierModel.ModelChange> {
     return this._changed;
   }
 
@@ -165,17 +174,16 @@ export class NotebookTierModel {
    */
   get ready(): Promise<NotebookTierModel> {
     return Promise.all(this._required).then(() => {
-      this._changed.emit();
       return this;
     });
   }
 
-  get treeData(): Promise<ITreeData | null> {
-    return cassini.treeManager.get(this.ids);
+  get isDisposed(): boolean {
+    return this._isDisposed;
   }
 
-  get children(): Promise<{ [id: string]: ITreeChildData } | null> {
-    return this.treeData.then(data => data?.children || null);
+  get treeData(): Promise<ITreeData | null> {
+    return cassini.treeManager.get(this.ids);
   }
 
   /**
@@ -221,7 +229,7 @@ export class NotebookTierModel {
     const o = {} as JSONObject;
     const metaJSON = this.meta;
 
-    const properties = this?.metaSchema && this.metaSchema.properties;
+    const properties = this.metaSchema.properties;
 
     for (const key in metaJSON) {
       if (
@@ -242,7 +250,7 @@ export class NotebookTierModel {
     const newMeta = this.meta;
     newMeta[key] = value;
     const outcome = this.updateMeta(newMeta);
-    this._changed.emit();
+    this._changed.emit({ type: 'meta' });
     return outcome;
   }
 
@@ -250,7 +258,7 @@ export class NotebookTierModel {
     const newMeta = this.meta;
     delete newMeta[key];
     this.updateMeta(newMeta);
-    this._changed.emit();
+    this._changed.emit({ type: 'meta' });
   }
 
   get description(): string {
@@ -258,10 +266,6 @@ export class NotebookTierModel {
   }
 
   set description(value: string) {
-    if (!this.metaFile) {
-      throw 'Tier has no meta, cannot store description';
-    }
-
     this.setMetaValue('description', value);
   }
 
@@ -270,11 +274,11 @@ export class NotebookTierModel {
   }
 
   set conclusion(value: string) {
-    if (!this.metaFile) {
-      throw 'Tier has no meta, cannot store conclusion';
-    }
-
     this.setMetaValue('conclusion', value);
+  }
+
+  get started(): Date {
+    return new Date(this.meta['started'] as string);
   }
 
   get dirty(): boolean {
@@ -330,13 +334,59 @@ export class NotebookTierModel {
       this.hltsFile?.revert()
     ]).then();
   }
+
+  refresh(
+    options: Partial<
+      Omit<NotebookTierInfo, 'metaPath' | 'id' | 'name' | 'notebookPath'>
+    >
+  ) {
+    if (options.hltsPath && this.hltsFile?.localPath !== options.hltsPath) {
+      const hltsFile = (this._hltsFile = new Context({
+        manager: cassini.contentService,
+        factory: new TextModelFactory(),
+        path: options.hltsPath as string
+      }));
+
+      hltsFile.model.contentChanged.connect(() => {
+        this._changed.emit({ type: 'hlts' });
+      }, this);
+
+      this._required.push(hltsFile.initialize(false));
+    }
+
+    const childrenData = options.children
+      ? treeChildrenToData(options.children)
+      : null;
+
+    if (childrenData !== this.children) {
+      this._children = childrenData;
+      this._changed.emit({ type: 'children' });
+    }
+
+    return Promise.all([this.ready, this.revert()]);
+  }
+
+  dispose(): void {
+    if (this.isDisposed) {
+      return;
+    }
+
+    this.metaFile.dispose();
+    this.hltsFile?.dispose();
+
+    Signal.clearData(this);
+  }
 }
 
 export namespace NotebookTierModel {
-  export type ModelChange = IChange<
+  export type NewModel = INewModel<
     NotebookTierModel | null,
     NotebookTierModel | null
   >;
+
+  export type ModelChange = {
+    type: 'meta' | 'hlts' | 'dirty' | 'ready' | 'children';
+  };
 }
 
 export interface IAdditionalColumnsStore {
@@ -368,12 +418,15 @@ export class TierBrowserModel {
     this.treeManager = cassini.treeManager;
     this._current = null;
 
-    this.currentPath.changed.connect(() => {
+    this.currentPath.changed.connect(path => {
+      this._changed.emit({ type: 'path', path: path });
+
       this.treeManager.get(this.sCurrentPath).then(value => {
         this._current = value;
-        this._currentUpdated.emit(this._current);
+        this._changed.emit({ type: 'current', current: value });
+
         if (value?.children) {
-          this._childrenUpdated.emit(value.children);
+          this._changed.emit({ type: 'children', children: value.children });
         }
       });
     }, this);
@@ -381,7 +434,7 @@ export class TierBrowserModel {
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.sCurrentPath.toString()) {
         if (this.current?.children) {
-          this._childrenUpdated.emit(this.current?.children);
+          this._changed.emit({ type: 'refresh' });
         }
       }
     }, this);
@@ -392,16 +445,10 @@ export class TierBrowserModel {
     };
   }
 
-  private _childrenUpdated = new Signal<this, TreeChildren | null>(this);
+  private _changed = new Signal<this, TierBrowserModel.ModelChange>(this);
 
-  public get childrenUpdated(): ISignal<this, TreeChildren | null> {
-    return this._childrenUpdated;
-  }
-
-  private _currentUpdated = new Signal<this, ITreeData | null>(this);
-
-  public get currentUpdated(): ISignal<this, ITreeData | null> {
-    return this._currentUpdated;
+  get changed(): ISignal<this, TierBrowserModel.ModelChange> {
+    return this._changed;
   }
 
   get current(): ITreeData | null {
@@ -459,4 +506,23 @@ export class TierBrowserModel {
   refresh(): Promise<ITreeData | null> {
     return this.treeManager.fetchTierData(this.sCurrentPath);
   }
+}
+
+export namespace TierBrowserModel {
+  export type ModelChange =
+    | {
+        type: 'path';
+        path: ObservableList<string>;
+      }
+    | {
+        type: 'current';
+        current: ITreeData | null;
+      }
+    | {
+        type: 'children';
+        children: TreeChildren | null;
+      }
+    | {
+        type: 'refresh';
+      };
 }

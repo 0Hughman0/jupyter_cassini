@@ -1,15 +1,14 @@
 import 'jest';
-import { FolderTierInfo } from '../schema/types';
 import { ServiceManager } from '@jupyterlab/services';
-import { signalToPromise } from '@jupyterlab/testutils';
 
 import {
   TierBrowserModel,
   NotebookTierModel,
   FolderTierModel
 } from '../models';
-import { TreeManager, cassini } from '../core';
-
+import { cassini } from '../core';
+import { treeResponseToData } from '../utils';
+import { FolderTierInfo } from '../schema/types';
 import { CassiniServer } from '../services';
 
 import {
@@ -19,7 +18,7 @@ import {
   TEST_META_CONTENT,
   WP1_INFO
 } from './test_cases';
-import { createTierFiles } from './tools';
+import { createTierFiles, awaitSignalType } from './tools';
 
 describe('TierModel', () => {
   let theManager: ServiceManager.IManager;
@@ -87,14 +86,11 @@ describe('TierModel', () => {
 
       await cassini.treeManager.cacheTreeData(
         ['1'],
-        TreeManager._treeResponseToData(WP1_TREE, ['1'])
+        treeResponseToData(WP1_TREE, ['1'])
       );
 
       await expect(tier.treeData).resolves.toEqual(
-        TreeManager._treeResponseToData(WP1_TREE, ['1'])
-      );
-      await expect(tier.children).resolves.toEqual(
-        TreeManager._treeResponseToData(WP1_TREE, ['1']).children
+        treeResponseToData(WP1_TREE, ['1'])
       );
     });
   });
@@ -215,30 +211,26 @@ describe('TierBrowserModel', () => {
     expect(Array.from(model.currentPath)).toEqual([]);
     expect(model.current).toBeNull();
 
-    const changed = signalToPromise(model.currentUpdated);
     model.currentPath.clear();
-    await changed;
+    await awaitSignalType(model.changed, 'current');
 
-    expect(model.current).toMatchObject(
-      TreeManager._treeResponseToData(HOME_TREE, [])
-    );
+    expect(model.current).toMatchObject(treeResponseToData(HOME_TREE, []));
 
     expect(model.current?.children).toMatchObject(
-      TreeManager._treeResponseToData(HOME_TREE, ['1']).children
+      treeResponseToData(HOME_TREE, ['1']).children
     );
   });
 
   test('updating', async () => {
     const ids = ['1', '1'];
 
-    const changed = signalToPromise(model.currentUpdated);
     model.currentPath.pushAll(ids);
-    await changed;
+    await awaitSignalType(model.changed, 'current');
 
     const childReponse = Object.assign(HOME_TREE);
 
     expect(model.current).toMatchObject(
-      TreeManager._treeResponseToData(childReponse, ['1', '1'])
+      treeResponseToData(childReponse, ['1', '1'])
     );
     expect(CassiniServer.tree).lastCalledWith(ids);
   });
@@ -268,9 +260,9 @@ describe('TierBrowserModel', () => {
   });
 
   test('childMetas', async () => {
-    const changed = signalToPromise(model.currentUpdated);
     model.currentPath.clear();
-    await changed;
+
+    await awaitSignalType(model.changed, 'current');
 
     expect(model.childMetas).toEqual(new Set(['Fishes', 'Crabs']));
   });
