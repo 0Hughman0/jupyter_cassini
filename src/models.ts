@@ -336,9 +336,9 @@ export class NotebookTierModel implements IDisposable {
   }
 
   refresh(
-    options: Omit<NotebookTierInfo, 'metaPath' | 'id' | 'name' | 'notebookPath'>
+    options: Partial<Omit<NotebookTierInfo, 'metaPath' | 'id' | 'name' | 'notebookPath'>>
   ) {
-    if (this.hltsFile?.localPath !== options.hltsPath) {
+    if (options.hltsPath && (this.hltsFile?.localPath !== options.hltsPath)) {
       const hltsFile = (this._hltsFile = new Context({
         manager: cassini.contentService,
         factory: new TextModelFactory(),

@@ -136,10 +136,11 @@ export const HOME_INFO: FolderTierInfo = {
   children: HOME_TREE.children,
   tierType: 'folder'
 };
+
 export const WP1_INFO: NotebookTierInfo = {
   name: 'WP1',
   ids: ['1'],
-  children: {},
+  children: WP1_TREE.children,
   started: '2024-08-31T19:36:58.587310Z',
   notebookPath: 'WorkPackages/WP1.ipynb',
   metaPath: 'WorkPackages/.wps/WP1.json',
