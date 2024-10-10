@@ -91,7 +91,7 @@ export namespace CassiniServer {
    */
   export function tree(ids: string[]): Promise<TreeResponse> {
     return client
-      .GET(`/tree/{ids}`, {
+      .GET('/tree/{ids}', {
         params: {
           path: { ids: ids.join('/') }
         }
