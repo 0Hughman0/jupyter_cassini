@@ -655,6 +655,7 @@ export class TierTreeBrowser extends ReactWidget {
       }
       case 'children': {
         this.additionalColumns = model.additionalColumns;
+        break;
       }
     }
     this.update();

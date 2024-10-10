@@ -215,13 +215,18 @@ export class TierNotebookHeader extends Panel {
     change: NotebookTierModel.ModelChange
   ) {
     switch (change.type) {
-      case 'ready':
+      case 'ready': {
+        this.descriptionEditor.source = this.model.description;
+        this.conclusionEditor.source = this.model.conclusion;
+        const children = this.model.children;
+        this.childrenSummary.data = children ? Object.entries(children) : [];
+        break;
+      }
       case 'meta': {
         this.descriptionEditor.source = this.model.description;
         this.conclusionEditor.source = this.model.conclusion;
         break;
       }
-      case 'ready':
       case 'children': {
         const children = this.model.children;
         this.childrenSummary.data = children ? Object.entries(children) : [];

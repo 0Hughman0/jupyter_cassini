@@ -299,22 +299,25 @@ export class TierViewer extends BoxPanel {
     change: NotebookTierModel.ModelChange
   ): void {
     switch (change.type) {
-      case 'ready':
+      case 'ready': {
+        this.descriptionCell.source = model.description;
+        this.concCell.source = model.conclusion;
+        this.renderHighlights(model);
+        this.tierTitle.node.textContent = model.name + (model.dirty ? '*' : '');
+        break;
+      }
       case 'meta': {
         this.descriptionCell.source = model.description;
         this.concCell.source = model.conclusion;
+        break;
       }
-      case 'ready':
       case 'hlts': {
         this.renderHighlights(model);
+        break;
       }
-      case 'ready':
       case 'dirty': {
-        if (model.dirty) {
-          this.tierTitle.node.textContent = model.name + '*';
-        } else {
-          this.tierTitle.node.textContent = model.name;
-        }
+        this.tierTitle.node.textContent = model.name + (model.dirty ? '*' : '');
+        break;
       }
     }
   }
