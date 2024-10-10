@@ -243,7 +243,7 @@ export class TierModelTreeManager {
         const oldModel = this.cache[name];
         if (
           oldModel instanceof NotebookTierModel &&
-          tierInfo.tierType == 'notebook'
+          tierInfo.tierType === 'notebook'
         ) {
           oldModel.refresh(tierInfo);
         }

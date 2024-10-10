@@ -192,6 +192,10 @@ export namespace MetaEditor {
     | { type: 'onlyDisplay'; values: string[] | null };
 }
 
+const noOp = () => {
+  return undefined;
+};
+
 /**
  * Widget for modifying the meta of a TierModel.
  */
@@ -209,8 +213,8 @@ export class MetaEditor extends Panel {
     this.table = new MetaTableWidget(
       { properties: {}, additionalProperties: {} },
       {},
-      () => {},
-      () => {}
+      noOp,
+      noOp
     );
 
     this.addWidget(this.table);
@@ -269,8 +273,8 @@ export class MetaEditor extends Panel {
     if (!newModel) {
       this.table.values = {};
       this.table.schema = { properties: {}, additionalProperties: {} };
-      this.table.handleRemoveMetaKey = () => {};
-      this.table.handleSetMetaValue = () => {};
+      this.table.handleRemoveMetaKey = noOp;
+      this.table.handleSetMetaValue = noOp;
 
       this.table.update();
       return;
