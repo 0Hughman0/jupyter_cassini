@@ -1,13 +1,18 @@
-import { NotebookTierModel } from '../../models'
-import { TierNotebookHeader } from '../../ui/nbheader'
+import { NotebookTierModel } from '../../models';
+import { TierNotebookHeader } from '../../ui/nbheader';
 import { treeChildrenToData } from '../../utils';
-import { WP1_INFO, TEST_META_CONTENT, TEST_HLT_CONTENT } from '../test_cases'
-import { mockCassini, mockServerAPI, createTierFiles, awaitSignalType } from '../tools';
-
+import { WP1_INFO, TEST_META_CONTENT, TEST_HLT_CONTENT } from '../test_cases';
+import {
+  mockCassini,
+  mockServerAPI,
+  createTierFiles,
+  awaitSignalType
+} from '../tools';
 
 beforeEach(() => {
-    mockCassini();
-    mockServerAPI({'/lookup': [
+  mockCassini();
+  mockServerAPI({
+    '/lookup': [
       { query: { name: 'WP1' }, response: WP1_INFO },
       {
         query: { name: 'Home' },
@@ -23,63 +28,72 @@ beforeEach(() => {
   createTierFiles([
     { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
     { path: WP1_INFO.hltsPath as string, content: TEST_HLT_CONTENT }
-    ]);
+  ]);
 });
-  
 
 describe('nb header', () => {
-    test('construct', async () => {
-        const model = new NotebookTierModel(WP1_INFO);
-        const widget = new TierNotebookHeader(model);
+  test('construct', async () => {
+    const model = new NotebookTierModel(WP1_INFO);
+    const widget = new TierNotebookHeader(model);
 
-        await model.ready
+    await model.ready;
 
-        expect(widget.descriptionEditor.source).toEqual(TEST_META_CONTENT.description);
-        expect(widget.conclusionEditor.source).toEqual(TEST_META_CONTENT.conclusion);
+    expect(widget.descriptionEditor.source).toEqual(
+      TEST_META_CONTENT.description
+    );
+    expect(widget.conclusionEditor.source).toEqual(
+      TEST_META_CONTENT.conclusion
+    );
 
-        expect(Array.from(widget.children())[0].node.textContent).toEqual('WP1')
-        expect(widget.childrenSummary.data).toEqual(Object.entries(treeChildrenToData(WP1_INFO.children || {})))
-    })
+    expect(Array.from(widget.children())[0].node.textContent).toEqual('WP1');
+    expect(widget.childrenSummary.data).toEqual(
+      Object.entries(treeChildrenToData(WP1_INFO.children || {}))
+    );
+  });
 
-    test('update description', async () => {
-        const model = new NotebookTierModel(WP1_INFO);
-        const widget = new TierNotebookHeader(model);
+  test('update description', async () => {
+    const model = new NotebookTierModel(WP1_INFO);
+    const widget = new TierNotebookHeader(model);
 
-        await model.ready
+    await model.ready;
 
-        expect(widget.descriptionEditor.source).toEqual(TEST_META_CONTENT.description);
+    expect(widget.descriptionEditor.source).toEqual(
+      TEST_META_CONTENT.description
+    );
 
-        let set = awaitSignalType(model.changed, 'meta');
-        model.setMetaValue('description', 'new description')
-        await set;
-        
-        expect(widget.descriptionEditor.source).toEqual('new description');
+    let set = awaitSignalType(model.changed, 'meta');
+    model.setMetaValue('description', 'new description');
+    await set;
 
-        set = awaitSignalType(model.changed, 'meta');
-        model.setMetaValue('conclusion', 'new conclusion')
-        await set;
-        
-        expect(widget.conclusionEditor.source).toEqual('new conclusion');
-    })
+    expect(widget.descriptionEditor.source).toEqual('new description');
 
-    test('update children', async () => {
-        const model = new NotebookTierModel(WP1_INFO);
-        const widget = new TierNotebookHeader(model);
+    set = awaitSignalType(model.changed, 'meta');
+    model.setMetaValue('conclusion', 'new conclusion');
+    await set;
 
-        await model.ready
+    expect(widget.conclusionEditor.source).toEqual('new conclusion');
+  });
 
-        expect(widget.childrenSummary.data).toEqual(
-            Object.entries(treeChildrenToData(WP1_INFO.children || {}))
-        )
+  test('update children', async () => {
+    const model = new NotebookTierModel(WP1_INFO);
+    const widget = new TierNotebookHeader(model);
 
-        const newChildren = structuredClone(WP1_INFO.children || {})
-        newChildren['2'] = newChildren['1']
+    await model.ready;
 
-        model.refresh({
-            children: newChildren
-        })
+    expect(widget.childrenSummary.data).toEqual(
+      Object.entries(treeChildrenToData(WP1_INFO.children || {}))
+    );
 
-        expect(widget.childrenSummary.data).toEqual(Object.entries(treeChildrenToData(newChildren)))
-        expect(widget.childrenSummary.data.map((row) => row[0])).toContain('2')
-    })
-})
+    const newChildren = structuredClone(WP1_INFO.children || {});
+    newChildren['2'] = newChildren['1'];
+
+    model.refresh({
+      children: newChildren
+    });
+
+    expect(widget.childrenSummary.data).toEqual(
+      Object.entries(treeChildrenToData(newChildren))
+    );
+    expect(widget.childrenSummary.data.map(row => row[0])).toContain('2');
+  });
+});
