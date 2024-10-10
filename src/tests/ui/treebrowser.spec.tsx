@@ -13,7 +13,12 @@ import {
 import { TierBrowserModel } from '../../models';
 import { treeResponseToData } from '../../utils';
 
-import { mockServerAPI, createTierFiles, mockCassini, awaitSignalType } from '../tools';
+import {
+  mockServerAPI,
+  createTierFiles,
+  mockCassini,
+  awaitSignalType
+} from '../tools';
 import {
   HOME_TREE,
   WP1_TREE,
@@ -86,7 +91,7 @@ describe('tree browser', () => {
 
     model.currentPath.clear();
     await signalToPromise(model.changed);
-    
+
     expect(widget.render()).not.toEqual(
       <div>
         <a>Loading</a>
@@ -115,9 +120,7 @@ describe('tree browser', () => {
 
     expect(Array.from(widget.currentPath)).toEqual(['1']);
     expect(widget.currentTier?.name).toEqual('WP1');
-    expect(widget.currentTier).toEqual(
-      treeResponseToData(WP1_TREE, ['1'])
-    );
+    expect(widget.currentTier).toEqual(treeResponseToData(WP1_TREE, ['1']));
     expect(widget.tierChildren).toEqual(
       treeResponseToData(WP1_TREE, ['1']).children
     );

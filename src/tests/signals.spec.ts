@@ -11,7 +11,6 @@ import {
 import 'jest';
 
 describe('tier-model', () => {
-
   beforeEach(async () => {
     await createTierFiles([
       { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
@@ -109,17 +108,29 @@ describe('tree-model', () => {
 
     browserModel.changed.connect((sender, change) => {
       switch (change.type) {
-        case 'path': { pathSentinal(change); break }
-        case 'current': { currentSentinal(change); break }
-        case 'children': { childrenSentinal(change); break }
-        case 'refresh': { refreshSentinal(change); break }
+        case 'path': {
+          pathSentinal(change);
+          break;
+        }
+        case 'current': {
+          currentSentinal(change);
+          break;
+        }
+        case 'children': {
+          childrenSentinal(change);
+          break;
+        }
+        case 'refresh': {
+          refreshSentinal(change);
+          break;
+        }
       }
     });
-    
+
     browserModel.currentPath.push('1');
 
-    await awaitSignalType(browserModel.changed, 'current')
-    
+    await awaitSignalType(browserModel.changed, 'current');
+
     expect(pathSentinal).toBeCalledTimes(1);
     expect(currentSentinal).toBeCalledTimes(1);
 

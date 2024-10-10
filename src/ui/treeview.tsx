@@ -640,15 +640,18 @@ export class TierTreeBrowser extends ReactWidget {
     return this.model.childMetas;
   }
 
-  handleModelChanged(model: TierBrowserModel, change: TierBrowserModel.ModelChange) {
+  handleModelChanged(
+    model: TierBrowserModel,
+    change: TierBrowserModel.ModelChange
+  ) {
     switch (change.type) {
       case 'current': {
         this.currentTier = change.current;
-        break
+        break;
       }
       case 'path': {
         this.currentPath = change.path;
-        break
+        break;
       }
       case 'children': {
         this.additionalColumns = model.additionalColumns;

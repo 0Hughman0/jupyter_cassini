@@ -14,19 +14,9 @@ import {
 import { IOutput } from '@jupyterlab/nbformat';
 import { Notification } from '@jupyterlab/apputils';
 
-import {
-  cassini,
-  TreeChildren,
-  ITreeData,
-  TreeManager
-} from './core';
-import {
-  MetaSchema,
-  FolderTierInfo,
-  NotebookTierInfo
-} from './schema/types';
+import { cassini, TreeChildren, ITreeData, TreeManager } from './core';
+import { MetaSchema, FolderTierInfo, NotebookTierInfo } from './schema/types';
 import { treeChildrenToData } from './utils';
-
 
 export interface INewModel<Old, New> {
   old: Old;
@@ -34,7 +24,7 @@ export interface INewModel<Old, New> {
 }
 
 export interface IModelChange {
-  type: string
+  type: string;
 }
 
 export type TierModel = FolderTierModel | NotebookTierModel;
@@ -47,7 +37,9 @@ export class FolderTierModel {
   constructor(options: FolderTierInfo) {
     this.name = options.name;
     this.ids = options.ids;
-    this.children = options.children ? treeChildrenToData(options.children) : null;
+    this.children = options.children
+      ? treeChildrenToData(options.children)
+      : null;
   }
 }
 
@@ -76,15 +68,15 @@ export class FolderTierModel {
 export class NotebookTierModel implements IDisposable {
   readonly name: string;
   readonly ids: string[];
-  
+
   readonly notebookPath: string;
-  
+
   readonly metaSchema: MetaSchema;
   readonly publicMetaSchema: MetaSchema;
   readonly metaValidator: ValidateFunction<MetaSchema>;
 
   readonly metaFile: Context<DocumentRegistry.ICodeModel>;
-  
+
   protected _hltsFile?: Context<DocumentRegistry.ICodeModel>;
   protected _children: TreeChildren | null;
 
@@ -103,41 +95,45 @@ export class NotebookTierModel implements IDisposable {
 
     this.metaValidator = cassini.ajv.compile<MetaSchema>(this.metaSchema);
 
-    this._children = options.children ? treeChildrenToData(options.children) : null;
+    this._children = options.children
+      ? treeChildrenToData(options.children)
+      : null;
 
     this._isDisposed = false;
     this._required = [];
 
-    const metaFile = (this.metaFile =
-      new Context<DocumentRegistry.ICodeModel>({
-        manager: cassini.contentService,
-        factory: new TextModelFactory(),
-        path: options.metaPath as string
+    const metaFile = (this.metaFile = new Context<DocumentRegistry.ICodeModel>({
+      manager: cassini.contentService,
+      factory: new TextModelFactory(),
+      path: options.metaPath as string
     }));
 
-    metaFile.model.contentChanged.connect(() => this._changed.emit({'type': 'meta'}), this);
+    metaFile.model.contentChanged.connect(
+      () => this._changed.emit({ type: 'meta' }),
+      this
+    );
     metaFile.model.stateChanged.connect((sender, change) => {
-        if (change.name === 'dirty') {
-          this._changed.emit({'type': 'dirty'}); // the dirtiness of the metaFile is also part of the state of this model.
-        }
+      if (change.name === 'dirty') {
+        this._changed.emit({ type: 'dirty' }); // the dirtiness of the metaFile is also part of the state of this model.
+      }
     }, this);
-    this._required.push(metaFile.initialize(false))
-    
+    this._required.push(metaFile.initialize(false));
+
     if (options.hltsPath) {
       const hltsFile = (this._hltsFile = new Context({
         manager: cassini.contentService,
         factory: new TextModelFactory(),
         path: options.hltsPath as string
       }));
-      
+
       hltsFile.model.contentChanged.connect(() => {
-          this._changed.emit({'type': 'hlts'});
+        this._changed.emit({ type: 'hlts' });
       }, this);
 
       this._required.push(hltsFile.initialize(false));
     }
 
-    this.ready.then(() => this._changed.emit({'type': 'ready'}))
+    this.ready.then(() => this._changed.emit({ type: 'ready' }));
   }
 
   static createPublicMetaSchema(schema: MetaSchema): MetaSchema {
@@ -155,14 +151,17 @@ export class NotebookTierModel implements IDisposable {
   }
 
   get children() {
-    return this._children
+    return this._children;
   }
 
   get hltsFile() {
-    return this._hltsFile
+    return this._hltsFile;
   }
 
-  private _changed = new Signal<NotebookTierModel, NotebookTierModel.ModelChange>(this);
+  private _changed = new Signal<
+    NotebookTierModel,
+    NotebookTierModel.ModelChange
+  >(this);
 
   get changed(): ISignal<NotebookTierModel, NotebookTierModel.ModelChange> {
     return this._changed;
@@ -174,7 +173,7 @@ export class NotebookTierModel implements IDisposable {
    * Models should not be considered in a valid state until this happens... although the readonly attributes are probably fine...
    */
   get ready(): Promise<NotebookTierModel> {
-    return Promise.all(this._required).then(() => {      
+    return Promise.all(this._required).then(() => {
       return this;
     });
   }
@@ -251,7 +250,7 @@ export class NotebookTierModel implements IDisposable {
     const newMeta = this.meta;
     newMeta[key] = value;
     const outcome = this.updateMeta(newMeta);
-    this._changed.emit({'type': 'meta'});
+    this._changed.emit({ type: 'meta' });
     return outcome;
   }
 
@@ -259,7 +258,7 @@ export class NotebookTierModel implements IDisposable {
     const newMeta = this.meta;
     delete newMeta[key];
     this.updateMeta(newMeta);
-    this._changed.emit({'type': 'meta'});
+    this._changed.emit({ type: 'meta' });
   }
 
   get description(): string {
@@ -336,29 +335,33 @@ export class NotebookTierModel implements IDisposable {
     ]).then();
   }
 
-  refresh(options: Omit<NotebookTierInfo, 'metaPath' | 'id' | 'name' | 'notebookPath'>) {
+  refresh(
+    options: Omit<NotebookTierInfo, 'metaPath' | 'id' | 'name' | 'notebookPath'>
+  ) {
     if (this.hltsFile?.localPath !== options.hltsPath) {
       const hltsFile = (this._hltsFile = new Context({
         manager: cassini.contentService,
         factory: new TextModelFactory(),
         path: options.hltsPath as string
       }));
-            
+
       hltsFile.model.contentChanged.connect(() => {
-          this._changed.emit({'type': 'hlts'});
+        this._changed.emit({ type: 'hlts' });
       }, this);
 
       this._required.push(hltsFile.initialize(false));
     }
 
-    const childrenData = options.children ? treeChildrenToData(options.children) : null;
+    const childrenData = options.children
+      ? treeChildrenToData(options.children)
+      : null;
 
     if (childrenData !== this.children) {
       this._children = childrenData;
-      this._changed.emit({'type': 'children'})
+      this._changed.emit({ type: 'children' });
     }
 
-    return Promise.all([this.ready, this.revert()])
+    return Promise.all([this.ready, this.revert()]);
   }
 
   dispose(): void {
@@ -380,8 +383,8 @@ export namespace NotebookTierModel {
   >;
 
   export type ModelChange = {
-    'type': 'meta' | 'hlts' | 'dirty' | 'ready' | 'children'
-  }
+    type: 'meta' | 'hlts' | 'dirty' | 'ready' | 'children';
+  };
 }
 
 export interface IAdditionalColumnsStore {
@@ -413,15 +416,15 @@ export class TierBrowserModel {
     this.treeManager = cassini.treeManager;
     this._current = null;
 
-    this.currentPath.changed.connect((path) => {
-      this._changed.emit({'type': 'path', 'path': path })
-      
+    this.currentPath.changed.connect(path => {
+      this._changed.emit({ type: 'path', path: path });
+
       this.treeManager.get(this.sCurrentPath).then(value => {
         this._current = value;
-        this._changed.emit({'type': 'current', 'current': value})
-        
+        this._changed.emit({ type: 'current', current: value });
+
         if (value?.children) {
-          this._changed.emit({'type': 'children', 'children': value.children })
+          this._changed.emit({ type: 'children', children: value.children });
         }
       });
     }, this);
@@ -429,7 +432,7 @@ export class TierBrowserModel {
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.sCurrentPath.toString()) {
         if (this.current?.children) {
-          this._changed.emit({ 'type': 'refresh' })
+          this._changed.emit({ type: 'refresh' });
         }
       }
     }, this);
@@ -503,18 +506,21 @@ export class TierBrowserModel {
   }
 }
 
-
 export namespace TierBrowserModel {
-  export type ModelChange = {
-    'type': 'path',
-    'path': ObservableList<string>
-  } | {
-    'type': 'current'
-    'current': ITreeData | null
-  } | {
-    'type': 'children',
-    'children': TreeChildren | null
-  } | {
-    'type': 'refresh'
-  }
+  export type ModelChange =
+    | {
+        type: 'path';
+        path: ObservableList<string>;
+      }
+    | {
+        type: 'current';
+        current: ITreeData | null;
+      }
+    | {
+        type: 'children';
+        children: TreeChildren | null;
+      }
+    | {
+        type: 'refresh';
+      };
 }

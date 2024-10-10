@@ -33,10 +33,11 @@ describe('TreeManager', () => {
   });
 
   test('conversion', () => {
-    const treeData: ITreeData = treeResponseToData(
-      HOME_TREE as TreeResponse,
-      ['1', '1', 'a']
-    );
+    const treeData: ITreeData = treeResponseToData(HOME_TREE as TreeResponse, [
+      '1',
+      '1',
+      'a'
+    ]);
 
     expect(treeData.started).toEqual(
       HOME_TREE.started === undefined ? null : new Date(HOME_TREE.started)

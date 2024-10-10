@@ -294,7 +294,10 @@ export class TierViewer extends BoxPanel {
    * Handle the model changing and update the contents of the widget.
    * @returns
    */
-  handleModelChanged(model: NotebookTierModel, change: NotebookTierModel.ModelChange): void {
+  handleModelChanged(
+    model: NotebookTierModel,
+    change: NotebookTierModel.ModelChange
+  ): void {
     switch (change.type) {
       case 'ready':
       case 'meta': {
@@ -347,7 +350,7 @@ export class TierViewer extends BoxPanel {
 
     this.metaView.model = model;
 
-    this.handleModelChanged(model, {'type': 'ready'} );
+    this.handleModelChanged(model, { type: 'ready' });
   }
 
   private renderHighlights(model: NotebookTierModel) {

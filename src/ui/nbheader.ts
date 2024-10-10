@@ -188,18 +188,18 @@ export class TierNotebookHeader extends Panel {
     childrenLabel.textContent = 'Children';
     childrenBox.addWidget(new Widget({ node: childrenLabel }));
 
-    const children = this.model.children
-    
+    const children = this.model.children;
+
     const childrenSummary = (this.childrenSummary = new ChildrenSummaryWidget(
-        children ? Object.entries(children) : [],
-        data => data && cassini.launchTier(data),
-        (data, id) => cassini.launchTierBrowser([...this.model.ids, id]),
-        () => this.model.treeData.then(data => data && openNewChildDialog(data))
+      children ? Object.entries(children) : [],
+      data => data && cassini.launchTier(data),
+      (data, id) => cassini.launchTierBrowser([...this.model.ids, id]),
+      () => this.model.treeData.then(data => data && openNewChildDialog(data))
     ));
 
     childrenBox.addWidget(childrenSummary);
     content.addWidget(childrenBox);
-  
+
     this.model.changed.connect(this.onModelChanged, this);
   }
 
@@ -210,19 +210,22 @@ export class TierNotebookHeader extends Panel {
   /**
    * Update content of the widget when the model changes
    */
-  onModelChanged(model: NotebookTierModel, change: NotebookTierModel.ModelChange) {
+  onModelChanged(
+    model: NotebookTierModel,
+    change: NotebookTierModel.ModelChange
+  ) {
     switch (change.type) {
       case 'ready':
       case 'meta': {
         this.descriptionEditor.source = this.model.description;
         this.conclusionEditor.source = this.model.conclusion;
-        break
+        break;
       }
       case 'ready':
       case 'children': {
-        const children = this.model.children
+        const children = this.model.children;
         this.childrenSummary.data = children ? Object.entries(children) : [];
-        break
+        break;
       }
     }
   }

@@ -15,7 +15,7 @@ import {
   NewChildInfo,
   TierInfo
 } from './schema/types';
-import { treeResponseToData } from './utils'
+import { treeResponseToData } from './utils';
 
 import { TierBrowser } from './ui/browser';
 import Ajv from 'ajv';
@@ -233,7 +233,7 @@ export class TierModelTreeManager {
    * I wanted this to be synchronus, but an alternative, which is probably sensible is to use the treeManager.lookup.
    */
   get(name: string, forceRefresh?: boolean): Promise<TierModel> {
-    const inCache = Object.keys(this.cache).includes(name)
+    const inCache = Object.keys(this.cache).includes(name);
     if (inCache && !forceRefresh) {
       return Promise.resolve(this.cache[name]);
     }
@@ -241,15 +241,18 @@ export class TierModelTreeManager {
     return CassiniServer.lookup(name).then(tierInfo => {
       if (inCache) {
         const oldModel = this.cache[name];
-        if (oldModel instanceof NotebookTierModel && tierInfo.tierType == 'notebook') {
+        if (
+          oldModel instanceof NotebookTierModel &&
+          tierInfo.tierType == 'notebook'
+        ) {
           oldModel.refresh(tierInfo);
         }
 
-        return oldModel
+        return oldModel;
       } else {
-        const newModel = this._insertNewTierModel(name, tierInfo)   
+        const newModel = this._insertNewTierModel(name, tierInfo);
 
-        return newModel
+        return newModel;
       }
     });
   }

@@ -1,27 +1,29 @@
-import { TreeResponse, TreeChildResponse } from "./schema/types";
-import { ITreeData, ITreeChildData, TreeChildren } from "./core";
+import { TreeResponse, TreeChildResponse } from './schema/types';
+import { ITreeData, ITreeChildData, TreeChildren } from './core';
 
-export function treeChildrenToData(children: {[id: string]: TreeChildResponse}): TreeChildren {
-    const newChildren: TreeChildren = {};
+export function treeChildrenToData(children: {
+  [id: string]: TreeChildResponse;
+}): TreeChildren {
+  const newChildren: TreeChildren = {};
 
-    for (const id of Object.keys(children)) {
-        const child = children[id];
+  for (const id of Object.keys(children)) {
+    const child = children[id];
 
-        const { started, ...rest } = child;
+    const { started, ...rest } = child;
 
-        const newChild: ITreeChildData = {
-        started: null,
-        ...rest
-        };
+    const newChild: ITreeChildData = {
+      started: null,
+      ...rest
+    };
 
-        if (child.started) {
-            newChild['started'] = new Date(child.started);
-        }
-
-        newChildren[id] = newChild
+    if (child.started) {
+      newChild['started'] = new Date(child.started);
     }
 
-    return newChildren
+    newChildren[id] = newChild;
+  }
+
+  return newChildren;
 }
 
 /**
@@ -32,23 +34,23 @@ export function treeChildrenToData(children: {[id: string]: TreeChildResponse}):
  * Currently just parses started into an actual Date object.
  */
 export function treeResponseToData(
-    treeResponse: TreeResponse,
-    ids: string[]
-    ): ITreeData {
-    const { started, children, ...rest } = treeResponse;
+  treeResponse: TreeResponse,
+  ids: string[]
+): ITreeData {
+  const { started, children, ...rest } = treeResponse;
 
-    const newTree: ITreeData = {
-        started: null,
-        children: {},
-        ids: ids,
-        ...rest
-    };
+  const newTree: ITreeData = {
+    started: null,
+    children: {},
+    ids: ids,
+    ...rest
+  };
 
-    if (started) {
-        newTree.started = new Date(started);
-    }
+  if (started) {
+    newTree.started = new Date(started);
+  }
 
-    newTree.children = treeChildrenToData(treeResponse.children)
+  newTree.children = treeChildrenToData(treeResponse.children);
 
-    return newTree;
+  return newTree;
 }

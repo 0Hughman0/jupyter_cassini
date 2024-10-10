@@ -117,14 +117,16 @@ export function mockServerAPI(calls: MockAPICalls): void {
   }) as jest.Mocked<typeof ServerConnection.makeRequest>;
 }
 
-
-export async function awaitSignalType<C extends IModelChange>(signal: ISignal<any, C>, type: C['type'] ): Promise<C> {
+export async function awaitSignalType<C extends IModelChange>(
+  signal: ISignal<any, C>,
+  type: C['type']
+): Promise<C> {
   let value: C | null = null;
 
   while (value?.type !== type) {
-    const [_, payload] = await signalToPromise(signal)
+    const [_, payload] = await signalToPromise(signal);
     value = payload;
   }
-  
-  return value
+
+  return value;
 }

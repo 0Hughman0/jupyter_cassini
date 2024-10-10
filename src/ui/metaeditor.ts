@@ -186,9 +186,10 @@ export function createValidatedInput(
   return validatedInput;
 }
 
-
 export namespace MetaEditor {
-  export type Update = NotebookTierModel.ModelChange | {'type': 'onlyDisplay', 'values': string[] | null }
+  export type Update =
+    | NotebookTierModel.ModelChange
+    | { type: 'onlyDisplay'; values: string[] | null };
 }
 
 /**
@@ -210,10 +211,10 @@ export class MetaEditor extends Panel {
       {},
       () => {},
       () => {}
-    )
+    );
 
     this.addWidget(this.table);
-    
+
     this.handleNewModel(null, tierModel);
   }
 
@@ -233,9 +234,12 @@ export class MetaEditor extends Panel {
 
   set onlyDisplay(values: string[] | null) {
     this._onlyDisplay = values;
-    
+
     if (this.model) {
-      this.handleModelChange(this.model, {'type': 'onlyDisplay', 'values': values });
+      this.handleModelChange(this.model, {
+        type: 'onlyDisplay',
+        values: values
+      });
     }
   }
 
@@ -246,12 +250,12 @@ export class MetaEditor extends Panel {
       case 'meta': {
         const { schema, values } = this.getSchemaValues();
         this.table.values = values;
-        this.table.schema = schema
-        break
+        this.table.schema = schema;
+        break;
       }
     }
 
-    this.table.update()
+    this.table.update();
   }
 
   handleNewModel(
@@ -285,17 +289,23 @@ export class MetaEditor extends Panel {
     this.table.handleSetMetaValue = onSetMetaValue.bind(this);
     this.table.handleRemoveMetaKey = onRemoveMetaKey.bind(this);
 
-    this.handleModelChange(newModel, { 'type': 'meta' });
+    this.handleModelChange(newModel, { type: 'meta' });
     newModel.changed.connect(this.handleModelChange, this);
   }
 
   private getSchemaValues() {
     if (!this.model) {
-      return { schema: { properties: {}, additionalProperties: {} }, values: {} }
+      return {
+        schema: { properties: {}, additionalProperties: {} },
+        values: {}
+      };
     }
 
     if (this.onlyDisplay === null) {
-      return { schema: this.model.publicMetaSchema, values: this.model.additionalMeta }
+      return {
+        schema: this.model.publicMetaSchema,
+        values: this.model.additionalMeta
+      };
     } else {
       return MetaEditor._getSelectMeta(
         this.model.publicMetaSchema,

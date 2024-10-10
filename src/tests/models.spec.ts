@@ -20,7 +20,6 @@ import {
 } from './test_cases';
 import { createTierFiles, awaitSignalType } from './tools';
 
-
 describe('TierModel', () => {
   let theManager: ServiceManager.IManager;
 
@@ -212,12 +211,10 @@ describe('TierBrowserModel', () => {
     expect(Array.from(model.currentPath)).toEqual([]);
     expect(model.current).toBeNull();
 
-    model.currentPath.clear();    
+    model.currentPath.clear();
     await awaitSignalType(model.changed, 'current');
 
-    expect(model.current).toMatchObject(
-      treeResponseToData(HOME_TREE, [])
-    );
+    expect(model.current).toMatchObject(treeResponseToData(HOME_TREE, []));
 
     expect(model.current?.children).toMatchObject(
       treeResponseToData(HOME_TREE, ['1']).children
@@ -264,7 +261,7 @@ describe('TierBrowserModel', () => {
 
   test('childMetas', async () => {
     model.currentPath.clear();
-    
+
     await awaitSignalType(model.changed, 'current');
 
     expect(model.childMetas).toEqual(new Set(['Fishes', 'Crabs']));
