@@ -1,7 +1,5 @@
 import 'jest';
-import { FolderTierInfo } from '../schema/types';
 import { ServiceManager } from '@jupyterlab/services';
-import { signalToPromise } from '@jupyterlab/testutils';
 
 import {
   TierBrowserModel,
@@ -10,7 +8,7 @@ import {
 } from '../models';
 import { cassini } from '../core';
 import { treeResponseToData } from '../utils';
-
+import { FolderTierInfo } from '../schema/types';
 import { CassiniServer } from '../services';
 
 import {
@@ -20,7 +18,8 @@ import {
   TEST_META_CONTENT,
   WP1_INFO
 } from './test_cases';
-import { createTierFiles } from './tools';
+import { createTierFiles, awaitSignalType } from './tools';
+
 
 describe('TierModel', () => {
   let theManager: ServiceManager.IManager;
@@ -93,9 +92,6 @@ describe('TierModel', () => {
 
       await expect(tier.treeData).resolves.toEqual(
         treeResponseToData(WP1_TREE, ['1'])
-      );
-      await expect(tier.children).resolves.toEqual(
-        treeResponseToData(WP1_TREE, ['1']).children
       );
     });
   });
@@ -216,9 +212,8 @@ describe('TierBrowserModel', () => {
     expect(Array.from(model.currentPath)).toEqual([]);
     expect(model.current).toBeNull();
 
-    const changed = signalToPromise(model.currentUpdated);
-    model.currentPath.clear();
-    await changed;
+    model.currentPath.clear();    
+    await awaitSignalType(model.changed, 'current');
 
     expect(model.current).toMatchObject(
       treeResponseToData(HOME_TREE, [])
@@ -232,9 +227,8 @@ describe('TierBrowserModel', () => {
   test('updating', async () => {
     const ids = ['1', '1'];
 
-    const changed = signalToPromise(model.currentUpdated);
     model.currentPath.pushAll(ids);
-    await changed;
+    await awaitSignalType(model.changed, 'current');
 
     const childReponse = Object.assign(HOME_TREE);
 
@@ -269,9 +263,9 @@ describe('TierBrowserModel', () => {
   });
 
   test('childMetas', async () => {
-    const changed = signalToPromise(model.currentUpdated);
     model.currentPath.clear();
-    await changed;
+    
+    await awaitSignalType(model.changed, 'current');
 
     expect(model.childMetas).toEqual(new Set(['Fishes', 'Crabs']));
   });

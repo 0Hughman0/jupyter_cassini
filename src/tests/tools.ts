@@ -1,5 +1,6 @@
 import { JSONObject } from '@lumino/coreutils';
 import { CommandRegistry } from '@lumino/commands';
+import { ISignal } from '@lumino/signaling';
 
 import { URLExt } from '@jupyterlab/coreutils';
 import {
@@ -9,9 +10,10 @@ import {
 } from '@jupyterlab/services';
 import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
 import { CodeMirrorEditorFactory } from '@jupyterlab/codemirror';
-import { defaultRenderMime } from '@jupyterlab/testutils';
+import { defaultRenderMime, signalToPromise } from '@jupyterlab/testutils';
 
 import { Cassini, cassini } from '../core';
+import { IModelChange } from '../models';
 import { paths } from '../schema/schema';
 import { CassiniServerError } from '../schema/types';
 
@@ -113,4 +115,16 @@ export function mockServerAPI(calls: MockAPICalls): void {
 
     throw TypeError(`No mocked responses found for this query, ${url}`);
   }) as jest.Mocked<typeof ServerConnection.makeRequest>;
+}
+
+
+export async function awaitSignalType<C extends IModelChange>(signal: ISignal<any, C>, type: C['type'] ): Promise<C> {
+  let value: C | null = null;
+
+  while (value?.type !== type) {
+    const [_, payload] = await signalToPromise(signal)
+    value = payload;
+  }
+  
+  return value
 }

@@ -13,7 +13,7 @@ import {
 import { TierBrowserModel } from '../../models';
 import { treeResponseToData } from '../../utils';
 
-import { mockServerAPI, createTierFiles, mockCassini } from '../tools';
+import { mockServerAPI, createTierFiles, mockCassini, awaitSignalType } from '../tools';
 import {
   HOME_TREE,
   WP1_TREE,
@@ -65,7 +65,7 @@ describe('tier browser', () => {
     expect(widget.browser).toBeInstanceOf(TierTreeBrowser);
     expect(widget.viewer).toBeInstanceOf(TierViewer);
 
-    await signalToPromise(widget.model.childrenUpdated);
+    await awaitSignalType(widget.model.changed, 'current');
     expect(widget.browser.currentTier?.name).toEqual('WP1');
 
     await signalToPromise(widget.viewer.modelChanged);
@@ -84,13 +84,9 @@ describe('tree browser', () => {
       </div>
     );
 
-    const updated = signalToPromise(model.currentPath.changed);
-    const childrenUpdated = signalToPromise(model.childrenUpdated);
     model.currentPath.clear();
-
-    await childrenUpdated;
-    await updated;
-
+    await signalToPromise(model.changed);
+    
     expect(widget.render()).not.toEqual(
       <div>
         <a>Loading</a>
@@ -111,13 +107,11 @@ describe('tree browser', () => {
     const model = new TierBrowserModel();
     const widget = new TierTreeBrowser(model, jest.fn(), jest.fn(), jest.fn());
 
-    const first = signalToPromise(model.currentUpdated);
     model.currentPath.clear();
-    await first;
+    await awaitSignalType(model.changed, 'current');
 
-    const updated = signalToPromise(model.currentUpdated);
     model.currentPath.push('1');
-    await updated;
+    await awaitSignalType(model.changed, 'current');
 
     expect(Array.from(widget.currentPath)).toEqual(['1']);
     expect(widget.currentTier?.name).toEqual('WP1');
@@ -134,9 +128,8 @@ describe('tree browser', () => {
     const model = new TierBrowserModel();
     const widget = new TierTreeBrowser(model, jest.fn(), jest.fn(), jest.fn());
 
-    const first = signalToPromise(model.currentUpdated);
     model.currentPath.clear();
-    await first;
+    await awaitSignalType(model.changed, 'current');
 
     expect(widget.tierChildren).toEqual(
       treeResponseToData(HOME_TREE, []).children

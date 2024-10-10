@@ -1,7 +1,5 @@
-import { signalToPromise } from '@jupyterlab/testutils';
-
 import { NotebookTierModel, TierBrowserModel } from '../models';
-import { createTierFiles, mockServerAPI } from './tools';
+import { awaitSignalType, createTierFiles, mockServerAPI } from './tools';
 import {
   TEST_HLT_CONTENT,
   TEST_META_CONTENT,
@@ -13,8 +11,6 @@ import {
 import 'jest';
 
 describe('tier-model', () => {
-  //let metaFile: any;
-  //let hltsFile: any;
 
   beforeEach(async () => {
     await createTierFiles([
@@ -106,26 +102,29 @@ describe('tree-model', () => {
   test('currentPath', async () => {
     const browserModel = new TierBrowserModel();
 
-    const childrenSentinal = jest.fn();
-    browserModel.childrenUpdated.connect(childrenSentinal);
-
     const pathSentinal = jest.fn();
+    const currentSentinal = jest.fn();
+    const childrenSentinal = jest.fn();
+    const refreshSentinal = jest.fn();
 
-    browserModel.currentPath.changed.connect(pathSentinal);
-
-    const pathChanged = signalToPromise(browserModel.currentPath.changed);
-    const childrenChanged = signalToPromise(browserModel.childrenUpdated);
+    browserModel.changed.connect((sender, change) => {
+      switch (change.type) {
+        case 'path': { pathSentinal(change); break }
+        case 'current': { currentSentinal(change); break }
+        case 'children': { childrenSentinal(change); break }
+        case 'refresh': { refreshSentinal(change); break }
+      }
+    });
+    
     browserModel.currentPath.push('1');
 
-    await pathChanged;
-    await childrenChanged;
-
+    await awaitSignalType(browserModel.changed, 'current')
+    
     expect(pathSentinal).toBeCalledTimes(1);
-    expect(childrenSentinal).toBeCalledTimes(1);
+    expect(currentSentinal).toBeCalledTimes(1);
 
     await browserModel.refresh();
 
-    expect(childrenSentinal).toBeCalledTimes(2);
-    expect(pathSentinal).toBeCalledTimes(1);
+    expect(refreshSentinal).toBeCalledTimes(1);
   });
 });

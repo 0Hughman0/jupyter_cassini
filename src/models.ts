@@ -23,10 +23,19 @@ import {
 import {
   MetaSchema,
   FolderTierInfo,
-  NotebookTierInfo,
-  IChange
+  NotebookTierInfo
 } from './schema/types';
 import { treeChildrenToData } from './utils';
+
+
+export interface INewModel<Old, New> {
+  old: Old;
+  new: New;
+}
+
+export interface IModelChange {
+  type: string
+}
 
 export type TierModel = FolderTierModel | NotebookTierModel;
 
@@ -365,7 +374,7 @@ export class NotebookTierModel implements IDisposable {
 }
 
 export namespace NotebookTierModel {
-  export type NewModel = IChange<
+  export type NewModel = INewModel<
     NotebookTierModel | null,
     NotebookTierModel | null
   >;
