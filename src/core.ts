@@ -8,15 +8,18 @@ import { IEditorFactoryService } from '@jupyterlab/codeeditor';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { CassiniServer } from './services';
-import { TierModel } from './models';
+import { FolderTierModel, NotebookTierModel, TierModel } from './models';
 import {
   TreeResponse,
   TreeChildResponse,
   NewChildInfo,
   TierInfo
 } from './schema/types';
+import { treeResponseToData } from './utils';
 
-import { BrowserPanel } from './ui/browser';
+import { TierBrowser } from './ui/browser';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 
 export interface ILaunchable {
   name: string;
@@ -32,13 +35,15 @@ export interface ILaunchable {
  */
 export interface ITreeData extends Omit<TreeResponse, 'started' | 'children'> {
   started: Date | null;
-  children: { [id: string]: ITreeChildData };
+  children: TreeChildren;
   ids: string[];
 }
 
 export interface ITreeChildData extends Omit<TreeChildResponse, 'started'> {
   started: Date | null;
 }
+
+export type TreeChildren = { [id: string]: ITreeChildData };
 
 /**
  * Looks after the 'tree' of tiers. Idea is to match the file structure of a cassini project. Because asking the server to generate this tree is
@@ -184,7 +189,7 @@ export class TreeManager {
   fetchTierData(ids: string[]): Promise<ITreeData | null> {
     return CassiniServer.tree(ids)
       .then(treeResponse => {
-        const newTree = TreeManager._treeResponseToData(treeResponse, ids);
+        const newTree = treeResponseToData(treeResponse, ids);
 
         return this.cacheTreeData(ids, newTree) as ITreeData;
       })
@@ -192,53 +197,11 @@ export class TreeManager {
         return null;
       });
   }
-
-  /**
-   * Convenience method for converting between ITreeRepsonse to ITreeData.
-   *
-   * This does a bit of basic parsing of the ITreeReponse, which can only be JSON, into an Object.
-   *
-   * Currently just parses started into an actual Date object.
-   */
-  static _treeResponseToData(
-    treeResponse: TreeResponse,
-    ids: string[]
-  ): ITreeData {
-    const { started, children, ...rest } = treeResponse;
-
-    const newTree: ITreeData = {
-      started: null,
-      children: {},
-      ids: ids,
-      ...rest
-    };
-
-    if (started) {
-      newTree.started = new Date(started);
-    }
-
-    for (const id of Object.keys(children)) {
-      const child = children[id];
-
-      const { started, ...rest } = child;
-
-      const newChild: ITreeChildData = {
-        started: null,
-        ...rest
-      };
-
-      if (child.started) {
-        newChild['started'] = new Date(child.started);
-      }
-
-      newTree.children[id] = newChild;
-    }
-
-    return newTree;
-  }
 }
 
-export type ITierModelTreeCache = { [id: string]: TierModel };
+export type ITierModelTreeCache = {
+  [id: string]: NotebookTierModel | FolderTierModel;
+};
 
 /**
  * Manages instances of TierModels. There should only ever be one instance per tier, or all hell will break loose.
@@ -270,17 +233,43 @@ export class TierModelTreeManager {
    * I wanted this to be synchronus, but an alternative, which is probably sensible is to use the treeManager.lookup.
    */
   get(name: string, forceRefresh?: boolean): Promise<TierModel> {
-    if (Object.keys(this.cache).includes(name) && !forceRefresh) {
+    const inCache = Object.keys(this.cache).includes(name);
+    if (inCache && !forceRefresh) {
       return Promise.resolve(this.cache[name]);
     }
 
-    return CassiniServer.lookup(name).then(tierInfo =>
-      this._insertNewTierModel(name, tierInfo)
-    );
+    return CassiniServer.lookup(name).then(tierInfo => {
+      if (inCache) {
+        const oldModel = this.cache[name];
+        if (
+          oldModel instanceof NotebookTierModel &&
+          tierInfo.tierType === 'notebook'
+        ) {
+          oldModel.refresh(tierInfo);
+        }
+
+        return oldModel;
+      } else {
+        const newModel = this._insertNewTierModel(name, tierInfo);
+
+        return newModel;
+      }
+    });
   }
 
   _insertNewTierModel(name: string, tierInfo: TierInfo) {
-    const model = new TierModel(tierInfo);
+    let model: TierModel;
+
+    switch (tierInfo.tierType) {
+      case 'notebook': {
+        model = new NotebookTierModel(tierInfo);
+        break;
+      }
+      case 'folder': {
+        model = new FolderTierModel(tierInfo);
+        break;
+      }
+    }
 
     this.cache[name] = model;
 
@@ -302,6 +291,7 @@ export class Cassini {
   rendermimeRegistry: IRenderMimeRegistry;
   tierModelManager: TierModelTreeManager;
   commandRegistry: CommandRegistry;
+  ajv: Ajv;
 
   protected resolveReady: (value: void | PromiseLike<void>) => void;
 
@@ -317,6 +307,9 @@ export class Cassini {
     this.ready = new Promise((resolve, reject) => {
       this.resolveReady = resolve;
     });
+    this.ajv = new Ajv();
+    addFormats(this.ajv);
+    this.ajv.addKeyword('x-cas-field');
   }
 
   /**
@@ -372,7 +365,7 @@ export class Cassini {
       return;
     }
 
-    const browser = new BrowserPanel(ids);
+    const browser = new TierBrowser(ids);
 
     const content = browser;
 

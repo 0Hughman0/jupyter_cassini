@@ -1,6 +1,9 @@
 /* eslint-disable prettier/prettier */
-import { Ajv, ValidateFunction } from 'ajv';
-import addFormats from 'ajv-formats';
+import { ValidateFunction } from 'ajv';
+
+import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
+import { Signal, ISignal } from '@lumino/signaling';
+import { IDisposable } from '@lumino/disposable';
 
 import { ObservableList } from '@jupyterlab/observables';
 import {
@@ -9,16 +12,36 @@ import {
   TextModelFactory
 } from '@jupyterlab/docregistry';
 import { IOutput } from '@jupyterlab/nbformat';
+import { Notification } from '@jupyterlab/apputils';
 
-import { PartialJSONObject, JSONObject, JSONValue } from '@lumino/coreutils';
-import { Signal, ISignal } from '@lumino/signaling';
+import { cassini, TreeChildren, ITreeData, TreeManager } from './core';
+import { MetaSchema, FolderTierInfo, NotebookTierInfo } from './schema/types';
+import { treeChildrenToData } from './utils';
 
-import { cassini, ITreeChildData, ITreeData, TreeManager } from './core';
-import { MetaSchema, TierInfo, IChange } from './schema/types';
+export interface INewModel<Old, New> {
+  old: Old;
+  new: New;
+}
 
-const ajv = new Ajv();
-addFormats(ajv);
-ajv.addKeyword('x-cas-field');
+export interface IModelChange {
+  type: string;
+}
+
+export type TierModel = FolderTierModel | NotebookTierModel;
+
+export class FolderTierModel {
+  readonly name: string;
+  readonly ids: string[];
+  readonly children: TreeChildren | null;
+
+  constructor(options: FolderTierInfo) {
+    this.name = options.name;
+    this.ids = options.ids;
+    this.children = options.children
+      ? treeChildrenToData(options.children)
+      : null;
+  }
+}
 
 /**
  * Browser-side model of a cassini tier.
@@ -42,83 +65,105 @@ ajv.addKeyword('x-cas-field');
  * Note that before any values are got from the model, model.ready should be waited for. In future might be worth decorating all values to help with this.
  *
  */
-export class TierModel {
+export class NotebookTierModel implements IDisposable {
   readonly name: string;
   readonly ids: string[];
-  readonly notebookPath: string | undefined;
-  readonly started: Date;
-  readonly metaSchema: MetaSchema | undefined;
-  readonly metaValidator: ValidateFunction<any>;
 
-  readonly hltsPath: string | undefined;
+  readonly notebookPath: string;
 
-  metaFile?: Context<DocumentRegistry.ICodeModel>;
-  hltsFile?: Context<DocumentRegistry.ICodeModel>;
+  readonly metaSchema: MetaSchema;
+  readonly publicMetaSchema: MetaSchema;
+  readonly metaValidator: ValidateFunction<MetaSchema>;
+
+  readonly metaFile: Context<DocumentRegistry.ICodeModel>;
+
+  protected _hltsFile?: Context<DocumentRegistry.ICodeModel>;
+  protected _children: TreeChildren | null;
 
   protected _required: Promise<any>[];
+  protected _isDisposed: boolean;
 
-  constructor(options: TierInfo) {
+  constructor(options: NotebookTierInfo) {
     this.name = options.name;
     this.ids = options.ids;
-
-    if (options.tierType === 'folder') {
-      return;
-    }
-
     this.notebookPath = options.notebookPath;
-    this.hltsPath = options.hltsPath;
+
     this.metaSchema = options.metaSchema;
-    this.metaValidator = ajv.compile(this.metaSchema);
+    this.publicMetaSchema = NotebookTierModel.createPublicMetaSchema(
+      this.metaSchema
+    );
 
-    cassini.treeManager.changed.connect((sender, { ids, data }) => {
-      if (ids.toString() === this.ids.toString()) {
-        this._changed.emit();
-      }
-    }, this);
+    this.metaValidator = cassini.ajv.compile<MetaSchema>(this.metaSchema);
 
+    this._children = options.children
+      ? treeChildrenToData(options.children)
+      : null;
+
+    this._isDisposed = false;
     this._required = [];
 
-    if (options.metaPath) {
-      const metaFile = (this.metaFile =
-        new Context<DocumentRegistry.ICodeModel>({
-          manager: cassini.contentService,
-          factory: new TextModelFactory(),
-          path: options.metaPath as string
-        }));
-      this._required.push(metaFile.ready);
+    const metaFile = (this.metaFile = new Context<DocumentRegistry.ICodeModel>({
+      manager: cassini.contentService,
+      factory: new TextModelFactory(),
+      path: options.metaPath as string
+    }));
 
-      metaFile.initialize(false);
-      metaFile.ready.then(() => {
-        metaFile.model.contentChanged.connect(() => this._changed.emit(), this);
-        metaFile.model.stateChanged.connect((sender, change) => {
-          if (change.name === 'dirty') {
-            this._changed.emit(); // the dirtiness of the metaFile is also part of the state of this model.
-          }
-        }, this);
-      });
-    }
+    metaFile.model.contentChanged.connect(
+      () => this._changed.emit({ type: 'meta' }),
+      this
+    );
+    metaFile.model.stateChanged.connect((sender, change) => {
+      if (change.name === 'dirty') {
+        this._changed.emit({ type: 'dirty' }); // the dirtiness of the metaFile is also part of the state of this model.
+      }
+    }, this);
+    this._required.push(metaFile.initialize(false));
 
     if (options.hltsPath) {
-      const hltsFile = (this.hltsFile = new Context({
+      const hltsFile = (this._hltsFile = new Context({
         manager: cassini.contentService,
         factory: new TextModelFactory(),
         path: options.hltsPath as string
       }));
-      this._required.push(hltsFile.ready);
 
-      hltsFile.initialize(false);
+      hltsFile.model.contentChanged.connect(() => {
+        this._changed.emit({ type: 'hlts' });
+      }, this);
 
-      this.hltsFile.ready.then(() => {
-        this.hltsFile?.model.contentChanged.connect(() => {
-          this._changed.emit();
-        }, this);
-      });
+      this._required.push(hltsFile.initialize(false));
     }
+
+    this.ready.then(() => this._changed.emit({ type: 'ready' }));
   }
 
-  private _changed = new Signal<TierModel, void>(this);
+  static createPublicMetaSchema(schema: MetaSchema): MetaSchema {
+    const publicMetaSchema = structuredClone(schema);
+    const names = Object.keys(publicMetaSchema.properties);
 
-  get changed(): ISignal<TierModel, void> {
+    for (const name of names) {
+      const info = publicMetaSchema.properties[name];
+      if (info['x-cas-field'] === 'core' || info['x-cas-field'] === 'private') {
+        delete publicMetaSchema.properties[name];
+      }
+    }
+
+    return publicMetaSchema;
+  }
+
+  get children() {
+    return this._children;
+  }
+
+  get hltsFile() {
+    return this._hltsFile;
+  }
+
+  private _changed = new Signal<
+    NotebookTierModel,
+    NotebookTierModel.ModelChange
+  >(this);
+
+  get changed(): ISignal<NotebookTierModel, NotebookTierModel.ModelChange> {
     return this._changed;
   }
 
@@ -127,16 +172,18 @@ export class TierModel {
    *
    * Models should not be considered in a valid state until this happens... although the readonly attributes are probably fine...
    */
-  get ready(): Promise<TierModel> {
-    return Promise.all(this._required).then(() => this);
+  get ready(): Promise<NotebookTierModel> {
+    return Promise.all(this._required).then(() => {
+      return this;
+    });
+  }
+
+  get isDisposed(): boolean {
+    return this._isDisposed;
   }
 
   get treeData(): Promise<ITreeData | null> {
     return cassini.treeManager.get(this.ids);
-  }
-
-  get children(): Promise<{ [id: string]: ITreeChildData } | null> {
-    return this.treeData.then(data => data?.children || null);
   }
 
   /**
@@ -151,6 +198,29 @@ export class TierModel {
     }
   }
 
+  protected updateMeta(newMeta: JSONObject): boolean {
+    if (this.metaValidator(newMeta)) {
+      this.metaFile?.model.fromJSON(newMeta);
+      return true;
+    } else {
+      const error = this.metaValidator.errors && this.metaValidator.errors[0];
+
+      if (!error) {
+        return false;
+      }
+
+      const name = error.instancePath.split('/')[1];
+      const value = newMeta[name];
+      Notification.error(
+        `Cassini Error - ${name} ${error.message}, got: ${JSON.stringify(
+          value
+        )}`
+      );
+
+      return false;
+    }
+  }
+
   /**
    * Get contents of meta, excluding the CORE_META, which are the required ones.
    *
@@ -159,7 +229,7 @@ export class TierModel {
     const o = {} as JSONObject;
     const metaJSON = this.meta;
 
-    const properties = this?.metaSchema && this.metaSchema.properties;
+    const properties = this.metaSchema.properties;
 
     for (const key in metaJSON) {
       if (
@@ -176,31 +246,39 @@ export class TierModel {
     return o;
   }
 
+  setMetaValue<T extends JSONValue>(key: string, value: T): boolean {
+    const newMeta = this.meta;
+    newMeta[key] = value;
+    const outcome = this.updateMeta(newMeta);
+    this._changed.emit({ type: 'meta' });
+    return outcome;
+  }
+
+  removeMeta(key: string) {
+    const newMeta = this.meta;
+    delete newMeta[key];
+    this.updateMeta(newMeta);
+    this._changed.emit({ type: 'meta' });
+  }
+
   get description(): string {
     return (this.meta['description'] as string) || '';
   }
 
   set description(value: string) {
-    if (!this.metaFile) {
-      throw 'Tier has no meta, cannot store description';
-    }
-
-    const oldMeta = this.meta;
-    oldMeta['description'] = value;
-    this.metaFile.model.fromJSON(oldMeta);
+    this.setMetaValue('description', value);
   }
 
   get conclusion(): string {
     return (this.meta['conclusion'] as string) || '';
   }
-  set conclusion(value: string) {
-    if (!this.metaFile) {
-      throw 'Tier has no meta, cannot store conclusion';
-    }
 
-    const oldMeta = this.meta;
-    oldMeta['conclusion'] = value;
-    this.metaFile.model.fromJSON(oldMeta);
+  set conclusion(value: string) {
+    this.setMetaValue('conclusion', value);
+  }
+
+  get started(): Date {
+    return new Date(this.meta['started'] as string);
   }
 
   get dirty(): boolean {
@@ -256,10 +334,59 @@ export class TierModel {
       this.hltsFile?.revert()
     ]).then();
   }
+
+  refresh(
+    options: Partial<
+      Omit<NotebookTierInfo, 'metaPath' | 'id' | 'name' | 'notebookPath'>
+    >
+  ) {
+    if (options.hltsPath && this.hltsFile?.localPath !== options.hltsPath) {
+      const hltsFile = (this._hltsFile = new Context({
+        manager: cassini.contentService,
+        factory: new TextModelFactory(),
+        path: options.hltsPath as string
+      }));
+
+      hltsFile.model.contentChanged.connect(() => {
+        this._changed.emit({ type: 'hlts' });
+      }, this);
+
+      this._required.push(hltsFile.initialize(false));
+    }
+
+    const childrenData = options.children
+      ? treeChildrenToData(options.children)
+      : null;
+
+    if (childrenData !== this.children) {
+      this._children = childrenData;
+      this._changed.emit({ type: 'children' });
+    }
+
+    return Promise.all([this.ready, this.revert()]);
+  }
+
+  dispose(): void {
+    if (this.isDisposed) {
+      return;
+    }
+
+    this.metaFile.dispose();
+    this.hltsFile?.dispose();
+
+    Signal.clearData(this);
+  }
 }
 
-export namespace TierModel {
-  export type ModelChange = IChange<TierModel | null, TierModel | null>;
+export namespace NotebookTierModel {
+  export type NewModel = INewModel<
+    NotebookTierModel | null,
+    NotebookTierModel | null
+  >;
+
+  export type ModelChange = {
+    type: 'meta' | 'hlts' | 'dirty' | 'ready' | 'children';
+  };
 }
 
 export interface IAdditionalColumnsStore {
@@ -284,21 +411,31 @@ export class TierBrowserModel {
   currentPath: ObservableList<string>;
   treeManager: TreeManager;
   protected _additionalColumnsStore: IAdditionalColumnsStore;
-  protected _current: Promise<ITreeData | null>;
+  protected _current: ITreeData | null;
 
   constructor() {
     this.currentPath = new ObservableList<string>();
     this.treeManager = cassini.treeManager;
-    this._current = Promise.resolve(null);
+    this._current = null;
 
-    this.currentPath.changed.connect(() => {
-      this._current = this.treeManager.get(this.sCurrentPath);
-      this._childrenUpdated.emit(this.current);
+    this.currentPath.changed.connect(path => {
+      this._changed.emit({ type: 'path', path: path });
+
+      this.treeManager.get(this.sCurrentPath).then(value => {
+        this._current = value;
+        this._changed.emit({ type: 'current', current: value });
+
+        if (value?.children) {
+          this._changed.emit({ type: 'children', children: value.children });
+        }
+      });
     }, this);
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {
       if (ids.toString() === this.sCurrentPath.toString()) {
-        this._childrenUpdated.emit(this.current);
+        if (this.current?.children) {
+          this._changed.emit({ type: 'refresh' });
+        }
       }
     }, this);
 
@@ -308,14 +445,28 @@ export class TierBrowserModel {
     };
   }
 
-  get current(): Promise<ITreeData | null> {
+  private _changed = new Signal<this, TierBrowserModel.ModelChange>(this);
+
+  get changed(): ISignal<this, TierBrowserModel.ModelChange> {
+    return this._changed;
+  }
+
+  get current(): ITreeData | null {
     return this._current;
   }
 
-  private _childrenUpdated = new Signal<this, Promise<ITreeData | null>>(this);
+  get childMetas(): Set<string> {
+    const children = this.current?.children;
+    const childMetas = new Set<string>();
 
-  public get childrenUpdated(): ISignal<this, Promise<ITreeData | null>> {
-    return this._childrenUpdated;
+    if (children) {
+      for (const child of Object.values(children)) {
+        for (const key of Object.keys(child.additionalMeta || {})) {
+          childMetas.add(key);
+        }
+      }
+    }
+    return childMetas;
   }
 
   /**
@@ -340,19 +491,6 @@ export class TierBrowserModel {
   }
 
   /**
-   * Promise that resolves with the children of the currentTier
-   */
-  getChildren(): Promise<{ [name: string]: ITreeChildData }> {
-    return this.current.then(tierData => {
-      if (tierData?.children) {
-        return tierData.children;
-      } else {
-        return {};
-      }
-    });
-  }
-
-  /**
    * Convenience way of getting a string version of currentPath
    */
   get sCurrentPath(): string[] {
@@ -368,4 +506,23 @@ export class TierBrowserModel {
   refresh(): Promise<ITreeData | null> {
     return this.treeManager.fetchTierData(this.sCurrentPath);
   }
+}
+
+export namespace TierBrowserModel {
+  export type ModelChange =
+    | {
+        type: 'path';
+        path: ObservableList<string>;
+      }
+    | {
+        type: 'current';
+        current: ITreeData | null;
+      }
+    | {
+        type: 'children';
+        children: TreeChildren | null;
+      }
+    | {
+        type: 'refresh';
+      };
 }

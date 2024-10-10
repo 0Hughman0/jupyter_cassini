@@ -45,9 +45,9 @@ components:
           items: 
             type: string
         children:
-          type: array
-          items:
-            type: string
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/TreeChildResponse"
       required:
         - name
         - ids
@@ -79,32 +79,48 @@ components:
         - metaPath
         - metaSchema
 
+    objectDef:
+      type: object
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+        default: {}
+        format: 
+          type: string
+        enum:
+          type: array
+          items: 
+            $ref: "#/components/schemas/objectDef/properties/type"
+        x-cas-field:
+          type: string
+          enum:
+            - private
+            - core
+        $ref:
+          type: string
+      oneOf:
+        - required: [type]
+        - required: [$ref]
+        - required: [type, enum]
+      additionalProperties: true
+
     metaSchema:
       type: object
       properties:
         properties:
           type: object
           additionalProperties:
-            type: object
-            properties:
-              title:
-                type: string
-              type:
-                type: string
-              default: {}
-              format: 
-                type: string
-              x-cas-field:
-                type: string
-                enum:
-                  - private
-                  - core
-          required:
-            - title
-            - type
-      additionalProperties: true
+            $ref: "#/components/schemas/objectDef"
+        additionalProperties:
+          $ref: "#/components/schemas/objectDef"
+        $defs: {}
+        type:
+          type: string
       required:
         - properties
+        - additionalProperties
 
     ChildClsInfo:
       type: object
@@ -126,6 +142,10 @@ components:
           type: string
         namePartTemplate:
           type: string
+      required:
+        - name
+        - idRegex
+        - namePartTemplate
 
     ChildClsFolderInfo:
       type: object
@@ -143,9 +163,14 @@ components:
             type: string
         metaSchema:
             $ref: "#/components/schemas/metaSchema"
+        additionalMetaKeys:
+          type: array
+          items:
+            type: string
       required:
         - templates
         - metaSchema
+        - additionalMetaKeys
 
     TreePathQuery:
       type: object
@@ -212,6 +237,17 @@ components:
       required:
         - id
         - parent
+    
+    CassiniServerError:
+      type: object
+      properties:
+        reason:
+          type: string
+        message:
+          type: string
+      required:
+        - reason
+        - message        
 
 paths: 
   /lookup:
@@ -234,6 +270,10 @@ paths:
                   $ref: "#/components/schemas/TierInfo"
           "404":
             description: "Not Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/CassiniServerError"
   /tree/{ids}:
     get:
       summary: View the tier tree
@@ -252,7 +292,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/TreeResponse"
         "404":
-          description: "Not Found"
+            description: "Not Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/CassiniServerError"
   /open:
     get:
       summary: Open a tier in file explorer
@@ -271,7 +315,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/Status"
         "404":
-          description: Not Found
+            description: "Not Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/CassiniServerError"
   /newChild:
     post:
       summary: Create a new child

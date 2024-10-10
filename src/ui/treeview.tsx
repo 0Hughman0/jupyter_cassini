@@ -2,7 +2,6 @@
 import React, { useMemo } from 'react';
 import { useState } from 'react';
 
-import { Signal, ISignal } from '@lumino/signaling';
 import { CommandRegistry } from '@lumino/commands';
 import { Menu } from '@lumino/widgets';
 
@@ -30,147 +29,11 @@ import {
   SortingState
 } from '@tanstack/react-table';
 
-import { ITreeData, ITreeChildData, ILaunchable } from '../core';
+import { ITreeData, ITreeChildData, ILaunchable, TreeChildren } from '../core';
 import { TierBrowserModel } from '../models';
 import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
-import { openNewChildDialog } from './newchilddialog';
-
-interface IBrowserProps {
-  model: TierBrowserModel;
-  onTierSelected: (casPath: string[], name: string) => void;
-  onTierLaunched: (tierData: ILaunchable) => void;
-  onCreateChild: (tierData: ITreeData) => void;
-}
-
-interface IBrowserState {
-  children: { [id: string]: ITreeChildData };
-  childMetas: string[];
-  additionalColumns: Set<string>;
-}
-
-/**
- * Widget for navigating the tier tree. Wraps the ChildrenTable
- *
- *
- */
-export class BrowserComponent extends React.Component<
-  IBrowserProps,
-  IBrowserState
-> {
-  constructor(props: IBrowserProps) {
-    super(props);
-
-    this.state = {
-      children: {},
-      childMetas: [],
-      additionalColumns: props.model.additionalColumns
-    };
-
-    console.log(this.state);
-
-    const setState = this.setState.bind(this);
-
-    this.props.model.childrenUpdated.connect(model => {
-      this.props.model
-        .getChildren()
-        .then(children => setState({ children: children }));
-      this.props.model.current.then(tierData => {
-        setState({
-          childMetas:
-            (tierData &&
-              tierData?.childClsInfo &&
-              tierData.childClsInfo.tierType === 'notebook' &&
-              Object.keys(tierData.childClsInfo.metaSchema.properties)) ||
-            []
-        });
-        setState({ additionalColumns: props.model.additionalColumns });
-      });
-    });
-  }
-
-  /**
-   * Opens a right click menu to modify the additional columns in the table.
-   * @param event
-   * @returns
-   */
-  openContextMenu(event: React.MouseEvent | null): void {
-    const allColumns = new Set([
-      ...this.state.additionalColumns,
-      ...this.state.childMetas
-    ]);
-
-    if (!allColumns.size) {
-      return;
-    }
-
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-
-    const commands = new CommandRegistry();
-
-    for (const columnName of allColumns) {
-      const icon = this.state.additionalColumns.has(columnName)
-        ? checkIcon
-        : undefined;
-      commands.addCommand(columnName, {
-        label: columnName,
-        icon: icon,
-        execute: args =>
-          this.setState((state, props) => {
-            const currentColumns = state.additionalColumns;
-
-            if (currentColumns.has(columnName)) {
-              currentColumns.delete(columnName);
-              this.props.model.additionalColumns.delete(columnName);
-
-              return { additionalColumns: currentColumns };
-            } else {
-              this.props.model.additionalColumns.add(columnName);
-              return {
-                additionalColumns: state.additionalColumns.add(columnName)
-              };
-            }
-          })
-      });
-    }
-
-    const menu = new Menu({ commands: commands });
-    menu.addItem({ command: 'Add Meta', type: 'separator' });
-
-    for (const columnName of allColumns) {
-      menu.addItem({ command: columnName });
-    }
-    if (event) {
-      menu.open(event.clientX, event.clientY);
-    }
-  }
-
-  render(): JSX.Element {
-    const onTierSelected = this.props.onTierSelected;
-    const onTierLaunched = this.props.onTierLaunched;
-    const onCreateChild = this.props.onCreateChild;
-    const openContextMenu = this.openContextMenu.bind(this);
-
-    const additionalColumns = this.state.additionalColumns;
-
-    return (
-      <div data-jp-suppress-context-menu>
-        <ChildrenTable
-          children={this.state.children}
-          model={this.props.model}
-          onTierLaunched={onTierLaunched}
-          onTierSelected={onTierSelected}
-          onCreateChild={onCreateChild}
-          onSelectMetas={openContextMenu}
-          additionalColumns={additionalColumns}
-        ></ChildrenTable>
-      </div>
-    );
-  }
-}
+import { ObservableList } from '@jupyterlab/observables';
 
 export interface ICasSearchProps {
   model: TierBrowserModel;
@@ -213,38 +76,27 @@ const CasSearch = (props: ICasSearchProps) => {
 };
 
 interface ICrumbsProps {
-  model: TierBrowserModel;
+  currentPath: ObservableList<string>;
+  currentTier: ITreeData | null;
+  onRefreshTree: () => void;
   onTierSelected: (casPath: string[], name: string) => void;
   onTierLaunched: (tierData: ILaunchable) => void;
-  onCreateChild: (tierData: ITreeData) => void;
-}
-
-export interface ICrumbsState {
-  currentTier: ITreeData | null;
+  onCreateChild: (currentTier: ITreeData) => void;
 }
 
 /**
  * Crumbs are like a visual representation of the currentPath
  */
-export class CassiniCrumbs extends React.Component<ICrumbsProps, ICrumbsState> {
+export class CassiniCrumbs extends React.Component<ICrumbsProps> {
   constructor(props: ICrumbsProps) {
     super(props);
-
-    this.state = { currentTier: null };
-
-    const setState = this.setState.bind(this);
-    this.props.model.currentPath.changed.connect(() =>
-      this.props.model.current.then(tier => {
-        tier && setState({ currentTier: tier });
-      })
-    );
   }
 
   render(): JSX.Element {
     const elements = [];
-    const path = this.props.model.currentPath;
-    const tier = this.state.currentTier;
-    const refresh = this.props.model.refresh.bind(this.props.model);
+    const path = this.props.currentPath;
+    const tier = this.props.currentTier;
+    const refresh = this.props.onRefreshTree;
 
     const onTierLaunched = this.props.onTierLaunched;
     const onTierSelected = this.props.onTierSelected;
@@ -316,6 +168,7 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps, ICrumbsState> {
                 onClick={() => {
                   tier && onTierSelected([...path], tier.name);
                 }}
+                enabled={Boolean(tier?.metaPath)}
                 tooltip={`Preview ${tier?.name}`}
               />
             </span>
@@ -326,18 +179,123 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps, ICrumbsState> {
   }
 }
 
-interface IChildrenTableProps {
-  children: { [id: string]: ITreeChildData };
+export interface IBrowserProps {
+  currentTier: ITreeData;
+  currentPath: ObservableList<string>;
+  children: TreeChildren;
+  childMetas: Set<string>;
   additionalColumns: Set<string>;
-  model: TierBrowserModel;
-  onTierLaunched: (tier: ILaunchable) => void;
+  onAdditionalColumnsSet: (names: Set<string>) => void;
   onTierSelected: (casPath: string[], name: string) => void;
-  onCreateChild: (tierData: ITreeData) => void;
-  onSelectMetas: (event: React.MouseEvent) => void;
+  onTierLaunched: (tierData: ILaunchable) => void;
+  onCreateChild: (currentTier: ITreeData) => void;
 }
 
-export interface IChildrenState {
-  currentTier: ITreeData | null;
+/**
+ * Widget for navigating the tier tree. Wraps the ChildrenTable
+ *
+ *
+ */
+export class BrowserComponent extends React.Component<IBrowserProps> {
+  constructor(props: IBrowserProps) {
+    super(props);
+  }
+
+  /**
+   * Opens a right click menu to modify the additional columns in the table.
+   * @param event
+   * @returns
+   */
+  openContextMenu(event: React.MouseEvent | null): void {
+    const allColumns = new Set([
+      ...this.props.additionalColumns,
+      ...this.props.childMetas
+    ]);
+
+    if (!allColumns.size) {
+      return;
+    }
+
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    const commands = new CommandRegistry();
+
+    for (const columnName of allColumns) {
+      const icon = this.props.additionalColumns.has(columnName)
+        ? checkIcon
+        : undefined;
+      commands.addCommand(columnName, {
+        label: columnName,
+        icon: icon,
+        execute: args =>
+          this.setState((state, props) => {
+            const newColumns = props.additionalColumns;
+
+            if (newColumns.has(columnName)) {
+              newColumns.delete(columnName);
+
+              this.props.onAdditionalColumnsSet(newColumns);
+
+              return { additionalColumns: newColumns };
+            } else {
+              newColumns.add(columnName);
+
+              this.props.onAdditionalColumnsSet(newColumns);
+
+              return { additionalColumns: newColumns };
+            }
+          })
+      });
+    }
+
+    const menu = new Menu({ commands: commands });
+    menu.addItem({ command: 'Add Meta', type: 'separator' });
+
+    for (const columnName of allColumns) {
+      menu.addItem({ command: columnName });
+    }
+    if (event) {
+      menu.open(event.clientX, event.clientY);
+    }
+  }
+
+  render(): JSX.Element {
+    const onTierSelected = this.props.onTierSelected;
+    const onTierLaunched = this.props.onTierLaunched;
+    const onCreateChild = this.props.onCreateChild;
+    const openContextMenu = this.openContextMenu.bind(this);
+
+    const additionalColumns = this.props.additionalColumns;
+
+    return (
+      <div data-jp-suppress-context-menu>
+        <ChildrenTable
+          currentTier={this.props.currentTier}
+          currentPath={this.props.currentPath}
+          children={this.props.children}
+          onTierLaunched={onTierLaunched}
+          onTierSelected={onTierSelected}
+          onCreateChild={onCreateChild}
+          onSelectMetas={openContextMenu}
+          additionalColumns={additionalColumns}
+        ></ChildrenTable>
+      </div>
+    );
+  }
+}
+
+interface IChildrenTableProps {
+  currentTier: ITreeData;
+  currentPath: ObservableList<string>;
+  children: { [id: string]: ITreeChildData };
+  additionalColumns: Set<string>;
+  onTierLaunched: (tier: ILaunchable) => void;
+  onTierSelected: (casPath: string[], name: string) => void;
+  onCreateChild: (currentTier: ITreeData) => void;
+  onSelectMetas: (event: React.MouseEvent) => void;
 }
 
 /**
@@ -345,21 +303,12 @@ export interface IChildrenState {
  * @param props
  * @returns
  */
-function ChildrenTable(props: IChildrenTableProps) {
-  const model = props.model;
+export function ChildrenTable(props: IChildrenTableProps) {
   const onTierLaunched = props.onTierLaunched;
   const onTierSelected = props.onTierSelected;
   const onCreateChild = props.onCreateChild;
-
-  const path = model.currentPath;
-
-  const [currentTier, updateCurrentTier] = useState<ITreeData | null>(null);
-
-  model.currentPath.changed.connect(() =>
-    model.current.then(tier => {
-      tier && updateCurrentTier(tier);
-    })
-  );
+  const path = props.currentPath;
+  const currentTier = props.currentTier;
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -517,6 +466,9 @@ function ChildrenTable(props: IChildrenTableProps) {
                       ? onTierSelected([...path, id], tierLaunchData.name)
                       : null;
                   }}
+                  enabled={Boolean(
+                    currentTier.childClsInfo?.tierType === 'notebook'
+                  )}
                   tooltip={`Preview ${tierLaunchData.name}`}
                 />
               </span>
@@ -555,7 +507,7 @@ function ChildrenTable(props: IChildrenTableProps) {
 
   return (
     <div>
-      <h1>{currentTier?.name}</h1>
+      <h1>{props.currentTier.name}</h1>
       <table
         className="cas-ChildrenTable-table"
         // style={{width: table.getCenterTotalSize()}}
@@ -623,8 +575,9 @@ function ChildrenTable(props: IChildrenTableProps) {
               <td colSpan={3}>
                 <ToolbarButtonComponent
                   icon={addIcon}
-                  onClick={() => currentTier && onCreateChild(currentTier)}
-                  tooltip={`Create new child of ${currentTier?.name}`}
+                  onClick={() => onCreateChild(props.currentTier)}
+                  tooltip={`Create new child of ${props.currentTier.name}`}
+                  enabled={Boolean(props.currentTier.childClsInfo)}
                 />
               </td>
             </tr>
@@ -649,52 +602,117 @@ export interface ITierSelectedSignal {
  *
  * Has the children table for heading into the tree.
  */
-export class TierBrowser extends ReactWidget {
-  constructor(model: TierBrowserModel) {
-    super();
-    this.model = model;
-    this.addClass('cas-TierBrowser');
-  }
-
+export class TierTreeBrowser extends ReactWidget {
   model: TierBrowserModel;
 
-  private _tierSelected = new Signal<this, ITierSelectedSignal>(this);
+  currentPath: ObservableList<string>;
+  currentTier: ITreeData | null;
+  additionalColumns: Set<string>;
+  onTierSelected: (path: string[], name: string) => void;
+  onTierLaunched: (branch: ILaunchable) => void;
+  onCreateChild: (currentTier: ITreeData) => Promise<ITreeData | null>;
 
-  public get tierSelected(): ISignal<this, ITierSelectedSignal> {
-    return this._tierSelected;
+  constructor(
+    model: TierBrowserModel,
+    onTierSelected: (path: string[], name: string) => void,
+    onTierLaunched: (branch: ILaunchable) => void,
+    onCreateChild: (currentTier: ITreeData) => Promise<ITreeData | null>
+  ) {
+    super();
+    this.model = model;
+    this.currentPath = model.currentPath;
+    this.currentTier = model.current;
+
+    this.onTierSelected = onTierSelected;
+    this.onTierLaunched = onTierLaunched;
+    this.onCreateChild = onCreateChild;
+
+    this.addClass('cas-TierBrowser');
+
+    model.changed.connect(this.handleModelChanged, this);
   }
 
-  private _tierLaunched = new Signal<this, ILaunchable>(this);
+  get tierChildren(): TreeChildren {
+    return this.model?.current?.children || {};
+  }
 
-  public get tierLaunched(): ISignal<this, ILaunchable> {
-    return this._tierLaunched;
+  get childMetas(): Set<string> {
+    return this.model.childMetas;
+  }
+
+  handleModelChanged(
+    model: TierBrowserModel,
+    change: TierBrowserModel.ModelChange
+  ) {
+    switch (change.type) {
+      case 'current': {
+        this.currentTier = change.current;
+        break;
+      }
+      case 'path': {
+        this.currentPath = change.path;
+        break;
+      }
+      case 'children': {
+        this.additionalColumns = model.additionalColumns;
+        break;
+      }
+    }
+    this.update();
+  }
+
+  handleAdditionalColumnsSet(additionalColumns: Set<string>): void {
+    const newColumns = new Set(additionalColumns);
+
+    this.model.additionalColumns.clear();
+
+    for (const column of newColumns) {
+      this.model.additionalColumns.add(column);
+    }
+
+    this.additionalColumns = newColumns;
+
+    this.update();
+  }
+
+  handleRefreshTree() {
+    this.model.refresh();
+    this.update();
   }
 
   render(): JSX.Element {
-    const onTierSelected = (path: string[], name: string) => {
-      this._tierSelected.emit({ path: path, name: name });
-    };
+    if (!this.currentTier) {
+      return (
+        <div>
+          <a>Loading</a>
+        </div>
+      );
+    }
 
-    const onTierLaunched = (branch: ILaunchable) => {
-      this._tierLaunched.emit(branch);
+    const onCreateChild = (currentTier: ITreeData) => {
+      this.onCreateChild(currentTier).then(() => this.model.refresh());
     };
-
-    const onCreateChild = (tier: ITreeData) =>
-      openNewChildDialog(tier).then(() => this.model.refresh());
 
     return (
       <div style={{ height: '100%', overflow: 'auto' }}>
         <CasSearch model={this.model}></CasSearch>
         <CassiniCrumbs
-          model={this.model}
-          onTierSelected={onTierSelected}
-          onTierLaunched={onTierLaunched}
+          currentPath={this.currentPath}
+          currentTier={this.currentTier}
+          onRefreshTree={this.handleRefreshTree.bind(this)}
+          onTierSelected={this.onTierSelected}
+          onTierLaunched={this.onTierLaunched}
           onCreateChild={onCreateChild}
         ></CassiniCrumbs>
         <BrowserComponent
-          model={this.model}
-          onTierSelected={onTierSelected}
-          onTierLaunched={onTierLaunched}
+          currentTier={this.currentTier}
+          currentPath={this.currentPath}
+          children={this.tierChildren}
+          childMetas={this.childMetas}
+          additionalColumns={this.additionalColumns}
+          onAdditionalColumnsSet={this.handleAdditionalColumnsSet.bind(this)}
+          onTierSelected={this.onTierSelected}
+          onTierLaunched={this.onTierLaunched}
           onCreateChild={onCreateChild}
         ></BrowserComponent>
       </div>
