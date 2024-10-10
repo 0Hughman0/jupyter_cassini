@@ -14,7 +14,7 @@ import {
   WP1_1_INFO,
   TEST_HLT_CONTENT
 } from './test_cases';
-import { mockServerAPI, createTierFiles } from './tools';
+import { mockServerAPI, createTierFiles, awaitSignalType } from './tools';
 
 describe('TreeManager', () => {
   beforeEach(() => {
@@ -194,6 +194,37 @@ describe('TreeModelManager', () => {
 
     expect(modelManager.cache['WP1']).toBe(first);
     expect(modelManager.cache['WP1.1']).toBe(second);
+  });
+
+  test('force-refresh', async () => {
+    const first = (await modelManager.get('WP1')) as NotebookTierModel;
+    await first.ready;
+
+    expect(first).toBeInstanceOf(NotebookTierModel);
+
+    first.description = 'updated description';
+
+    expect(first.description).toEqual('updated description');
+
+    const sentinal = jest.fn();
+
+    first.changed.connect((sender, change) => {
+      if (change.type == 'meta') {
+        sentinal(change);
+      }
+    });
+
+    await createTierFiles([
+      { path: WP1_INFO.metaPath, content: TEST_META_CONTENT }
+    ]); // overright the meta  file with it's old content
+
+    const second = (await modelManager.get('WP1', true)) as NotebookTierModel;
+    await awaitSignalType(second.changed, 'meta');
+
+    expect(first).toBe(second);
+    expect(second.description).toEqual('this is a test');
+
+    expect(sentinal).toBeCalled();
   });
 });
 

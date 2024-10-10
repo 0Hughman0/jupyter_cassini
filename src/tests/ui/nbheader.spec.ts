@@ -96,4 +96,19 @@ describe('nb header', () => {
     );
     expect(widget.childrenSummary.data.map(row => row[0])).toContain('2');
   });
+
+  test('can update meta', async () => {
+    const model = new NotebookTierModel(WP1_INFO);
+    const widget = new TierNotebookHeader(model);
+
+    await model.ready;
+
+    widget.descriptionEditor.source = 'new description';
+    widget.descriptionEditor.setRendered(true);
+    expect(model.description).toEqual('new description');
+
+    widget.conclusionEditor.source = 'new conclusion';
+    widget.conclusionEditor.setRendered(true);
+    expect(model.conclusion).toEqual('new conclusion');
+  });
 });
