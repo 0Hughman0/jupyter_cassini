@@ -310,7 +310,9 @@ export function ChildrenTable(props: IChildrenTableProps) {
   const path = props.currentPath;
   const currentTier = props.currentTier;
 
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: 'started', desc: true }
+  ]);
 
   const data = useMemo(
     () => Object.entries(props.children),
@@ -496,13 +498,13 @@ export function ChildrenTable(props: IChildrenTableProps) {
   const table = useReactTable({
     data: data,
     columns: columns,
-    state: {
-      sorting
-    },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    columnResizeMode: 'onChange'
+    columnResizeMode: 'onChange',
+    state: {
+      sorting
+    }
   });
 
   return (
