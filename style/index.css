@@ -124,7 +124,7 @@ textarea {
 }
 
 .cas-floating-preview {
-  top: 0px;
+  top: 0;
   position: absolute;
-  right: 0px;
+  right: 0;
 }
