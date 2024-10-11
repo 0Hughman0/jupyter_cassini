@@ -91,11 +91,10 @@ export namespace CassiniServer {
    */
   export function tree(ids: string[]): Promise<TreeResponse> {
     return client
-      .GET('/tree', {
+      .GET('/tree/{ids}', {
         params: {
-          query: { 'ids[]': ids }
-        },
-        querySerializer: { array: { explode: false, style: 'form' } } // don't like that this is necessary!
+          path: { ids: ids.join('/') }
+        }
       })
       .then(val => {
         const { data, error, response } = val;

@@ -43,9 +43,9 @@ beforeEach(async () => {
   wp1_tree = structuredClone(WP1_TREE);
 
   mockServerAPI({
-    '/tree': [
-      { query: { 'ids[]': '' }, response: home_tree },
-      { query: { 'ids[]': '1' }, response: wp1_tree }
+    '/tree/{ids}': [
+      { path: '', response: home_tree },
+      { path: '1', response: wp1_tree }
     ],
     '/lookup': [
       { query: { name: 'WP1' }, response: INFO },

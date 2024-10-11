@@ -40,6 +40,19 @@ def parse_get_query(raw_query: str) -> RawQueryType:
     return query
 
 
+def parse_path_query(raw_query: Dict[str, str]) -> Dict[str, List[str]]:
+    query = {}
+
+    for key, value in raw_query.items():
+        value = value.split('?')[0]  # for reasons I don't understand, it seems to include queries in the url?
+        if '/' in value:
+            query[key] = [v for v in value.split('/') if v]
+        else:
+            query[key] = [value] if value else []
+    
+    return query
+
+
 def with_types(
     query_model: Type[Q],
     response_model: Type[R],
@@ -48,9 +61,15 @@ def with_types(
 
     def wrapper(func: Callable[[S, Q], R]) -> Callable[[S], None]:
     
-        def wrap_handler(self: S) -> None:
+        def wrap_handler(self: S, **kwargs) -> None:
             if method == "GET":
-                query = parse_get_query(self.request.query)
+                if kwargs and parse_get_query(self.request.query):
+                    raise RuntimeError("Receiving a query via parameters and path, this is not supported")
+                
+                if kwargs:
+                    query = parse_path_query(kwargs)
+                else:
+                    query = parse_get_query(self.request.query)
             elif method == "POST":
                 query = self.get_json_body()
             else:

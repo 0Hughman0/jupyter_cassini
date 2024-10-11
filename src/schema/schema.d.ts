@@ -54,7 +54,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/tree': {
+  '/tree/{ids}': {
     parameters: {
       query?: never;
       header?: never;
@@ -67,11 +67,11 @@ export interface paths {
      */
     get: {
       parameters: {
-        query?: {
-          'ids[]'?: string[];
-        };
+        query?: never;
         header?: never;
-        path?: never;
+        path: {
+          ids: string;
+        };
         cookie?: never;
       };
       requestBody?: never;
@@ -283,6 +283,9 @@ export interface components {
        */
       tierType: 'notebook';
     });
+    TreePathQuery: {
+      path: string[];
+    };
     TreeChildResponse: {
       name: string;
       info?: string;

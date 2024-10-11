@@ -19,9 +19,9 @@ describe('newChildDialog', () => {
     mockCassini();
 
     mockServerAPI({
-      '/tree': [
-        { query: { 'ids[]': '' }, response: HOME_TREE },
-        { query: { 'ids[]': '1' }, response: WP1_TREE }
+      '/tree/{ids}': [
+        { path: '', response: HOME_TREE },
+        { path: '1', response: WP1_TREE }
       ]
     });
   });

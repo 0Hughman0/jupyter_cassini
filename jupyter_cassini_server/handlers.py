@@ -13,12 +13,12 @@ from jupyter_cassini_server.safety import needs_project, with_types
 from jupyter_cassini_server.serialisation import serialize_branch, serialize_child, encode_path
 from jupyter_cassini_server.schema.models import (
     NewChildInfo,
+    TreePathQuery,
     TreeResponse,
     TierInfo,
     MetaSchema,
     LookupGetParametersQuery,
     OpenGetParametersQuery,
-    TreeGetParametersQuery,
     FolderTierInfo,
     NotebookTierInfo,
     Status,
@@ -130,11 +130,11 @@ class TreeHandler(APIHandler):
 
     @tornado.web.authenticated
     @needs_project
-    @with_types(TreeGetParametersQuery, TreeResponse, "GET")
-    def get(self, query: TreeGetParametersQuery) -> TreeResponse:
+    @with_types(TreePathQuery, TreeResponse, "GET")
+    def get(self, query: TreePathQuery) -> TreeResponse:
         assert env.project
 
-        ids = query.ids__
+        ids = query.path
 
         try:
             tier = env.project.home
@@ -157,7 +157,7 @@ def setup_handlers(web_app):
 
     base_url = web_app.settings["base_url"]
     lookup_pattern = url_path_join(base_url, "jupyter_cassini", "lookup")
-    tree_pattern = url_path_join(base_url, "jupyter_cassini", "tree")
+    tree_pattern = url_path_join(base_url, "jupyter_cassini", r"tree(?P<path>(?:(?:/[^/]+)+|/?))")
     open_pattern = url_path_join(base_url, "jupyter_cassini", "open")
     new_child_pattern = url_path_join(base_url, "jupyter_cassini", "newChild")
 
