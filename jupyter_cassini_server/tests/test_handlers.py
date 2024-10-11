@@ -62,6 +62,15 @@ async def test_tree_home(project_via_env, jp_fetch) -> None:
 
     tree = TreeResponse.model_validate_json(reponse.body.decode())
     assert tree.name == 'Home'
+
+
+async def test_tree_home_with_query_bit(project_via_env, jp_fetch) -> None:    
+    reponse = await jp_fetch("jupyter_cassini", "tree/?1231623")
+
+    assert reponse.code == 200
+
+    tree = TreeResponse.model_validate_json(reponse.body.decode())
+    assert tree.name == 'Home'
     
 
 async def test_tree_WP1(project_via_env, jp_fetch) -> None:    
@@ -82,6 +91,19 @@ async def test_tree_WP1_1(project_via_env, jp_fetch) -> None:
     project['WP1.1'].setup_files()
 
     reponse = await jp_fetch("jupyter_cassini", "tree/1/1")
+
+    assert reponse.code == 200
+
+    tree = TreeResponse.model_validate_json(reponse.body.decode())
+    assert tree.name == 'WP1.1'
+
+
+async def test_tree_WP1_1_with_query_bit(project_via_env, jp_fetch) -> None:    
+    project = project_via_env
+    project['WP1'].setup_files()
+    project['WP1.1'].setup_files()
+
+    reponse = await jp_fetch("jupyter_cassini", "tree/1/1?1232341")
 
     assert reponse.code == 200
 

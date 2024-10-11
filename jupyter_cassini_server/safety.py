@@ -44,6 +44,7 @@ def parse_path_query(raw_query: Dict[str, str]) -> Dict[str, List[str]]:
     query = {}
 
     for key, value in raw_query.items():
+        value = value.split('?')[0]  # for reasons I don't understand, it seems to include queries in the url?
         if '/' in value:
             query[key] = [v for v in value.split('/') if v]
         else:
@@ -62,7 +63,7 @@ def with_types(
     
         def wrap_handler(self: S, **kwargs) -> None:
             if method == "GET":
-                if kwargs and self.request.query:
+                if kwargs and parse_get_query(self.request.query):
                     raise RuntimeError("Receiving a query via parameters and path, this is not supported")
                 
                 if kwargs:

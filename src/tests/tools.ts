@@ -78,6 +78,8 @@ export function mockServerAPI(calls: MockAPICalls): void {
   ServerConnection.makeRequest = jest.fn((url, init, settings) => {
     const { pathname, search } = URLExt.parse(url);
 
+    let pathQuery = pathname.search('{(.+)}')
+
     const mockResponses = calls[
       pathname.replace('/jupyter_cassini', '') as keyof MockAPICalls
     ] as MockAPICall[] | undefined;

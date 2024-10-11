@@ -93,9 +93,8 @@ export namespace CassiniServer {
     return client
       .GET(`/tree/{ids}`, {
         params: {
-          path: { ids: ids.join('/') }
+          path: { ids: ids.join('/')}
         }
-        //querySerializer: { array: { explode: false, style: 'form' } } // don't like that this is necessary!
       })
       .then(val => {
         const { data, error, response } = val;
