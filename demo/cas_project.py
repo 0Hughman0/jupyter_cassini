@@ -16,10 +16,6 @@ class MyWP(WorkPackage):
     a_date = manager.meta_attr(datetime.date, datetime.date)
     one_of = manager.meta_attr(Literal['bees', 'fish'], str)
     an_int = manager.meta_attr(int, int)
-    a_bool = manager.meta_attr(bool, bool)
-    a_float = manager.meta_attr(float, float)
-    # a_secret = manager.meta_attr(SecretStr, str)  # there's a problem with SecretStr serialisation in Pydantic currently 
-
 
 project = Project([DEFAULT_TIERS[0], MyWP, *DEFAULT_TIERS[2:]], __file__)
 project = cassini_lib.extend_project(project)
