@@ -5,16 +5,24 @@ import {
 } from '@jupyterlab/application';
 
 import { ICommandPalette } from '@jupyterlab/apputils';
-
 import { IDocumentManager } from '@jupyterlab/docmanager';
 
 import { ILauncher } from '@jupyterlab/launcher';
 import { IEditorServices } from '@jupyterlab/codeeditor';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
+import { LabIcon } from '@jupyterlab/ui-components';
+
 import { WidgetExtension } from './widgetextension';
 
 import { cassini } from './core';
+import cassiniLogo from '../style/logo.svg'
+
+
+const cassiniIcon = new LabIcon({
+  name: 'cassini:logo',
+  svgstr: cassiniLogo
+})
 
 /**
  * Initialization data for the jupyter_cassini extension.
@@ -59,7 +67,8 @@ const extension: JupyterFrontEndPlugin<void> = {
     commands.addCommand(command, {
       label: args => (args['isPalette'] ? 'What key' : 'Browser'),
       caption: 'Launch a Cassini Browser Window',
-      execute: cassini.launchTierBrowserCommand
+      execute: cassini.launchTierBrowserCommand,
+      icon: cassiniIcon
     });
 
     palette.addItem({ command, category: 'Cassini' });
@@ -67,7 +76,7 @@ const extension: JupyterFrontEndPlugin<void> = {
     launcher.add({
       command,
       category: 'Cassini',
-      rank: 1
+      rank: 1,
     });
   }
 };
