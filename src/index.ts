@@ -16,13 +16,12 @@ import { LabIcon } from '@jupyterlab/ui-components';
 import { WidgetExtension } from './widgetextension';
 
 import { cassini } from './core';
-import cassiniLogo from '../style/logo.svg'
-
+import cassiniLogo from '../style/logo.svg';
 
 const cassiniIcon = new LabIcon({
   name: 'cassini:logo',
   svgstr: cassiniLogo
-})
+});
 
 /**
  * Initialization data for the jupyter_cassini extension.
@@ -76,7 +75,7 @@ const extension: JupyterFrontEndPlugin<void> = {
     launcher.add({
       command,
       category: 'Cassini',
-      rank: 1,
+      rank: 1
     });
   }
 };
