@@ -19,11 +19,11 @@ import { mockServerAPI, createTierFiles, awaitSignalType } from './tools';
 describe('TreeManager', () => {
   beforeEach(() => {
     mockServerAPI({
-      '/tree': [
-        { query: { 'ids[]': '' }, response: HOME_TREE },
-        { query: { 'ids[]': '1' }, response: WP1_TREE },
-        { query: { 'ids[]': '1,1' }, response: WP1_1_TREE },
-        { query: { 'ids[]': '1,1,a' }, response: WP1_1_TREE } // cheeky
+      '/tree/{ids}': [
+        { path: '', response: HOME_TREE },
+        { path: '1', response: WP1_TREE },
+        { path: '1/1', response: WP1_1_TREE },
+        { path: '1/1/a', response: WP1_1_TREE } // cheeky
       ],
       '/lookup': [
         { query: { name: 'WP1' }, response: WP1_INFO },

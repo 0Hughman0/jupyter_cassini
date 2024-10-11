@@ -44,17 +44,14 @@ describe('tree', () => {
     errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
 
     mockServerAPI({
-      '/tree': [
-        { query: { 'ids[]': '1' }, response: WP1_TREE },
-        {
-          query: { 'ids[]': 'bad request' },
-          response: {
-            reason: 'Bad Request',
-            message: 'Bad query'
-          } as CassiniServerError,
-          status: 405
+      '/tree/{ids}': [
+        {path: '1', response: WP1_TREE },
+        {path: 'bad request', response: {
+          reason: 'Bad Request',
+          message: 'Bad query'
         },
-        { query: { 'ids[]': 'bad response' }, response: badWP1 }
+        status: 405 },
+        {path: '123412', response: badWP1 }
       ]
     });
   });
@@ -97,9 +94,9 @@ describe('lookup', () => {
 
     mockServerAPI({
       '/lookup': [
-        { query: { name: 'WP1' }, response: WP1_INFO },
+        { query: { name: 'WP1' }, response: WP1_INFO},
         {
-          query: { name: 'bad request' },
+          query: {name: 'bad request'},
           response: {
             reason: 'Bad Request',
             message: 'Bad query'
