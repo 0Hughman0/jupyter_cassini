@@ -1,8 +1,10 @@
 from unittest.mock import Mock
 from urllib.parse import urlencode
+from http import HTTPStatus
 
 import pytest
 from pydantic import BaseModel, ValidationError
+from tornado.web import HTTPError
 
 from ..safety import with_types, parse_get_query
 
@@ -28,6 +30,8 @@ class MockServer():
         self.body: dict = body
         self.finished: str | None = None
         self.error: int | None = None
+        self.message: str | None = None
+        self.reason: str | None = None
         self.query: BaseModel | None = None
 
     def get_json_body(self):
@@ -36,9 +40,10 @@ class MockServer():
     def finish(self, message):
         self.finished = message
     
-    def send_error(self, error, message=None):
+    def send_error(self, error, message=None, reason=None):
         self.error = error
         self.message = message
+        self.reason = reason
 
 
 def test_get_query_parser_regular():
@@ -66,6 +71,22 @@ def test_get_all_valid():
     assert Response.model_validate_json(s.finished) == valid_response
 
 
+def test_invalid_request_method():
+    class Server(MockServer):
+
+        @with_types(Query, Response, 'DELETE')  # type: ignore[type-var]
+        def endpoint(self, query: Query) -> Response:
+            self.query = query
+            return valid_response
+        
+    s = Server(query=urlencode(dict(valid_query)))
+
+    with pytest.raises(HTTPError) as e:
+        s.endpoint()
+    
+    assert e.value.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+
+
 def test_get_invalid_query():
     class Server(MockServer):
 
@@ -75,9 +96,11 @@ def test_get_invalid_query():
             return valid_response
 
     s = Server(query=urlencode({'invalid': 'yaya'}))
-    s.endpoint()
 
-    assert s.error == 400
+    with pytest.raises(HTTPError) as e:
+        s.endpoint()
+    
+    assert e.value.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_get_invalid_response():
@@ -89,9 +112,11 @@ def test_get_invalid_response():
             return Response(invalid='wassup')
 
     s = Server(query=urlencode(dict(valid_query)))
-    s.endpoint()
 
-    assert s.error == 500
+    with pytest.raises(HTTPError) as e:
+        s.endpoint()
+
+    assert e.value.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 def test_get_not_found():
@@ -104,9 +129,11 @@ def test_get_not_found():
             return valid_response
 
     s = Server(query=urlencode(dict(valid_query)))
-    s.endpoint()
 
-    assert s.error == 404
+    with pytest.raises(HTTPError) as e:
+        s.endpoint()
+
+    assert e.value.status_code == HTTPStatus.NOT_FOUND
 
 
 def test_post_all_valid():
@@ -122,5 +149,4 @@ def test_post_all_valid():
     
     assert s.body == dict(valid_query)
     assert s.query == valid_query
-    assert Response.model_validate_json(s.finished) == valid_response
-
+    assert Response.model_validate_json(s.finished) == valid_response 

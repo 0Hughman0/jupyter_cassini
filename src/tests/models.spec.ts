@@ -1,6 +1,14 @@
-import { TierModel, TierBrowserModel } from '../models';
-import { TreeManager, cassini } from '../core';
+import 'jest';
+import { ServiceManager } from '@jupyterlab/services';
 
+import {
+  TierBrowserModel,
+  NotebookTierModel,
+  FolderTierModel
+} from '../models';
+import { cassini } from '../core';
+import { treeResponseToData } from '../utils';
+import { FolderTierInfo } from '../schema/types';
 import { CassiniServer } from '../services';
 
 import {
@@ -10,11 +18,7 @@ import {
   TEST_META_CONTENT,
   WP1_INFO
 } from './test_cases';
-import { createTierFiles } from './tools';
-
-import 'jest';
-import { FolderTierInfo } from '../schema/types';
-import { ServiceManager } from '@jupyterlab/services';
+import { createTierFiles, awaitSignalType } from './tools';
 
 describe('TierModel', () => {
   let theManager: ServiceManager.IManager;
@@ -30,19 +34,19 @@ describe('TierModel', () => {
 
   describe('complete-meta', () => {
     test('meta', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.meta).toEqual(TEST_META_CONTENT);
     });
 
     test('name', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.name).toBe('WP1');
     });
 
     test('description', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.description).toBe(TEST_META_CONTENT['description']);
 
@@ -53,7 +57,7 @@ describe('TierModel', () => {
     });
 
     test('conclusion', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.conclusion).toBe(TEST_META_CONTENT['conclusion']);
 
@@ -64,25 +68,29 @@ describe('TierModel', () => {
     });
 
     test('additionalMeta', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.additionalMeta).toEqual({ temperature: 273 });
     });
 
+    test('addingInvalidMeta', async () => {
+      const tier = new NotebookTierModel(WP1_INFO);
+      await tier.ready;
+      expect(tier.setMetaValue('description', 'new')).toEqual(true);
+      expect(tier.setMetaValue('description', 15)).toEqual(false);
+    });
+
     test('treeData', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
 
       await cassini.treeManager.cacheTreeData(
         ['1'],
-        TreeManager._treeResponseToData(WP1_TREE, ['1'])
+        treeResponseToData(WP1_TREE, ['1'])
       );
 
       await expect(tier.treeData).resolves.toEqual(
-        TreeManager._treeResponseToData(WP1_TREE, ['1'])
-      );
-      await expect(tier.children).resolves.toEqual(
-        TreeManager._treeResponseToData(WP1_TREE, ['1']).children
+        treeResponseToData(WP1_TREE, ['1'])
       );
     });
   });
@@ -97,30 +105,15 @@ describe('TierModel', () => {
         tierType: 'folder'
       };
 
-      const tier = new TierModel(noMeta);
+      const tier = new FolderTierModel(noMeta);
 
       expect(tier.name).toBe('No meta Yoo');
-
-      expect(tier.meta).toEqual({});
-
-      expect(tier.description).toBe('');
-      expect(tier.conclusion).toBe('');
-
-      expect(() => {
-        tier.description = 'new';
-      }).toThrow('Tier has no meta, cannot store description');
-      expect(tier.description).toBe('');
-
-      expect(() => {
-        tier.conclusion = 'new';
-      }).toThrow('Tier has no meta, cannot store conclusion');
-      expect(tier.conclusion).toBe('');
     });
 
     test('missing description', async () => {
       const { description, ...noDescription } = TEST_META_CONTENT;
 
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
 
       await tier.ready;
 
@@ -136,7 +129,7 @@ describe('TierModel', () => {
 
       expect(tierInfo.hltsPath).toBeUndefined();
 
-      const tier = new TierModel(tierInfo);
+      const tier = new NotebookTierModel(tierInfo);
       await tier.ready;
 
       expect(tier.hltsFile).toBe(undefined);
@@ -146,7 +139,7 @@ describe('TierModel', () => {
     test('init', async () => {
       expect(WP1_INFO.hltsPath).toBeDefined();
 
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
 
       expect(tier.hltsFile).not.toEqual(undefined);
@@ -164,7 +157,7 @@ describe('TierModel', () => {
 
   describe('io', () => {
     test('save', async () => {
-      const tier = new TierModel(WP1_INFO);
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
 
       expect(tier.dirty).toBe(false);
@@ -215,26 +208,29 @@ describe('TierBrowserModel', () => {
   });
 
   test('initial', async () => {
+    expect(Array.from(model.currentPath)).toEqual([]);
+    expect(model.current).toBeNull();
+
     model.currentPath.clear();
+    await awaitSignalType(model.changed, 'current');
 
-    await expect(model.current).resolves.toMatchObject(
-      TreeManager._treeResponseToData(HOME_TREE, [])
-    );
+    expect(model.current).toMatchObject(treeResponseToData(HOME_TREE, []));
 
-    await expect(model.getChildren()).resolves.toMatchObject(
-      TreeManager._treeResponseToData(HOME_TREE, ['1']).children
+    expect(model.current?.children).toMatchObject(
+      treeResponseToData(HOME_TREE, ['1']).children
     );
   });
 
-  test('updating', () => {
+  test('updating', async () => {
     const ids = ['1', '1'];
+
     model.currentPath.pushAll(ids);
+    await awaitSignalType(model.changed, 'current');
 
     const childReponse = Object.assign(HOME_TREE);
-    childReponse.name = 'WP1.1';
 
-    expect(model.current).resolves.toMatchObject(
-      TreeManager._treeResponseToData(childReponse, ['1', '1'])
+    expect(model.current).toMatchObject(
+      treeResponseToData(childReponse, ['1', '1'])
     );
     expect(CassiniServer.tree).lastCalledWith(ids);
   });
@@ -255,5 +251,19 @@ describe('TierBrowserModel', () => {
     model.currentPath.pushAll(['b', 'd']);
 
     expect(model.additionalColumns).toEqual(new Set());
+
+    model.currentPath.clear();
+    model.currentPath.pushAll(['a']);
+
+    // should remember.
+    expect(model.additionalColumns).toEqual(new Set(['new Col']));
+  });
+
+  test('childMetas', async () => {
+    model.currentPath.clear();
+
+    await awaitSignalType(model.changed, 'current');
+
+    expect(model.childMetas).toEqual(new Set(['Fishes', 'Crabs']));
   });
 });

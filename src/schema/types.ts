@@ -1,5 +1,7 @@
 import { components } from './schema';
 
+export type CassiniServerError = components['schemas']['CassiniServerError'];
+
 export type ChildClsInfo = components['schemas']['ChildClsInfo'];
 export type ChildClsNotebookInfo =
   components['schemas']['ChildClsNotebookInfo'];
@@ -15,9 +17,5 @@ export type NewChildInfo = components['schemas']['NewChildInfo'];
 
 export type Status = components['schemas']['Status'];
 
+export type ObjectDef = components['schemas']['objectDef'];
 export type MetaSchema = components['schemas']['metaSchema'];
-
-export interface IChange<Old, New> {
-  old: Old;
-  new: New;
-}

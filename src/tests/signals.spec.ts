@@ -1,5 +1,5 @@
-import { TierBrowserModel, TierModel } from '../models';
-import { createTierFiles, mockServerAPI } from './tools';
+import { NotebookTierModel, TierBrowserModel } from '../models';
+import { awaitSignalType, createTierFiles, mockServerAPI } from './tools';
 import {
   TEST_HLT_CONTENT,
   TEST_META_CONTENT,
@@ -11,9 +11,6 @@ import {
 import 'jest';
 
 describe('tier-model', () => {
-  //let metaFile: any;
-  //let hltsFile: any;
-
   beforeEach(async () => {
     await createTierFiles([
       { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
@@ -22,7 +19,7 @@ describe('tier-model', () => {
   });
 
   test('model-ready-no-hlts', async () => {
-    const tier = new TierModel(WP1_INFO);
+    const tier = new NotebookTierModel(WP1_INFO);
     expect(tier.metaFile?.isReady).toBe(false);
 
     expect(tier.description).toBe('');
@@ -35,7 +32,7 @@ describe('tier-model', () => {
   });
 
   test('model-ready-hlts', async () => {
-    const tier = new TierModel(WP1_INFO);
+    const tier = new NotebookTierModel(WP1_INFO);
     expect(tier.metaFile?.isReady).toBe(false);
     // expect(tier.hltsFile?.isReady).toBe(false) // doesn't work because hlts file is set in a callback... hmmm
 
@@ -52,7 +49,7 @@ describe('tier-model', () => {
   });
 
   test('changed', async () => {
-    const tier = await new TierModel(WP1_INFO).ready;
+    const tier = await new NotebookTierModel(WP1_INFO).ready;
     const sentinal = jest.fn();
 
     tier.changed.connect(sentinal);
@@ -63,7 +60,7 @@ describe('tier-model', () => {
     tier.description = 'new value';
     expect(tier.dirty).toBe(true);
 
-    expect(sentinal).toBeCalledTimes(calls + 2); // once for meta contents and once for making dirty
+    expect(sentinal).toBeCalledTimes(calls + 3); // once for meta contents and once for making dirty
 
     calls = sentinal.mock.calls.length;
 
@@ -104,21 +101,41 @@ describe('tree-model', () => {
   test('currentPath', async () => {
     const browserModel = new TierBrowserModel();
 
-    const childrenSentinal = jest.fn();
-    browserModel.childrenUpdated.connect(childrenSentinal);
-
     const pathSentinal = jest.fn();
+    const currentSentinal = jest.fn();
+    const childrenSentinal = jest.fn();
+    const refreshSentinal = jest.fn();
 
-    browserModel.currentPath.changed.connect(pathSentinal);
+    browserModel.changed.connect((sender, change) => {
+      switch (change.type) {
+        case 'path': {
+          pathSentinal(change);
+          break;
+        }
+        case 'current': {
+          currentSentinal(change);
+          break;
+        }
+        case 'children': {
+          childrenSentinal(change);
+          break;
+        }
+        case 'refresh': {
+          refreshSentinal(change);
+          break;
+        }
+      }
+    });
 
     browserModel.currentPath.push('1');
 
+    await awaitSignalType(browserModel.changed, 'current');
+
     expect(pathSentinal).toBeCalledTimes(1);
-    expect(childrenSentinal).toBeCalledTimes(1);
+    expect(currentSentinal).toBeCalledTimes(1);
 
     await browserModel.refresh();
 
-    expect(childrenSentinal).toBeCalledTimes(3); // honestly not that sure why this is 3...
-    expect(pathSentinal).toBeCalledTimes(1);
+    expect(refreshSentinal).toBeCalledTimes(1);
   });
 });

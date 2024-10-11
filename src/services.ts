@@ -2,10 +2,17 @@
 import createClient from 'openapi-fetch';
 
 import { URLExt } from '@jupyterlab/coreutils';
+import { Notification } from '@jupyterlab/apputils';
 
 import { ServerConnection } from '@jupyterlab/services';
 import { paths } from './schema/schema';
-import { TierInfo, TreeResponse, NewChildInfo, Status } from './schema/types';
+import {
+  TierInfo,
+  TreeResponse,
+  NewChildInfo,
+  Status,
+  CassiniServerError
+} from './schema/types';
 
 const JLfetch = async (info: Request) => {
   const url = info.url;
@@ -33,6 +40,20 @@ export const client = createClient<paths>({
   fetch: JLfetch
 });
 
+export function handleServerError(
+  response: Response,
+  error: CassiniServerError
+): string {
+  const { pathname, search } = URLExt.parse(response.url);
+  Notification.error(
+    `${pathname}${search}, returned ${error?.reason}, check out browser and server log for more details.`
+  );
+  console.warn(
+    `Cassini server error ${error.reason} at ${pathname}${search}, caused by: \n\n ${error.message}`
+  );
+  return error.reason;
+}
+
 /**
  * Wrapper for the requestAPI.
  */
@@ -43,12 +64,6 @@ export namespace CassiniServer {
    * @param query the name of the tier
    * @returns Promise that resolves with the info of the tier you lookup.
    */
-  /*
-  export function lookup(query: string): Promise<ITierInfo> {
-    return requestAPI('lookup', {}, { id: query });
-  }
-  */
-
   export function lookup(query: string): Promise<TierInfo> {
     return client
       .GET('/lookup', {
@@ -57,10 +72,12 @@ export namespace CassiniServer {
         }
       })
       .then(val => {
-        if (val.data) {
+        const { data, error, response } = val;
+        if (data) {
           return val.data;
         } else {
-          throw Error();
+          const reason = handleServerError(response, error);
+          throw Error(reason);
         }
       });
   }
@@ -81,10 +98,12 @@ export namespace CassiniServer {
         //querySerializer: { array: { explode: false, style: 'form' } } // don't like that this is necessary!
       })
       .then(val => {
-        if (val.data) {
+        const { data, error, response } = val;
+        if (data) {
           return val.data;
         } else {
-          throw Error();
+          const reason = handleServerError(response, error);
+          throw Error(reason);
         }
       });
   }
@@ -101,10 +120,12 @@ export namespace CassiniServer {
         body: info
       })
       .then(val => {
-        if (val.data) {
+        const { data, error, response } = val;
+        if (data) {
           return val.data;
         } else {
-          throw Error();
+          const reason = handleServerError(response, error);
+          throw Error(reason);
         }
       });
   }
@@ -117,10 +138,12 @@ export namespace CassiniServer {
         }
       })
       .then(val => {
-        if (val.data) {
+        const { data, error, response } = val;
+        if (data) {
           return val.data;
         } else {
-          throw Error();
+          const reason = handleServerError(response, error);
+          throw Error(reason);
         }
       });
   }

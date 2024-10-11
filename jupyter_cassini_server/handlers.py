@@ -1,8 +1,8 @@
-from typing import TypeVar, Callable, Any, Union
+from typing import TypeVar, Callable, Union
 import datetime
 
-from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
+from jupyter_server.base.handlers import APIHandler
 
 import tornado
 
@@ -10,9 +10,8 @@ from cassini import env
 from cassini.core import NotebookTierBase
 
 from jupyter_cassini_server.safety import needs_project, with_types
-from jupyter_cassini_server.serialisation import serialize_branch, encode_path
-
-from .schema.models import (
+from jupyter_cassini_server.serialisation import serialize_branch, serialize_child, encode_path
+from jupyter_cassini_server.schema.models import (
     NewChildInfo,
     TreePathQuery,
     TreeResponse,
@@ -61,7 +60,7 @@ class LookupHandler(APIHandler):
                 metaPath=encode_path(tier.meta_file, project),
                 hltsPath=hlts_path,
                 started=started,
-                children=[child.name for child in tier],
+                children={child.id: serialize_child(child) for child in tier},
                 metaSchema=MetaSchema.model_validate(tier.__meta_manager__.build_model().model_json_schema())
             ))
         else:
@@ -69,7 +68,7 @@ class LookupHandler(APIHandler):
                 tierType='folder',
                 name=tier.name,
                 ids=list(tier.identifiers),
-                children=[child.name for child in tier]
+                children={child.id: serialize_child(child) for child in tier}
             ))
 
 

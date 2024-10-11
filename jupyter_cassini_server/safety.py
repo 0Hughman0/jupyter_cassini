@@ -1,11 +1,15 @@
 import functools
+from http.client import responses
 import urllib.parse
 from typing import Callable, Dict, List, Literal, Type, Union, TypeVar, cast, Any
 
 from pydantic import BaseModel, ValidationError
 from jupyter_server.base.handlers import APIHandler
+from tornado.web import HTTPError
 
 from cassini import env
+from cassini.meta import MetaValidationError
+
 
 Q = TypeVar("Q", bound=BaseModel)
 R = TypeVar("R", bound=BaseModel)
@@ -68,25 +72,25 @@ def with_types(
             elif method == "POST":
                 query = self.get_json_body()
             else:
-                raise NotImplementedError
+                raise HTTPError(405)
             
             try:
                 validated_query = query_model.model_validate(query)
-            except ValidationError:
-                return self.send_error(400, message=f'Invalid Query {query}')
+            except (MetaValidationError, ValidationError) as e:
+                raise HTTPError(400, reason=e.__class__.__name__, log_message=f'Invalid Query {query}, {e}')
             
             try:
                 response = func(self, validated_query)
-            except ValidationError:
-                return self.send_error(500, message='Invalid Response')
-            except ValueError:
-                return self.send_error(404)
+            except (MetaValidationError, ValidationError) as e:
+                raise HTTPError(500, reason=e.__class__.__name__, log_message=f'Invalid Response, {e}')
+            except ValueError as e:
+                raise HTTPError(404, reason=e.__class__.__name__, log_message=f'Value error from query {query}, {e}')
             
             try:
                 validated_response = response_model.model_validate(response)
-            except ValidationError:
+            except (MetaValidationError, ValidationError) as e:
                 # this will actually never happen...
-                return self.send_error(500, message=f'Invalid Response {response}')
+                raise HTTPError(500, reason=e.__class__.__name__, log_message=f'Invalid Response {response}, {e}')
             
             self.finish(validated_response.model_dump_json(by_alias=True, exclude_defaults=True))
             return

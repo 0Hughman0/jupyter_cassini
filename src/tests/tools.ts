@@ -1,4 +1,6 @@
 import { JSONObject } from '@lumino/coreutils';
+import { CommandRegistry } from '@lumino/commands';
+import { ISignal } from '@lumino/signaling';
 
 import { URLExt } from '@jupyterlab/coreutils';
 import {
@@ -7,9 +9,32 @@ import {
   ServerConnection
 } from '@jupyterlab/services';
 import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
+import { CodeMirrorEditorFactory } from '@jupyterlab/codemirror';
+import { defaultRenderMime, signalToPromise } from '@jupyterlab/testutils';
 
-import { cassini } from '../core';
+import { Cassini, cassini } from '../core';
+import { IModelChange } from '../models';
 import { paths } from '../schema/schema';
+import { CassiniServerError } from '../schema/types';
+
+let cassiniMocked = false;
+
+export function mockCassini(): Cassini {
+  cassini.tierModelManager.cache = {};
+  cassini.treeManager.cache = {};
+
+  if (cassiniMocked) {
+    return cassini;
+  }
+
+  cassini.contentService = new ServiceManagerMock();
+  cassini.contentFactory = new CodeMirrorEditorFactory();
+  cassini.rendermimeRegistry = defaultRenderMime();
+  cassini.commandRegistry = new CommandRegistry();
+
+  cassiniMocked = true;
+  return cassini;
+}
 
 export interface IFile {
   path: string;
@@ -20,8 +45,8 @@ export async function createTierFiles(files: IFile[]): Promise<{
   manager: ServiceManager.IManager;
   files: Contents.IModel[];
 }> {
-  const manager = new ServiceManagerMock();
-  cassini.contentService = manager;
+  mockCassini();
+  const manager = cassini.contentService;
 
   const filesOut: Contents.IModel[] = [];
 
@@ -41,8 +66,10 @@ export async function createTierFiles(files: IFile[]): Promise<{
 }
 
 export interface MockAPICall {
-  query: { [key: string]: string };
-  response: any;
+  query?: { [key: string]: string };
+  body?: any;
+  response: CassiniServerError | any;
+  status?: number;
 }
 
 export type MockAPICalls = { [endpoint in keyof paths]?: MockAPICall[] };
@@ -51,24 +78,55 @@ export function mockServerAPI(calls: MockAPICalls): void {
   ServerConnection.makeRequest = jest.fn((url, init, settings) => {
     const { pathname, search } = URLExt.parse(url);
 
-    const query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
-
     const mockResponses = calls[
       pathname.replace('/jupyter_cassini', '') as keyof MockAPICalls
     ] as MockAPICall[] | undefined;
 
     if (!mockResponses) {
-      throw TypeError(`Could not find endpoint ${pathname}`);
+      throw TypeError('No mocked responses found for this endpoint');
     }
 
-    for (const response of mockResponses) {
-      if (JSON.stringify(response.query) == JSON.stringify(query)) {
-        return Promise.resolve(new Response(JSON.stringify(response.response)));
+    if (init.method == 'GET') {
+      let query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
+
+      for (const response of mockResponses) {
+        if (JSON.stringify(response.query) == JSON.stringify(query)) {
+          return Promise.resolve(
+            new Response(JSON.stringify(response.response), {
+              status: response.status ?? 200
+            })
+          );
+        }
+      }
+    } else if (init.method == 'POST' && init.body) {
+      for (const response of mockResponses) {
+        if (
+          JSON.stringify(response.body) ==
+          new TextDecoder().decode(init.body as any)
+        ) {
+          return Promise.resolve(
+            new Response(JSON.stringify(response.response), {
+              status: response.status ?? 200
+            })
+          );
+        }
       }
     }
 
-    throw TypeError(
-      `Couldn't find matching mock response to query ${JSON.stringify(query)}`
-    );
+    throw TypeError(`No mocked responses found for this query, ${url}`);
   }) as jest.Mocked<typeof ServerConnection.makeRequest>;
+}
+
+export async function awaitSignalType<C extends IModelChange>(
+  signal: ISignal<any, C>,
+  type: C['type']
+): Promise<C> {
+  let value: C | null = null;
+
+  while (value?.type !== type) {
+    const [_, payload] = await signalToPromise(signal);
+    value = payload;
+  }
+
+  return value;
 }
