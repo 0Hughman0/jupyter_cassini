@@ -117,3 +117,13 @@ div.cas-invalid-id * {
 .cas-ChildrenSummaryTable-table tr:hover {
   background-color: var(--jp-layout-color2);
 }
+
+.cas-dialogue-input input, textarea{
+  width: 100%;
+}
+
+.cas-floating-preview{
+  top: 0px;
+  position: absolute;
+  right: 0px;
+}

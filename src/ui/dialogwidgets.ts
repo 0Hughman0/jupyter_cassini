@@ -50,6 +50,7 @@ export abstract class InputDialogBase<T>
     super();
     this._dirty = false;
     this.addClass(INPUT_DIALOG_CLASS);
+    this.addClass('cas-dialogue-input')
 
     const { label } = options;
 
@@ -505,6 +506,7 @@ export class InputIdDialogue extends InputTextDialog {
     this.nameTemplate = options.nameTemplate;
 
     this.previewBox = document.createElement('span');
+    this.previewBox.className = 'cas-floating-preview'
     this.node.appendChild(this.previewBox);
     this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
       '{}',
