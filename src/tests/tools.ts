@@ -73,23 +73,25 @@ export interface MockAPICall {
   path?: undefined;
 }
 
-export interface MockAPIPathCall{
-  path: string
+export interface MockAPIPathCall {
+  path: string;
   response: CassiniServerError | any;
   status?: number;
 }
 
-export type MockAPICalls = { [endpoint in keyof paths]?: (MockAPICall | MockAPIPathCall)[] };
+export type MockAPICalls = {
+  [endpoint in keyof paths]?: (MockAPICall | MockAPIPathCall)[];
+};
 
 export function mockServerAPI(calls: MockAPICalls): void {
-  const pathResponses: {[path: string]: MockAPIPathCall} = {};
+  const pathResponses: { [path: string]: MockAPIPathCall } = {};
 
   for (const [endpoint, responses] of Object.entries(calls)) {
     if (endpoint.includes('{') && endpoint.includes('}')) {
       for (const response of responses) {
         if (response.path !== undefined) {
-          const fullPath = endpoint.replace(/\{(.+)\}/, response.path)
-          pathResponses[fullPath] = response
+          const fullPath = endpoint.replace(/\{(.+)\}/, response.path);
+          pathResponses[fullPath] = response;
         }
       }
     }
@@ -97,15 +99,18 @@ export function mockServerAPI(calls: MockAPICalls): void {
 
   ServerConnection.makeRequest = jest.fn((url, init, settings) => {
     const { pathname, search } = URLExt.parse(url);
-    const endpoint = decodeURIComponent(pathname.replace('/jupyter_cassini', '')) as keyof MockAPICalls
+    const endpoint = decodeURIComponent(
+      pathname.replace('/jupyter_cassini', '')
+    ) as keyof MockAPICalls;
 
-    const mockPathResponse = pathResponses[endpoint]
+    const mockPathResponse = pathResponses[endpoint];
 
     if (mockPathResponse) {
       return Promise.resolve(
         new Response(JSON.stringify(mockPathResponse.response), {
           status: mockPathResponse.status ?? 200
-      }))
+        })
+      );
     }
     const mockResponses = calls[endpoint] as MockAPICall[] | undefined;
 
@@ -115,13 +120,14 @@ export function mockServerAPI(calls: MockAPICalls): void {
 
     if (init.method == 'GET') {
       const query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
-      
+
       for (const response of mockResponses) {
         if (JSON.stringify(response.query) == JSON.stringify(query)) {
           return Promise.resolve(
             new Response(JSON.stringify(response.response), {
               status: response.status ?? 200
-          }))
+            })
+          );
         }
       }
     } else if (init.method == 'POST' && init.body) {

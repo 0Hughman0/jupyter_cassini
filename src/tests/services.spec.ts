@@ -45,13 +45,16 @@ describe('tree', () => {
 
     mockServerAPI({
       '/tree/{ids}': [
-        {path: '1', response: WP1_TREE },
-        {path: 'bad request', response: {
-          reason: 'Bad Request',
-          message: 'Bad query'
+        { path: '1', response: WP1_TREE },
+        {
+          path: 'bad request',
+          response: {
+            reason: 'Bad Request',
+            message: 'Bad query'
+          },
+          status: 405
         },
-        status: 405 },
-        {path: '123412', response: badWP1 }
+        { path: '123412', response: badWP1 }
       ]
     });
   });
@@ -94,9 +97,9 @@ describe('lookup', () => {
 
     mockServerAPI({
       '/lookup': [
-        { query: { name: 'WP1' }, response: WP1_INFO},
+        { query: { name: 'WP1' }, response: WP1_INFO },
         {
-          query: {name: 'bad request'},
+          query: { name: 'bad request' },
           response: {
             reason: 'Bad Request',
             message: 'Bad query'

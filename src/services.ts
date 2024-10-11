@@ -93,7 +93,7 @@ export namespace CassiniServer {
     return client
       .GET(`/tree/{ids}`, {
         params: {
-          path: { ids: ids.join('/')}
+          path: { ids: ids.join('/') }
         }
       })
       .then(val => {
