@@ -395,7 +395,6 @@ export class Cassini {
     };
   }
 
-  /* istanbul ignore next */
   /**
    * 'launches' a tier. I actually use open externally, so maybe should be open idk.
    *
