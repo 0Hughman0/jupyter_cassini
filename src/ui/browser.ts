@@ -22,6 +22,7 @@ export class TierBrowser extends SplitPanel {
   model: TierBrowserModel;
   browser: TierTreeBrowser;
   viewer: TierViewer;
+  panelSizes: { browser: number; viewer: number };
 
   constructor(identifiers?: string[]) {
     super();
@@ -42,12 +43,12 @@ export class TierBrowser extends SplitPanel {
     ));
 
     this.addWidget(browser);
-    SplitPanel.setStretch(browser, 0);
+    SplitPanel.setStretch(browser, 1);
 
     const tierContent = (this.viewer = new TierViewer());
 
     this.addWidget(tierContent);
-    SplitPanel.setStretch(tierContent, 1);
+    SplitPanel.setStretch(tierContent, 0);
 
     this.setRelativeSizes([5, 3]);
 
@@ -81,5 +82,9 @@ export class TierBrowser extends SplitPanel {
    */
   launchTier(tier: ILaunchable): void {
     cassini.launchTier(tier);
+  }
+
+  onResize(): void {
+    //this.setRelativeSizes([5, 3]);
   }
 }
