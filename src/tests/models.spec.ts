@@ -28,11 +28,10 @@ describe('TierModel', () => {
       { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
       { path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT }
     ]);
-  
+
     mockServerAPI({
-      '/tree/{ids}': [
-        { path: '1', response: WP1_TREE }
-    ]})
+      '/tree/{ids}': [{ path: '1', response: WP1_TREE }]
+    });
 
     await manager.ready;
     theManager = manager;
@@ -103,23 +102,25 @@ describe('TierModel', () => {
     test('children updates from tree manager', async () => {
       const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
-      
+
       const sentinal = jest.fn();
       tier.changed.connect((sender, change) => {
         if (change.type === 'children') {
           sentinal(change);
         }
-      })
+      });
 
       const oldChildren = tier.children;
 
-      expect(tier.children).toEqual(treeChildrenToData(WP1_INFO.children || {}));
+      expect(tier.children).toEqual(
+        treeChildrenToData(WP1_INFO.children || {})
+      );
 
       await cassini.treeManager.get(['1'], true);
-    
+
       expect(sentinal).toBeCalled();
       expect(tier.children).not.toBe(oldChildren);
-    })
+    });
   });
 
   describe('missing meta', () => {
