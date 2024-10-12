@@ -99,6 +99,13 @@ export class NotebookTierModel implements IDisposable {
       ? treeChildrenToData(options.children)
       : null;
 
+    cassini.treeManager.changed.connect((sender, change) => {
+      if (JSON.stringify(change.ids) === JSON.stringify(this.ids)) {
+        this._children = change.data.children;
+        this._changed.emit({ type: 'children' });
+      }
+    }, this);
+
     this._isDisposed = false;
     this._required = [];
 

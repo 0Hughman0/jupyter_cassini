@@ -92,7 +92,7 @@ div.cas-invalid-id * {
 }
 
 .cas-ChildrenSummaryWidget {
-  height: 100%;
+  height: 100px;
   overflow: auto;
 }
 
@@ -112,6 +112,7 @@ div.cas-invalid-id * {
 
 .cas-ChildrenSummaryTable-table {
   width: 100%;
+  overflow: auto;
 }
 
 .cas-ChildrenSummaryTable-table tr:hover {

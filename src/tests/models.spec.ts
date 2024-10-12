@@ -7,7 +7,7 @@ import {
   FolderTierModel
 } from '../models';
 import { cassini } from '../core';
-import { treeResponseToData } from '../utils';
+import { treeChildrenToData, treeResponseToData } from '../utils';
 import { FolderTierInfo } from '../schema/types';
 import { CassiniServer } from '../services';
 
@@ -18,7 +18,7 @@ import {
   TEST_META_CONTENT,
   WP1_INFO
 } from './test_cases';
-import { createTierFiles, awaitSignalType } from './tools';
+import { createTierFiles, awaitSignalType, mockServerAPI } from './tools';
 
 describe('TierModel', () => {
   let theManager: ServiceManager.IManager;
@@ -28,6 +28,11 @@ describe('TierModel', () => {
       { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
       { path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT }
     ]);
+
+    mockServerAPI({
+      '/tree/{ids}': [{ path: '1', response: WP1_TREE }]
+    });
+
     await manager.ready;
     theManager = manager;
   });
@@ -92,6 +97,29 @@ describe('TierModel', () => {
       await expect(tier.treeData).resolves.toEqual(
         treeResponseToData(WP1_TREE, ['1'])
       );
+    });
+
+    test('children updates from tree manager', async () => {
+      const tier = new NotebookTierModel(WP1_INFO);
+      await tier.ready;
+
+      const sentinal = jest.fn();
+      tier.changed.connect((sender, change) => {
+        if (change.type === 'children') {
+          sentinal(change);
+        }
+      });
+
+      const oldChildren = tier.children;
+
+      expect(tier.children).toEqual(
+        treeChildrenToData(WP1_INFO.children || {})
+      );
+
+      await cassini.treeManager.get(['1'], true);
+
+      expect(sentinal).toBeCalled();
+      expect(tier.children).not.toBe(oldChildren);
     });
   });
 
