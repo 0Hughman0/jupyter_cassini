@@ -230,9 +230,11 @@ export class TierNotebookHeader extends Panel {
       case 'children': {
         const children = this.model.children;
         this.childrenSummary.data = children ? Object.entries(children) : [];
+        this.childrenSummary.update();
         break;
       }
     }
+    this.update();
   }
 }
 

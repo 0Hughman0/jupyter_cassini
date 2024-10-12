@@ -49,7 +49,7 @@ export class TierBrowser extends SplitPanel {
     this.addWidget(tierContent);
     SplitPanel.setStretch(tierContent, 1);
 
-    this.setRelativeSizes([5, 2]);
+    this.setRelativeSizes([5, 3]);
 
     cassini.treeManager.get(ids).then(tier => {
       if (!tier) {

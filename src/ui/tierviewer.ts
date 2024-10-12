@@ -243,33 +243,53 @@ export class TierViewer extends BoxPanel {
 
     content.addWidget(this.tierTitle);
 
-    content.addWidget(createElementWidget('h2', 'Description'));
+    const descriptionContent = new Panel();
+    descriptionContent.node.title = 'description-section';
+
+    descriptionContent.addWidget(createElementWidget('h2', 'Description'));
 
     const descriptionCell = (this.descriptionCell = new MarkdownEditor(
       '',
       true
     ));
 
-    content.addWidget(descriptionCell);
+    descriptionContent.addWidget(descriptionCell);
 
-    content.addWidget(createElementWidget('h2', 'Highlights'));
+    content.addWidget(descriptionContent);
+
+    const highlightsContent = new Panel();
+    highlightsContent.node.title = 'highlights-section';
+
+    highlightsContent.addWidget(createElementWidget('h2', 'Highlights'));
 
     this.highlightsBox = new Panel();
     this.highlightsBox.addClass('cas-tier-highlights-box');
 
-    content.addWidget(this.highlightsBox);
+    highlightsContent.addWidget(this.highlightsBox);
 
-    content.addWidget(createElementWidget('h2', 'Conclusion'));
+    content.addWidget(highlightsContent);
+
+    const conclusionContent = new Panel();
+    conclusionContent.node.title = 'conclusion-section';
+
+    conclusionContent.addWidget(createElementWidget('h2', 'Conclusion'));
 
     const concCell = (this.concCell = new MarkdownEditor('', true));
 
-    content.addWidget(concCell);
+    conclusionContent.addWidget(concCell);
 
-    content.addWidget(createElementWidget('h2', 'Meta'));
+    content.addWidget(conclusionContent);
+
+    const metaContent = new Panel();
+    metaContent.node.title = 'meta-section';
+
+    metaContent.addWidget(createElementWidget('h2', 'Meta'));
 
     const metaView = (this.metaView = new MetaEditor(this.model));
 
-    content.addWidget(metaView);
+    metaContent.addWidget(metaView);
+
+    content.addWidget(metaContent);
   }
 
   get modelChanged(): ISignal<TierViewer, NotebookTierModel.NewModel> {

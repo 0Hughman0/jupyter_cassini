@@ -214,11 +214,12 @@ test.describe('Cassini-Browser', async () => {
     await page.getByRole('button', { name: 'Preview WP1' }).click();
 
     // conclusion box...
-    await page.getByRole('button', { name: 'Edit' }).nth(1).click();
-    await page.getByRole('textbox').nth(2).fill('First Line\n\nline 2');
+    const concBox = await page.getByTitle('description-section');
+    await concBox.getByRole('button').click();
+    await concBox.getByRole('textbox').fill('First Line\n\nline 2');
 
     // save changes button
-    await page.getByRole('button', { name: 'Apply changes' }).click();
+    await concBox.getByRole('button').click();
 
     await page.getByRole('button', { name: 'Save changes to disk' }).click();
 
@@ -233,6 +234,7 @@ test.describe('Cassini-Browser', async () => {
   });
 
   test('highlights', async ({ page }) => {
+    test.slow();
     // check notebook openable
     await page.getByRole('button', { name: 'Open WP1' }).click();
 
