@@ -21,6 +21,7 @@ setupFiles.push('<rootDir>/src/tests/structuredclonepatch.js');
 module.exports = {
   ...baseConfig,
   automock: false,
+  restoreMocks: false, // this has to be false for jupyterlab mocks to work.
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
