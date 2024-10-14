@@ -113,7 +113,7 @@ def serialize_branch(tier: TierABC) -> TreeResponse:
         child_metas.discard("description")
         child_metas.discard("conclusion")
 
-        schema = child_cls.__meta_manager__.build_model().model_json_schema()
+        schema = child_cls.meta_model.model_json_schema()
 
         for name in schema['properties']:
             child_metas.discard(name)

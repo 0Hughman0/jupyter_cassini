@@ -61,7 +61,7 @@ class LookupHandler(APIHandler):
                 hltsPath=hlts_path,
                 started=started,
                 children={child.id: serialize_child(child) for child in tier},
-                metaSchema=MetaSchema.model_validate(tier.__meta_manager__.build_model().model_json_schema())
+                metaSchema=MetaSchema.model_validate(tier.meta_model.model_json_schema())
             ))
         else:
             return TierInfo(FolderTierInfo(
