@@ -1,3 +1,5 @@
+import { Notification } from '@jupyterlab/apputils';
+
 import { TreeResponse, TreeChildResponse } from './schema/types';
 import { ITreeData, ITreeChildData, TreeChildren } from './core';
 
@@ -53,4 +55,14 @@ export function treeResponseToData(
   newTree.children = treeChildrenToData(treeResponse.children);
 
   return newTree;
+}
+
+export function warnError(notifyMessage: string, logMessage?: string): void {
+  Notification.error('Cassini - ' + notifyMessage);
+
+  if (!logMessage) {
+    logMessage = notifyMessage;
+  }
+
+  console.warn('Cassini - ' + logMessage);
 }

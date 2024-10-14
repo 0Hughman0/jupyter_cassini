@@ -15,7 +15,7 @@ import {
   NewChildInfo,
   TierInfo
 } from './schema/types';
-import { treeResponseToData } from './utils';
+import { treeResponseToData, warnError } from './utils';
 
 import { TierBrowser } from './ui/browser';
 import Ajv from 'ajv';
@@ -187,15 +187,11 @@ export class TreeManager {
    * This will also update the cache with that data.
    */
   fetchTierData(ids: string[]): Promise<ITreeData | null> {
-    return CassiniServer.tree(ids)
-      .then(treeResponse => {
-        const newTree = treeResponseToData(treeResponse, ids);
+    return CassiniServer.tree(ids).then(treeResponse => {
+      const newTree = treeResponseToData(treeResponse, ids);
 
-        return this.cacheTreeData(ids, newTree) as ITreeData;
-      })
-      .catch(reason => {
-        return null;
-      });
+      return this.cacheTreeData(ids, newTree) as ITreeData;
+    });
   }
 }
 
@@ -332,7 +328,14 @@ export class Cassini {
     this.rendermimeRegistry = rendermimeRegistry;
     this.commandRegistry = commandRegistry;
 
-    this.treeManager.initialize().then(() => this.resolveReady());
+    this.treeManager
+      .initialize()
+      .then(() => this.resolveReady())
+      .catch(() =>
+        warnError(
+          "Cassini can't find your project. You must explicitly launch jupyter lab with project.launch() or set CASSINI_PROJECT."
+        )
+      );
     return this.ready;
   }
 
