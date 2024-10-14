@@ -2,7 +2,6 @@
 import createClient from 'openapi-fetch';
 
 import { URLExt } from '@jupyterlab/coreutils';
-import { Notification } from '@jupyterlab/apputils';
 
 import { ServerConnection } from '@jupyterlab/services';
 import { paths } from './schema/schema';
@@ -13,6 +12,7 @@ import {
   Status,
   CassiniServerError
 } from './schema/types';
+import { warnError } from './utils';
 
 const JLfetch = async (info: Request) => {
   const url = info.url;
@@ -45,12 +45,11 @@ export function handleServerError(
   error: CassiniServerError
 ): string {
   const { pathname, search } = URLExt.parse(response.url);
-  Notification.error(
-    `${pathname}${search}, returned ${error?.reason}, check out browser and server log for more details.`
-  );
-  console.warn(
-    `Cassini server error ${error.reason} at ${pathname}${search}, caused by: \n\n ${error.message}`
-  );
+
+  const notifyMessage = `${pathname}${search}, returned ${error?.reason}, check out browser and server log for more details.`;
+  const logMessage = `Cassini server error ${error.reason} at ${pathname}${search}, caused by: \n\n ${error.message}`;
+  warnError(notifyMessage, logMessage);
+
   return error.reason;
 }
 

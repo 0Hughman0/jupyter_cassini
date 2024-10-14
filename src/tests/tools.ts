@@ -83,7 +83,13 @@ export type MockAPICalls = {
   [endpoint in keyof paths]?: (MockAPICall | MockAPIPathCall)[];
 };
 
-export function mockServerAPI(calls: MockAPICalls): void {
+export function mockServerAPI(
+  calls: MockAPICalls
+): jest.SpyInstance<
+  Promise<Response>,
+  [url: string, init: RequestInit, settings: ServerConnection.ISettings],
+  any
+> {
   const pathResponses: { [path: string]: MockAPIPathCall } = {};
 
   for (const [endpoint, responses] of Object.entries(calls)) {
@@ -97,7 +103,11 @@ export function mockServerAPI(calls: MockAPICalls): void {
     }
   }
 
-  ServerConnection.makeRequest = jest.fn((url, init, settings) => {
+  const mockedServer = (
+    url: string,
+    init: RequestInit,
+    settings: ServerConnection.ISettings
+  ) => {
     const { pathname, search } = URLExt.parse(url);
     const endpoint = decodeURIComponent(
       pathname.replace('/jupyter_cassini', '')
@@ -144,9 +154,13 @@ export function mockServerAPI(calls: MockAPICalls): void {
         }
       }
     }
-
     throw TypeError(`No mocked responses found for this query, ${url}`);
-  }) as jest.Mocked<typeof ServerConnection.makeRequest>;
+  };
+
+  const mock = jest.spyOn(ServerConnection, 'makeRequest');
+  mock.mockImplementation(mockedServer);
+
+  return mock;
 }
 
 export async function awaitSignalType<C extends IModelChange>(

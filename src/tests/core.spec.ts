@@ -230,10 +230,14 @@ describe('TreeModelManager', () => {
 
 describe('cassini', () => {
   test('init', async () => {
-    const cassini = new Cassini();
-    expect(cassini.ready).toBeDefined();
+    mockServerAPI({
+      '/tree/{ids}': [{ path: '', response: HOME_TREE }]
+    });
 
     const { manager } = await createTierFiles([]);
+
+    const cassini = new Cassini();
+    expect(cassini.ready).toBeDefined();
 
     await cassini.initialize(
       null as any,
@@ -243,6 +247,35 @@ describe('cassini', () => {
       null as any
     );
 
-    expect(cassini.ready).resolves.toBe(undefined);
+    expect(cassini.ready).resolves.toBe(true);
+  });
+
+  test('init-sever-not-setup', async () => {
+    mockServerAPI({
+      '/tree/{ids}': [
+        {
+          path: '',
+          response: {
+            reason: 'Bad Request',
+            message: 'Bad query'
+          },
+          status: 400
+        }
+      ]
+    });
+
+    const mockWarn = (console.warn = jest.fn());
+
+    const { manager } = await createTierFiles([]);
+
+    const cassini = new Cassini();
+    expect(cassini.ready).toBeDefined();
+
+    await cassini
+      .initialize(null as any, manager, null as any, null as any, null as any)
+      .catch(() => {});
+
+    await expect(cassini.ready).rejects.toBe(false);
+    expect(mockWarn).toBeCalled();
   });
 });

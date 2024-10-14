@@ -15,7 +15,7 @@ import {
   NewChildInfo,
   TierInfo
 } from './schema/types';
-import { treeResponseToData } from './utils';
+import { treeResponseToData, warnError } from './utils';
 
 import { TierBrowser } from './ui/browser';
 import Ajv from 'ajv';
@@ -187,15 +187,11 @@ export class TreeManager {
    * This will also update the cache with that data.
    */
   fetchTierData(ids: string[]): Promise<ITreeData | null> {
-    return CassiniServer.tree(ids)
-      .then(treeResponse => {
-        const newTree = treeResponseToData(treeResponse, ids);
+    return CassiniServer.tree(ids).then(treeResponse => {
+      const newTree = treeResponseToData(treeResponse, ids);
 
-        return this.cacheTreeData(ids, newTree) as ITreeData;
-      })
-      .catch(reason => {
-        return null;
-      });
+      return this.cacheTreeData(ids, newTree) as ITreeData;
+    });
   }
 }
 
@@ -293,9 +289,10 @@ export class Cassini {
   commandRegistry: CommandRegistry;
   ajv: Ajv;
 
-  protected resolveReady: (value: void | PromiseLike<void>) => void;
+  protected resolveReady: (value: boolean) => void;
+  protected rejectReady: (value: boolean) => void;
 
-  ready: Promise<void>;
+  ready: Promise<boolean>;
 
   /**
    * Creates treeManager and tierModelManager instances.
@@ -304,8 +301,9 @@ export class Cassini {
     this.treeManager = new TreeManager();
     this.tierModelManager = new TierModelTreeManager();
 
-    this.ready = new Promise((resolve, reject) => {
+    this.ready = new Promise<boolean>((resolve, reject) => {
       this.resolveReady = resolve;
+      this.rejectReady = reject;
     });
     this.ajv = new Ajv();
     addFormats(this.ajv);
@@ -325,14 +323,23 @@ export class Cassini {
     contentFactory: IEditorFactoryService,
     rendermimeRegistry: IRenderMimeRegistry,
     commandRegistry: CommandRegistry
-  ): Promise<void> {
+  ): Promise<boolean> {
     this.app = app;
     this.contentService = contentService;
     this.contentFactory = contentFactory;
     this.rendermimeRegistry = rendermimeRegistry;
     this.commandRegistry = commandRegistry;
 
-    this.treeManager.initialize().then(() => this.resolveReady());
+    this.treeManager
+      .initialize()
+      .then(() => this.resolveReady(true))
+      .catch(() => {
+        warnError(
+          "Cassini can't find your project. You must explicitly launch jupyter lab with project.launch() or set CASSINI_PROJECT."
+        );
+        return this.rejectReady(false);
+      });
+
     return this.ready;
   }
 
