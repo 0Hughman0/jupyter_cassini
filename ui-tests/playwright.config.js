@@ -8,7 +8,7 @@ module.exports = {
   expect: { timeout: 15000 },
   webServer: {
     command: 'jlpm start',
-    url: 'http://localhost:8888/lab',
+    url: 'http://localhost:9001/lab',
     timeout: 10 * 1000,
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',
