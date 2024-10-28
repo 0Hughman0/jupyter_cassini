@@ -13,7 +13,7 @@ import { MarkdownEditor } from './tierviewer';
 import { FolderTierModel, NotebookTierModel } from '../models';
 import { ChildrenSummaryWidget } from './nbheadercomponents';
 import { openNewChildDialog } from './newchilddialog';
-import { CasServerError } from '../utils';
+import { CasServerError } from '../services';
 
 /**
  * Additional toolbar to insert at the top of notebooks that correspond to tiers.

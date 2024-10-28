@@ -1,6 +1,6 @@
 import { Notification } from '@jupyterlab/apputils';
 
-import { CassiniServer } from '../services';
+import { CassiniServer, CasServerError } from '../services';
 import { mockServerAPI } from './tools';
 import { WP1_TREE, WP1_INFO, TEST_NEW_CHILD_INFO } from './test_cases';
 import { CassiniErrorInfo } from '../schema/types';
@@ -15,14 +15,13 @@ describe('Error logging', () => {
   });
 
   test('error content', async () => {
-    const response = { url: 'http://jupyter_cassini/tree' } as Response;
-    response.json
-    /*
-    handleServerError(response, {
+    const options: CassiniErrorInfo = {
       reason: 'The Reason is short!',
       message: 'The Error Message is long... apparently!'
-    });
-    */
+    }
+
+    const error = new CasServerError(options.reason, 'http://jupyter_cassini/tree', options.message);
+    error.notify();
 
     expect(Notification.manager.notifications[0].message).toContain('/tree');
     expect(Notification.manager.notifications[0].message).toContain(

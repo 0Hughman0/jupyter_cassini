@@ -34,7 +34,7 @@ import { TierBrowserModel } from '../models';
 import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
 import { ObservableList } from '@jupyterlab/observables';
-import { CasServerError } from '../utils';
+import { CasServerError } from '../services';
 
 export interface ICasSearchProps {
   model: TierBrowserModel;

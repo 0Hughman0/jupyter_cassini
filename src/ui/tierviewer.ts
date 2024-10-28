@@ -22,7 +22,7 @@ import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
 import { cassini } from '../core';
 import { NotebookTierModel } from '../models';
 import { MetaEditor } from './metaeditor';
-import { CasServerError } from '../utils';
+import { CasServerError } from '../services';
 
 export function createElementWidget(
   element: string,

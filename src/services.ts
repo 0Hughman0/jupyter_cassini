@@ -10,7 +10,30 @@ import {
   TreeResponse,
   NewChildInfo,
   Status} from './schema/types';
-import { CasServerError } from './utils';
+import { warnError } from './utils';
+
+
+export class CasServerError extends Error {
+  endpoint: string;
+  query: string | null;
+  info: string | null;
+
+  constructor(reason: string, url: string, info?: string ) {
+    super(reason);
+    const { pathname, search } = URLExt.parse(url);
+    
+    this.endpoint = pathname;
+    this.query = search || null;
+    this.info = info || null;
+  }
+
+  notify(): void {
+    const notifyMessage = `${this.endpoint}${this.query}, returned ${this.message}, check out browser and server log for more details.`;
+    const logMessage = `Cassini server error ${this.message} at ${this.endpoint}${this.query}, caused by: \n\n ${this.info}`;
+    warnError(notifyMessage, logMessage);
+  }
+}
+
 
 const JLfetch = async (info: Request) => {
   const url = info.url;

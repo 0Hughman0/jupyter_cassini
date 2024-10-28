@@ -23,7 +23,7 @@ import {
   ValidatingInput
 } from './dialogwidgets';
 import { MetaSchema, ObjectDef } from '../schema/types';
-import { CasServerError } from '../utils';
+import { CasServerError } from '../services';
 
 export function createMetaInput(
   propertySchema: ObjectDef,

@@ -6,7 +6,7 @@ import { NotebookTierModel, TierBrowserModel } from '../models';
 import { TierTreeBrowser } from './treeview';
 import { TierViewer } from './tierviewer';
 import { openNewChildDialog } from './newchilddialog';
-import { CasServerError } from '../utils';
+import { CasServerError } from '../services';
 
 /**
  * BrowserPanel contains a TierBrowser, and TierViewer.
