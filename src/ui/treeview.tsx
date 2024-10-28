@@ -34,6 +34,7 @@ import { TierBrowserModel } from '../models';
 import { CassiniServer } from '../services';
 import { homeIcon } from './icons';
 import { ObservableList } from '@jupyterlab/observables';
+import { CasServerError } from '../utils';
 
 export interface ICasSearchProps {
   model: TierBrowserModel;
@@ -61,6 +62,8 @@ const CasSearch = (props: ICasSearchProps) => {
       CassiniServer.lookup(query).then(tierInfo => {
         model.currentPath.clear();
         model.currentPath.pushAll(tierInfo.ids);
+      }).catch((error: CasServerError) => {
+        error.notify()
       });
     }
   };

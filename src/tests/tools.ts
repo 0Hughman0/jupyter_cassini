@@ -15,7 +15,7 @@ import { defaultRenderMime, signalToPromise } from '@jupyterlab/testutils';
 import { Cassini, cassini } from '../core';
 import { IModelChange } from '../models';
 import { paths } from '../schema/schema';
-import { CassiniServerError } from '../schema/types';
+import { CassiniErrorInfo } from '../schema/types';
 
 let cassiniMocked = false;
 
@@ -68,14 +68,14 @@ export async function createTierFiles(files: IFile[]): Promise<{
 export interface MockAPICall {
   query?: { [key: string]: string };
   body?: any;
-  response: CassiniServerError | any;
+  response: CassiniErrorInfo | any;
   status?: number;
   path?: undefined;
 }
 
 export interface MockAPIPathCall {
   path: string;
-  response: CassiniServerError | any;
+  response: CassiniErrorInfo | any;
   status?: number;
 }
 

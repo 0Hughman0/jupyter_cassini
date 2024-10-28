@@ -9,10 +9,8 @@ import {
   TierInfo,
   TreeResponse,
   NewChildInfo,
-  Status,
-  CassiniServerError
-} from './schema/types';
-import { warnError } from './utils';
+  Status} from './schema/types';
+import { CasServerError } from './utils';
 
 const JLfetch = async (info: Request) => {
   const url = info.url;
@@ -40,19 +38,6 @@ export const client = createClient<paths>({
   fetch: JLfetch
 });
 
-export function handleServerError(
-  response: Response,
-  error: CassiniServerError
-): string {
-  const { pathname, search } = URLExt.parse(response.url);
-
-  const notifyMessage = `${pathname}${search}, returned ${error?.reason}, check out browser and server log for more details.`;
-  const logMessage = `Cassini server error ${error.reason} at ${pathname}${search}, caused by: \n\n ${error.message}`;
-  warnError(notifyMessage, logMessage);
-
-  return error.reason;
-}
-
 /**
  * Wrapper for the requestAPI.
  */
@@ -75,10 +60,9 @@ export namespace CassiniServer {
         if (data) {
           return val.data;
         } else {
-          const reason = handleServerError(response, error);
-          throw Error(reason);
+          throw new CasServerError(error.reason, response.url, error.message);
         }
-      });
+      })
   }
 
   /**
@@ -100,8 +84,7 @@ export namespace CassiniServer {
         if (data) {
           return val.data;
         } else {
-          const reason = handleServerError(response, error);
-          throw Error(reason);
+          throw new CasServerError(error.reason, response.url, error.message);
         }
       });
   }
@@ -118,12 +101,11 @@ export namespace CassiniServer {
         body: info
       })
       .then(val => {
-        const { data, error, response } = val;
+        const { data, error } = val;
         if (data) {
           return val.data;
         } else {
-          const reason = handleServerError(response, error);
-          throw Error(reason);
+          throw Error(error);
         }
       });
   }
@@ -140,8 +122,7 @@ export namespace CassiniServer {
         if (data) {
           return val.data;
         } else {
-          const reason = handleServerError(response, error);
-          throw Error(reason);
+          throw new CasServerError(error.reason, response.url, error.message);
         }
       });
   }

@@ -23,6 +23,7 @@ import {
   ValidatingInput
 } from './dialogwidgets';
 import { MetaSchema, ObjectDef } from '../schema/types';
+import { CasServerError } from '../utils';
 
 export function createMetaInput(
   propertySchema: ObjectDef,
@@ -396,6 +397,8 @@ export class RenderMimeMetaEditor
         this.editor = new MetaEditor(model);
         this.addWidget(this.editor);
       }
+    }).catch((reason: CasServerError) => {
+      console.debug(`Couldn't load widget because tier model couldn't be loaded for ${this.name}`);
     });
   }
 

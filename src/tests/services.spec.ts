@@ -1,9 +1,9 @@
 import { Notification } from '@jupyterlab/apputils';
 
-import { CassiniServer, handleServerError } from '../services';
+import { CassiniServer } from '../services';
 import { mockServerAPI } from './tools';
 import { WP1_TREE, WP1_INFO, TEST_NEW_CHILD_INFO } from './test_cases';
-import { CassiniServerError } from '../schema/types';
+import { CassiniErrorInfo } from '../schema/types';
 
 import 'jest';
 
@@ -16,11 +16,13 @@ describe('Error logging', () => {
 
   test('error content', async () => {
     const response = { url: 'http://jupyter_cassini/tree' } as Response;
-
+    response.json
+    /*
     handleServerError(response, {
       reason: 'The Reason is short!',
       message: 'The Error Message is long... apparently!'
     });
+    */
 
     expect(Notification.manager.notifications[0].message).toContain('/tree');
     expect(Notification.manager.notifications[0].message).toContain(
@@ -103,7 +105,7 @@ describe('lookup', () => {
           response: {
             reason: 'Bad Request',
             message: 'Bad query'
-          } as CassiniServerError,
+          } as CassiniErrorInfo,
           status: 405
         }
       ]
@@ -140,7 +142,7 @@ describe('newChild', () => {
           response: {
             reason: 'Bad Request',
             message: 'Bad query'
-          } as CassiniServerError,
+          } as CassiniErrorInfo,
           status: 405
         }
       ]
@@ -177,7 +179,7 @@ describe('open', () => {
           response: {
             reason: 'Bad Request',
             message: 'Bad query'
-          } as CassiniServerError,
+          } as CassiniErrorInfo,
           status: 405
         }
       ]

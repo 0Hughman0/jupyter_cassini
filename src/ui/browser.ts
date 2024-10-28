@@ -6,6 +6,7 @@ import { NotebookTierModel, TierBrowserModel } from '../models';
 import { TierTreeBrowser } from './treeview';
 import { TierViewer } from './tierviewer';
 import { openNewChildDialog } from './newchilddialog';
+import { CasServerError } from '../utils';
 
 /**
  * BrowserPanel contains a TierBrowser, and TierViewer.
@@ -60,6 +61,8 @@ export class TierBrowser extends SplitPanel {
       treeModel.currentPath.clear();
       treeModel.currentPath.pushAll(ids);
       this.previewTier(tier.name);
+    }).catch((reason: CasServerError) => {
+      reason.notify();
     });
   }
 
@@ -73,6 +76,8 @@ export class TierBrowser extends SplitPanel {
       if (tierModel instanceof NotebookTierModel) {
         this.viewer.model = tierModel;
       }
+    }).catch((reason: CasServerError) => {
+      reason.notify();
     });
   }
 

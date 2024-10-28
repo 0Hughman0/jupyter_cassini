@@ -13,6 +13,7 @@ import { MarkdownEditor } from './tierviewer';
 import { FolderTierModel, NotebookTierModel } from '../models';
 import { ChildrenSummaryWidget } from './nbheadercomponents';
 import { openNewChildDialog } from './newchilddialog';
+import { CasServerError } from '../utils';
 
 /**
  * Additional toolbar to insert at the top of notebooks that correspond to tiers.
@@ -77,6 +78,11 @@ export class TierNotebookHeaderTB extends BoxPanel {
 
     return cassini.tierModelManager.get(tierName).then(tierModel => {
       if (tierModel && tierModel instanceof NotebookTierModel) {
+        
+        if (tierModel.notebookPath !== context.path) {
+          return
+        }
+
         const widget = new TierNotebookHeaderTB(tierModel);
 
         panel.contentHeader.addWidget(widget);
@@ -89,7 +95,10 @@ export class TierNotebookHeaderTB extends BoxPanel {
 
         return widget;
       }
-    });
+    }).catch((reason: CasServerError) => {
+      console.debug(`Not tier found associated with this notebook ${tierName}`);
+      return undefined
+    })
   }
 
   /**
@@ -269,7 +278,11 @@ export class RMHeader extends Panel implements IRenderMime.IRenderer {
         this.addWidget(new TierNotebookHeader(this.model));
 
         return this.model;
-      });
+      })
+      .catch((reason: CasServerError) => {
+        console.debug(`Not tier found associated with this notebook ${this.name}`);
+        return undefined
+      })
   }
 
   ready(): Promise<void> {
