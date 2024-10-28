@@ -124,11 +124,11 @@ export namespace CassiniServer {
         body: info
       })
       .then(val => {
-        const { data, error } = val;
+        const { data, error, response } = val;
         if (data) {
           return val.data;
         } else {
-          throw Error(error);
+          throw new CasServerError(error.reason, response.url, error.message);
         }
       });
   }

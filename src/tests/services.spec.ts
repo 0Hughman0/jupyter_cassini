@@ -39,11 +39,8 @@ describe('Error logging', () => {
 const { name, ...badWP1 } = structuredClone(WP1_TREE);
 
 describe('tree', () => {
-  let errorLog: jest.Mock<typeof console.log>;
-
   beforeEach(() => {
-    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
-
+    
     mockServerAPI({
       '/tree/{ids}': [
         { path: '1', response: WP1_TREE },
@@ -83,18 +80,11 @@ describe('tree', () => {
     await expect(
       async () => await CassiniServer.tree(['bad request'])
     ).rejects.toThrowError('Bad Request');
-    expect(Notification.manager.notifications[0].message).toMatch(
-      'Bad Request'
-    );
-    expect(errorLog.mock.lastCall[0]).toContain('Bad Request');
   });
 });
 
 describe('lookup', () => {
-  let errorLog: jest.Mock<typeof console.log>;
-
   beforeEach(() => {
-    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
 
     mockServerAPI({
       '/lookup': [
@@ -120,18 +110,12 @@ describe('lookup', () => {
     await expect(
       async () => await CassiniServer.lookup('bad request')
     ).rejects.toThrowError('Bad Request');
-    expect(Notification.manager.notifications[0].message).toMatch(
-      'Bad Request'
-    );
-    expect(errorLog.mock.lastCall[0]).toContain('Bad Request');
   });
 });
 
 describe('newChild', () => {
-  let errorLog: jest.Mock<typeof console.log>;
 
   beforeEach(() => {
-    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
 
     mockServerAPI({
       '/newChild': [
@@ -157,19 +141,12 @@ describe('newChild', () => {
     await expect(
       async () => await CassiniServer.newChild({ name: 'bad request' } as any)
     ).rejects.toThrowError('Bad Request');
-    expect(Notification.manager.notifications[0].message).toMatch(
-      'Bad Request'
-    );
-    expect(errorLog.mock.lastCall[0]).toContain('Bad Request');
   });
 });
 
 describe('open', () => {
-  let errorLog: jest.Mock<typeof console.log>;
-
+  
   beforeEach(() => {
-    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
-
     mockServerAPI({
       '/open': [
         { query: { name: 'WP1' }, response: { status: 'success' } },
@@ -194,9 +171,5 @@ describe('open', () => {
     await expect(
       async () => await CassiniServer.openTier('bad request')
     ).rejects.toThrowError('Bad Request');
-    expect(Notification.manager.notifications[0].message).toMatch(
-      'Bad Request'
-    );
-    expect(errorLog.mock.lastCall[0]).toContain('Bad Request');
   });
 });
