@@ -18,9 +18,13 @@ describe('Error logging', () => {
     const options: CassiniErrorInfo = {
       reason: 'The Reason is short!',
       message: 'The Error Message is long... apparently!'
-    }
+    };
 
-    const error = new CasServerError(options.reason, 'http://jupyter_cassini/tree', options.message);
+    const error = new CasServerError(
+      options.reason,
+      'http://jupyter_cassini/tree',
+      options.message
+    );
     error.notify();
 
     expect(Notification.manager.notifications[0].message).toContain('/tree');
@@ -40,7 +44,6 @@ const { name, ...badWP1 } = structuredClone(WP1_TREE);
 
 describe('tree', () => {
   beforeEach(() => {
-    
     mockServerAPI({
       '/tree/{ids}': [
         { path: '1', response: WP1_TREE },
@@ -85,7 +88,6 @@ describe('tree', () => {
 
 describe('lookup', () => {
   beforeEach(() => {
-
     mockServerAPI({
       '/lookup': [
         { query: { name: 'WP1' }, response: WP1_INFO },
@@ -114,9 +116,7 @@ describe('lookup', () => {
 });
 
 describe('newChild', () => {
-
   beforeEach(() => {
-
     mockServerAPI({
       '/newChild': [
         { body: TEST_NEW_CHILD_INFO, response: WP1_INFO },
@@ -145,7 +145,6 @@ describe('newChild', () => {
 });
 
 describe('open', () => {
-  
   beforeEach(() => {
     mockServerAPI({
       '/open': [

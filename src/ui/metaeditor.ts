@@ -392,14 +392,18 @@ export class RenderMimeMetaEditor
         return this.model;
       });
 
-    this.fetchModel.then(model => {
-      if (model) {
-        this.editor = new MetaEditor(model);
-        this.addWidget(this.editor);
-      }
-    }).catch((reason: CasServerError) => {
-      console.debug(`Couldn't load widget because tier model couldn't be loaded for ${this.name}`);
-    });
+    this.fetchModel
+      .then(model => {
+        if (model) {
+          this.editor = new MetaEditor(model);
+          this.addWidget(this.editor);
+        }
+      })
+      .catch((reason: CasServerError) => {
+        console.debug(
+          `Couldn't load widget because tier model couldn't be loaded for ${this.name}`
+        );
+      });
   }
 
   get modelChanged(): ISignal<this, NotebookTierModel | null> {

@@ -53,17 +53,20 @@ export class TierBrowser extends SplitPanel {
 
     this.setRelativeSizes([5, 3]);
 
-    cassini.treeManager.get(ids).then(tier => {
-      if (!tier) {
-        return;
-      }
+    cassini.treeManager
+      .get(ids)
+      .then(tier => {
+        if (!tier) {
+          return;
+        }
 
-      treeModel.currentPath.clear();
-      treeModel.currentPath.pushAll(ids);
-      this.previewTier(tier.name);
-    }).catch((reason: CasServerError) => {
-      reason.notify();
-    });
+        treeModel.currentPath.clear();
+        treeModel.currentPath.pushAll(ids);
+        this.previewTier(tier.name);
+      })
+      .catch((reason: CasServerError) => {
+        reason.notify();
+      });
   }
 
   /**
@@ -72,13 +75,16 @@ export class TierBrowser extends SplitPanel {
    * @param name { string }
    */
   previewTier(name: string): void {
-    cassini.tierModelManager.get(name).then(tierModel => {
-      if (tierModel instanceof NotebookTierModel) {
-        this.viewer.model = tierModel;
-      }
-    }).catch((reason: CasServerError) => {
-      reason.notify();
-    });
+    cassini.tierModelManager
+      .get(name)
+      .then(tierModel => {
+        if (tierModel instanceof NotebookTierModel) {
+          this.viewer.model = tierModel;
+        }
+      })
+      .catch((reason: CasServerError) => {
+        reason.notify();
+      });
   }
 
   /**

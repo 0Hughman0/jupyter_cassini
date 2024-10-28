@@ -416,7 +416,8 @@ export class TierViewer extends BoxPanel {
         if (tierModel instanceof NotebookTierModel) {
           this.model = tierModel;
         }
-      }).catch((reason: CasServerError) => {
+      })
+      .catch((reason: CasServerError) => {
         reason.notify();
       });
   }

@@ -76,29 +76,33 @@ export class TierNotebookHeaderTB extends BoxPanel {
   ): Promise<TierNotebookHeaderTB | undefined> {
     const tierName = PathExt.basename(context.path, '.ipynb');
 
-    return cassini.tierModelManager.get(tierName).then(tierModel => {
-      if (tierModel && tierModel instanceof NotebookTierModel) {
-        
-        if (tierModel.notebookPath !== context.path) {
-          return
-        }
-
-        const widget = new TierNotebookHeaderTB(tierModel);
-
-        panel.contentHeader.addWidget(widget);
-
-        context.saveState.connect((sender, state) => {
-          if (state === 'started') {
-            widget.model.save();
+    return cassini.tierModelManager
+      .get(tierName)
+      .then(tierModel => {
+        if (tierModel && tierModel instanceof NotebookTierModel) {
+          if (tierModel.notebookPath !== context.path) {
+            return;
           }
-        }, this);
 
-        return widget;
-      }
-    }).catch((reason: CasServerError) => {
-      console.debug(`Not tier found associated with this notebook ${tierName}`);
-      return undefined
-    })
+          const widget = new TierNotebookHeaderTB(tierModel);
+
+          panel.contentHeader.addWidget(widget);
+
+          context.saveState.connect((sender, state) => {
+            if (state === 'started') {
+              widget.model.save();
+            }
+          }, this);
+
+          return widget;
+        }
+      })
+      .catch((reason: CasServerError) => {
+        console.debug(
+          `Not tier found associated with this notebook ${tierName}`
+        );
+        return undefined;
+      });
   }
 
   /**
@@ -280,9 +284,11 @@ export class RMHeader extends Panel implements IRenderMime.IRenderer {
         return this.model;
       })
       .catch((reason: CasServerError) => {
-        console.debug(`Not tier found associated with this notebook ${this.name}`);
-        return undefined
-      })
+        console.debug(
+          `Not tier found associated with this notebook ${this.name}`
+        );
+        return undefined;
+      });
   }
 
   ready(): Promise<void> {

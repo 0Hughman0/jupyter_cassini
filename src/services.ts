@@ -5,23 +5,18 @@ import { URLExt } from '@jupyterlab/coreutils';
 
 import { ServerConnection } from '@jupyterlab/services';
 import { paths } from './schema/schema';
-import {
-  TierInfo,
-  TreeResponse,
-  NewChildInfo,
-  Status} from './schema/types';
+import { TierInfo, TreeResponse, NewChildInfo, Status } from './schema/types';
 import { warnError } from './utils';
-
 
 export class CasServerError extends Error {
   endpoint: string;
   query: string | null;
   info: string | null;
 
-  constructor(reason: string, url: string, info?: string ) {
+  constructor(reason: string, url: string, info?: string) {
     super(reason);
     const { pathname, search } = URLExt.parse(url);
-    
+
     this.endpoint = pathname;
     this.query = search || null;
     this.info = info || null;
@@ -33,7 +28,6 @@ export class CasServerError extends Error {
     warnError(notifyMessage, logMessage);
   }
 }
-
 
 const JLfetch = async (info: Request) => {
   const url = info.url;
@@ -85,7 +79,7 @@ export namespace CassiniServer {
         } else {
           throw new CasServerError(error.reason, response.url, error.message);
         }
-      })
+      });
   }
 
   /**

@@ -59,12 +59,14 @@ const CasSearch = (props: ICasSearchProps) => {
 
   const handleSubmit = (e: React.KeyboardEvent<any>) => {
     if (e.key === 'Enter') {
-      CassiniServer.lookup(query).then(tierInfo => {
-        model.currentPath.clear();
-        model.currentPath.pushAll(tierInfo.ids);
-      }).catch((error: CasServerError) => {
-        error.notify()
-      });
+      CassiniServer.lookup(query)
+        .then(tierInfo => {
+          model.currentPath.clear();
+          model.currentPath.pushAll(tierInfo.ids);
+        })
+        .catch((error: CasServerError) => {
+          error.notify();
+        });
     }
   };
   return (

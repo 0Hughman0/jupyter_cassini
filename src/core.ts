@@ -250,7 +250,7 @@ export class TierModelTreeManager {
 
         return newModel;
       }
-    })
+    });
   }
 
   _insertNewTierModel(name: string, tierInfo: TierInfo) {
