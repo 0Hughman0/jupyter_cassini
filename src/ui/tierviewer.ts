@@ -417,8 +417,8 @@ export class TierViewer extends BoxPanel {
           this.model = tierModel;
         }
       })
-      .catch((reason: CasServerError) => {
-        reason.notify();
+      .catch((reason) => {
+        CasServerError.notifyOrThrow(reason);
       });
   }
 }

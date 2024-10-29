@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { signalToPromise } from '@jupyterlab/testutils';
+import { Notification } from '@jupyterlab/apputils';
 
 import { TierBrowser } from '../../ui/browser';
 import {
@@ -45,7 +46,14 @@ beforeEach(async () => {
   mockServerAPI({
     '/tree/{ids}': [
       { path: '', response: home_tree },
-      { path: '1', response: wp1_tree }
+      { path: '1', response: wp1_tree },
+      { path: 'invalid', response: {
+          response: {
+            reason: 'Not Found',
+            message: 'Could not find'
+          },
+          status: 404
+      }}
     ],
     '/lookup': [
       { query: { name: 'WP1' }, response: INFO },
@@ -57,6 +65,14 @@ beforeEach(async () => {
           children: ['WP1', 'WP2'],
           tierType: 'folder'
         }
+      },
+      { 
+        query: {name: 'invalid'},
+        response: {
+          reason: 'Not Found',
+          message: 'Could not find'
+        },
+        status: 404
       }
     ]
   });
@@ -76,6 +92,17 @@ describe('tier browser', () => {
     await signalToPromise(widget.viewer.modelChanged);
     expect(widget.viewer.tierTitle.node.textContent).toEqual('WP1');
   });
+
+  test('preview invalid ids', async () => {
+    expect(Notification.manager.notifications[0]?.message).toBeUndefined();
+    
+    const widget = new TierBrowser();
+    widget.previewTier('invalid');
+    
+    await signalToPromise(Notification.manager.changed)
+
+    expect(Notification.manager.notifications[0]?.message).toContain('Not Found');
+  })
 });
 
 describe('tree browser', () => {
@@ -153,7 +180,7 @@ describe('tree browser', () => {
 
     expect(Object.keys(widget.tierChildren)).toContain('3');
     expect(widget.childMetas).toEqual(new Set(['Fishes', 'Crabs', 'x']));
-  });
+  });  
 });
 
 describe('crumbs', () => {

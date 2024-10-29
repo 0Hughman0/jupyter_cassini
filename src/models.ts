@@ -17,6 +17,7 @@ import { Notification } from '@jupyterlab/apputils';
 import { cassini, TreeChildren, ITreeData, TreeManager } from './core';
 import { MetaSchema, FolderTierInfo, NotebookTierInfo } from './schema/types';
 import { treeChildrenToData } from './utils';
+import { CasServerError } from './services';
 
 export interface INewModel<Old, New> {
   old: Old;
@@ -435,6 +436,8 @@ export class TierBrowserModel {
         if (value?.children) {
           this._changed.emit({ type: 'children', children: value.children });
         }
+      }).catch((reason) => {
+        CasServerError.notifyOrThrow(reason);
       });
     }, this);
 

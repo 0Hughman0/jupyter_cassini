@@ -65,7 +65,7 @@ const CasSearch = (props: ICasSearchProps) => {
           model.currentPath.pushAll(tierInfo.ids);
         })
         .catch((error: CasServerError) => {
-          error.notify();
+          CasServerError.notifyOrThrow(error);
         });
     }
   };

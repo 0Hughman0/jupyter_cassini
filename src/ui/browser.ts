@@ -28,13 +28,16 @@ export class TierBrowser extends SplitPanel {
   constructor(identifiers?: string[]) {
     super();
 
+    console.debug(this);
+
     const ids = identifiers || [];
 
     this.id = `cas-container-${ids}`;
 
     const treeModel = (this.model = new TierBrowserModel());
 
-    console.log(this);
+    treeModel.currentPath.clear();
+    treeModel.currentPath.pushAll(ids);
 
     const browser = (this.browser = new TierTreeBrowser(
       treeModel,
@@ -52,21 +55,12 @@ export class TierBrowser extends SplitPanel {
     SplitPanel.setStretch(tierContent, 0);
 
     this.setRelativeSizes([5, 3]);
-
+    
     cassini.treeManager
       .get(ids)
-      .then(tier => {
-        if (!tier) {
-          return;
-        }
-
-        treeModel.currentPath.clear();
-        treeModel.currentPath.pushAll(ids);
-        this.previewTier(tier.name);
-      })
-      .catch((reason: CasServerError) => {
-        reason.notify();
-      });
+      .then(tier => {        
+        tier && this.previewTier(tier.name);
+    })
   }
 
   /**
@@ -82,8 +76,8 @@ export class TierBrowser extends SplitPanel {
           this.viewer.model = tierModel;
         }
       })
-      .catch((reason: CasServerError) => {
-        reason.notify();
+      .catch((reason) => {
+        CasServerError.notifyOrThrow(reason);
       });
   }
 

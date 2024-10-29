@@ -27,6 +27,14 @@ export class CasServerError extends Error {
     const logMessage = `Cassini server error ${this.message} at ${this.endpoint}${this.query}, caused by: \n\n ${this.info}`;
     warnError(notifyMessage, logMessage);
   }
+
+  static notifyOrThrow(error: CasServerError | Error) {
+    if (error instanceof CasServerError) {
+      error.notify();
+    } else {
+      throw error
+    }
+  }
 }
 
 const JLfetch = async (info: Request) => {
