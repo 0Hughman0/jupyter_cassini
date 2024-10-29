@@ -2,8 +2,7 @@ import { expect, test, galata } from '@jupyterlab/galata';
 import { ContentsHelper } from '@jupyterlab/galata/lib/contents';
 import * as path from 'path';
 
-
-const BASE_URL = "http://localhost:9001"
+const BASE_URL = 'http://localhost:9001';
 
 /**
  * Don't load JupyterLab webpage before running the tests.
