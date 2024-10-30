@@ -196,7 +196,7 @@ describe('tree browser', () => {
 });
 
 describe('CasSearch', () => {
-  test('construct', async () => {
+  test('search', async () => {
     const model = new TierBrowserModel();
     render(<CasSearch model={model}></CasSearch>);
 
@@ -211,6 +211,25 @@ describe('CasSearch', () => {
     await awaitSignalType(model.changed, 'current');
 
     expect(model.current?.name).toEqual('WP1');
+  });
+
+  test('invalid name notifies', async () => {
+    const model = new TierBrowserModel();
+    render(<CasSearch model={model}></CasSearch>);
+
+    Notification.dismiss();
+
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('textbox'));
+    await user.keyboard('invalid');
+    user.keyboard('{Enter}'); // no wait here, or somehow it also waits for the signal below...?
+
+    await signalToPromise(Notification.manager.changed);
+
+    expect(Notification.manager.notifications[0].message).toContain(
+      'Not Found'
+    );
   });
 });
 
