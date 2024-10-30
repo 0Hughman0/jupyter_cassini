@@ -1,4 +1,6 @@
+import { JSONValue } from '@lumino/coreutils';
 import { Widget, PanelLayout } from '@lumino/widgets';
+
 import { Dialog } from '@jupyterlab/apputils';
 
 import { ITreeData, cassini } from '../core';
@@ -10,10 +12,8 @@ import {
   ValidatingInput
 } from './dialogwidgets';
 import { NotebookTierModel } from '../models';
-
-//import { createValidatedInput } from './metaeditor';
-import { JSONValue } from '@lumino/coreutils';
 import { MetaTableWidget } from './metatable';
+import { createElementWidget } from '../utils';
 
 /**
  * A widget that creates a dialog for creating a new tier child.
@@ -41,8 +41,8 @@ export class NewChildWidget extends Widget {
     const identifierInput = (this.identifierInput = new ValidatingInput(
       new InputIdDialogue({
         title: 'Identitifier',
-        label: 'Identifier',
-        nameTemplate: nameTemplate
+        nameTemplate: nameTemplate,
+        label: 'Identifier'
       }),
       (value: string | undefined) => {
         if (value) {
@@ -64,7 +64,7 @@ export class NewChildWidget extends Widget {
     if (tier.childClsInfo.tierType === 'notebook') {
       const descriptionInput = (this.descriptionInput = new InputTextAreaDialog(
         {
-          title: 'Da Description',
+          title: 'Description',
           label: 'Description'
         }
       ));
@@ -73,7 +73,7 @@ export class NewChildWidget extends Widget {
 
       const templateSelector = (this.templateSelector = new InputItemsDialog({
         title: 'template',
-        label: 'Template',
+        label: "Template",
         items: tier.childClsInfo.templates || [],
         placeholder: 'Select a Template'
       }));
@@ -93,6 +93,9 @@ export class NewChildWidget extends Widget {
         false
       ));
 
+      const metaLabel = createElementWidget('label', 'Meta');
+      (metaLabel.node as HTMLLabelElement).htmlFor = metaTable.node.id;
+      layout.addWidget(metaLabel);
       layout.addWidget(metaTable);
     }
   }

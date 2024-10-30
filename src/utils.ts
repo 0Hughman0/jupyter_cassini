@@ -2,6 +2,7 @@ import { Notification } from '@jupyterlab/apputils';
 
 import { TreeResponse, TreeChildResponse } from './schema/types';
 import { ITreeData, ITreeChildData, TreeChildren } from './core';
+import { Widget } from '@lumino/widgets';
 
 export function treeChildrenToData(children: {
   [id: string]: TreeChildResponse;
@@ -65,4 +66,13 @@ export function warnError(notifyMessage: string, logMessage?: string): void {
   }
 
   console.warn('Cassini - ' + logMessage);
+}
+export function createElementWidget(
+  element: string,
+  textContent: string
+): Widget {
+  const node = document.createElement(element);
+  node.textContent = textContent;
+  const widget = new Widget({ node: node });
+  return widget;
 }
