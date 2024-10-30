@@ -74,7 +74,8 @@ export class NewChildWidget extends Widget {
       const templateSelector = (this.templateSelector = new InputItemsDialog({
         title: 'template',
         label: 'Template',
-        items: tier.childClsInfo.templates || []
+        items: tier.childClsInfo.templates || [],
+        placeholder: 'Select a Template'
       }));
 
       layout.addWidget(templateSelector);

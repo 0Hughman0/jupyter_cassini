@@ -292,6 +292,10 @@ export class InputItemsDialog extends InputDialogBase<string> {
   constructor(options: InputDialog.IItemOptions) {
     super(options);
 
+    if (options.placeholder !== undefined && options.current !== undefined) {
+      throw Error('One of placeholder or current can be provided');
+    }
+
     this._editable = options.editable || false;
 
     let current = options.current || 0;
@@ -330,6 +334,20 @@ export class InputItemsDialog extends InputDialogBase<string> {
       /* Use select directly */
       this.input.remove();
       this.node.appendChild(Styling.wrapSelect(this.list));
+
+      if (options.placeholder) {
+        for (const elem of this.list.options) {
+          elem.selected = false;
+        }
+
+        const option = document.createElement('option');
+        option.value = options.placeholder;
+        option.textContent = options.placeholder;
+        option.disabled = true;
+        option.selected = true;
+
+        this.list.insertBefore(option, this.list.firstChild);
+      }
     }
 
     this.list.addEventListener('input', this);

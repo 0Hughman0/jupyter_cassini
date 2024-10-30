@@ -74,55 +74,113 @@ test('InputPasswordDialog', () => {
   expect(dialog.getValue()).toEqual('new');
 });
 
-test('InputItemsDialog', () => {
-  let dialog = new InputItemsDialog({
-    title: '',
-    items: ['one', 'two'],
-    current: 1,
-    editable: true
-  });
-  expect(dialog.input.type).toEqual('text');
-  expect(dialog.list.type).toEqual('select-one');
-  expect(dialog.input.value).toEqual('two');
-  expect(dialog.getValue()).toEqual(undefined);
-  expect(dialog.dirty).toBeFalsy();
+describe('InputItemsDialogue', () => {
+  test('editable true', () => {
+    const dialog = new InputItemsDialog({
+      title: '',
+      items: ['one', 'two'],
+      current: 1,
+      editable: true
+    });
 
-  dialog.input.value = 'one';
-  dialog.input.dispatchEvent(new Event('input'));
+    expect(dialog.input.type).toEqual('text');
+    expect(dialog.list.type).toEqual('select-one');
+    expect(dialog.input.value).toEqual('two');
+    expect(dialog.getValue()).toEqual(undefined);
+    expect(dialog.dirty).toBeFalsy();
 
-  expect(dialog.dirty).toBeTruthy();
+    dialog.input.value = 'one';
+    dialog.input.dispatchEvent(new Event('input'));
 
-  expect(dialog.getValue()).toEqual('one');
+    expect(dialog.dirty).toBeTruthy();
 
-  dialog.input.value = 'two';
-  dialog.input.dispatchEvent(new Event('input'));
+    expect(dialog.getValue()).toEqual('one');
 
-  expect(dialog.getValue()).toEqual('two');
+    dialog.input.value = 'two';
+    dialog.input.dispatchEvent(new Event('input'));
 
-  dialog = new InputItemsDialog({
-    title: '',
-    items: ['one', 'two'],
-    current: 1,
-    editable: false // logic quite different for non-editable vs editable.
+    expect(dialog.getValue()).toEqual('two');
   });
 
-  expect(dialog.input.type).toEqual('text');
-  expect(dialog.list.type).toEqual('select-one');
-  expect(dialog.list.value).toEqual('two');
-  expect(dialog.getValue()).toEqual(undefined);
-  expect(dialog.dirty).toBeFalsy();
+  test('editable false', () => {
+    const dialog = new InputItemsDialog({
+      title: '',
+      items: ['one', 'two'],
+      current: 1,
+      editable: false // logic quite different for non-editable vs editable.
+    });
 
-  dialog.list.value = 'one';
-  dialog.list.dispatchEvent(new Event('input'));
+    expect(dialog.input.type).toEqual('text');
+    expect(dialog.list.type).toEqual('select-one');
+    expect(dialog.list.value).toEqual('two');
+    expect(dialog.getValue()).toEqual(undefined);
+    expect(dialog.dirty).toBeFalsy();
 
-  expect(dialog.dirty).toBeTruthy();
+    dialog.list.value = 'one';
+    dialog.list.dispatchEvent(new Event('input'));
 
-  expect(dialog.getValue()).toEqual('one');
+    expect(dialog.dirty).toBeTruthy();
 
-  dialog.list.value = 'two';
-  dialog.list.dispatchEvent(new Event('input'));
+    expect(dialog.getValue()).toEqual('one');
 
-  expect(dialog.getValue()).toEqual('two');
+    dialog.list.value = 'two';
+    dialog.list.dispatchEvent(new Event('input'));
+
+    expect(dialog.getValue()).toEqual('two');
+  });
+
+  test('editable false', () => {
+    const dialog = new InputItemsDialog({
+      title: '',
+      items: ['one', 'two'],
+      current: 1,
+      editable: false // logic quite different for non-editable vs editable.
+    });
+
+    expect(dialog.input.type).toEqual('text');
+    expect(dialog.list.type).toEqual('select-one');
+    expect(dialog.list.value).toEqual('two');
+    expect(dialog.getValue()).toEqual(undefined);
+    expect(dialog.dirty).toBeFalsy();
+
+    dialog.list.value = 'one';
+    dialog.list.dispatchEvent(new Event('input'));
+
+    expect(dialog.dirty).toBeTruthy();
+
+    expect(dialog.getValue()).toEqual('one');
+
+    dialog.list.value = 'two';
+    dialog.list.dispatchEvent(new Event('input'));
+
+    expect(dialog.getValue()).toEqual('two');
+  });
+
+  describe('placeholder behaviour', () => {
+    test('only placeholder or current can be provided', () => {
+      expect(() => {
+        new InputItemsDialog({
+          title: '',
+          items: ['one', 'two'],
+          placeholder: 'select',
+          current: 0
+        });
+      }).toThrow();
+    });
+
+    test('placeholder is default value, but disabled.', () => {
+      const dialog = new InputItemsDialog({
+        title: '',
+        items: ['one', 'two'],
+        placeholder: 'a placeholder',
+        editable: false
+      });
+
+      expect(dialog.list.value).toEqual('a placeholder');
+      expect(dialog.list.options[0].disabled).toBeTruthy();
+      expect(dialog.getValue()).toBeUndefined();
+    });
+  });
 });
 
 test('InputTextAreaDialog', () => {
