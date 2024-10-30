@@ -23,16 +23,7 @@ import { cassini } from '../core';
 import { NotebookTierModel } from '../models';
 import { MetaEditor } from './metaeditor';
 import { CasServerError } from '../services';
-
-export function createElementWidget(
-  element: string,
-  textContent: string
-): Widget {
-  const node = document.createElement(element);
-  node.textContent = textContent;
-  const widget = new Widget({ node: node });
-  return widget;
-}
+import { createElementWidget } from '../utils';
 
 /**
  * Widget for editing markdown content.

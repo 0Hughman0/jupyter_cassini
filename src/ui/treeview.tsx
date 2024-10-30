@@ -316,7 +316,7 @@ export function ChildrenTable(props: IChildrenTableProps) {
   const currentTier = props.currentTier;
 
   const [sorting, setSorting] = React.useState<SortingState>([
-    { id: 'started', desc: true }
+    { id: 'started', desc: false }
   ]);
 
   const data = useMemo(
