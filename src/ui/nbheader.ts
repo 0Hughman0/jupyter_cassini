@@ -97,11 +97,15 @@ export class TierNotebookHeaderTB extends BoxPanel {
           return widget;
         }
       })
-      .catch((reason: CasServerError) => {
-        console.debug(
-          `Not tier found associated with this notebook ${tierName}`
-        );
-        return undefined;
+      .catch(reason => {
+        if (reason instanceof CasServerError) {
+          console.debug(
+            `No tier found associated with this notebook ${tierName}`
+          );
+          return undefined;
+        } else {
+          throw reason;
+        }
       });
   }
 
