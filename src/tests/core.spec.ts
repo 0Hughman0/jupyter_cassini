@@ -1,6 +1,12 @@
 import 'jest';
 
-import { ITreeData, TreeManager, TierModelTreeManager, Cassini } from '../core';
+import {
+  ITreeData,
+  TreeManager,
+  TierModelTreeManager,
+  Cassini,
+  cassini
+} from '../core';
 import { NotebookTierModel } from '../models';
 import { TreeResponse } from '../schema/types';
 import { treeResponseToData } from '../utils';
@@ -12,9 +18,17 @@ import {
   TEST_META_CONTENT,
   WP1_INFO,
   WP1_1_INFO,
-  TEST_HLT_CONTENT
+  TEST_HLT_CONTENT,
+  TEST_NEW_CHILD_INFO
 } from './test_cases';
-import { mockServerAPI, createTierFiles, awaitSignalType } from './tools';
+import {
+  mockServerAPI,
+  createTierFiles,
+  awaitSignalType,
+  mockCassini
+} from './tools';
+import { Notification } from '@jupyterlab/apputils';
+// import { signalToPromise } from '@jupyterlab/coreutils';
 
 describe('TreeManager', () => {
   beforeEach(() => {
@@ -277,5 +291,46 @@ describe('cassini', () => {
 
     await expect(cassini.ready).rejects.toBe(false);
     expect(mockWarn).toBeCalled();
+  });
+
+  test('new child', async () => {
+    mockCassini();
+    mockServerAPI({
+      '/tree/{ids}': [{ path: '', response: HOME_TREE }],
+      '/newChild': [{ body: TEST_NEW_CHILD_INFO, response: WP1_INFO }]
+    });
+
+    const home_tree = treeResponseToData(HOME_TREE, []);
+    const parent = await cassini.newChild(home_tree, TEST_NEW_CHILD_INFO);
+
+    expect(Object.keys(parent?.children || [])).toContain('1');
+  });
+
+  test('new child bad request notifies', async () => {
+    mockCassini();
+    mockServerAPI({
+      '/tree/{ids}': [{ path: '', response: HOME_TREE }],
+      '/newChild': [
+        {
+          body: TEST_NEW_CHILD_INFO,
+          response: {
+            reason: 'Bad Request',
+            message: 'Bad query'
+          },
+          status: 405
+        }
+      ]
+    });
+
+    const home_tree = treeResponseToData(HOME_TREE, []);
+    const parent = await cassini.newChild(home_tree, TEST_NEW_CHILD_INFO);
+
+    // await signalToPromise(Notification.manager.changed)
+
+    expect(Object.keys(parent?.children || [])).not.toContain('1');
+
+    expect(Notification.manager.notifications[0].message).toContain(
+      'Bad Request'
+    );
   });
 });
