@@ -48,7 +48,7 @@ export interface ICasSearchProps {
  * @param props
  * @returns
  */
-const CasSearch = (props: ICasSearchProps) => {
+export const CasSearch = (props: ICasSearchProps) => {
   const [query, setQuery] = useState('');
 
   const model = props.model;

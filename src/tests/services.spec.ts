@@ -38,6 +38,12 @@ describe('Error logging', () => {
       'The Error Message is long... apparently!'
     );
   });
+
+  test('regular errors throw through', () => {
+    expect(() => {
+      CasServerError.notifyOrThrow(new Error());
+    }).toThrow();
+  });
 });
 
 const { name, ...badWP1 } = structuredClone(WP1_TREE);

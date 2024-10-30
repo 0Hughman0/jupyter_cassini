@@ -9,7 +9,8 @@ import { TierBrowser } from '../../ui/browser';
 import {
   CassiniCrumbs,
   TierTreeBrowser,
-  ChildrenTable
+  ChildrenTable,
+  CasSearch
 } from '../../ui/treeview';
 import { TierBrowserModel, NotebookTierModel } from '../../models';
 import { treeResponseToData } from '../../utils';
@@ -191,6 +192,25 @@ describe('tree browser', () => {
 
     expect(Object.keys(widget.tierChildren)).toContain('3');
     expect(widget.childMetas).toEqual(new Set(['Fishes', 'Crabs', 'x']));
+  });
+});
+
+describe('CasSearch', () => {
+  test('construct', async () => {
+    const model = new TierBrowserModel();
+    render(<CasSearch model={model}></CasSearch>);
+
+    expect(model.current?.name).not.toEqual('WP1');
+
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('textbox'));
+    await user.keyboard('WP1');
+    user.keyboard('{Enter}'); // no wait here, or somehow it also waits for the signal below...?
+
+    await awaitSignalType(model.changed, 'current');
+
+    expect(model.current?.name).toEqual('WP1');
   });
 });
 
