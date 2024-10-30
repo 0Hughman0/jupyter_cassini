@@ -55,12 +55,10 @@ export class TierBrowser extends SplitPanel {
     SplitPanel.setStretch(tierContent, 0);
 
     this.setRelativeSizes([5, 3]);
-    
-    cassini.treeManager
-      .get(ids)
-      .then(tier => {        
-        tier && this.previewTier(tier.name);
-    })
+
+    cassini.treeManager.get(ids).then(tier => {
+      tier && this.previewTier(tier.name);
+    });
   }
 
   /**
@@ -76,7 +74,7 @@ export class TierBrowser extends SplitPanel {
           this.viewer.model = tierModel;
         }
       })
-      .catch((reason) => {
+      .catch(reason => {
         CasServerError.notifyOrThrow(reason);
       });
   }

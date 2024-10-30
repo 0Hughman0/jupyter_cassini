@@ -32,7 +32,7 @@ export class CasServerError extends Error {
     if (error instanceof CasServerError) {
       error.notify();
     } else {
-      throw error
+      throw error;
     }
   }
 }

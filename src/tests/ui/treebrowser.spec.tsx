@@ -47,13 +47,16 @@ beforeEach(async () => {
     '/tree/{ids}': [
       { path: '', response: home_tree },
       { path: '1', response: wp1_tree },
-      { path: 'invalid', response: {
+      {
+        path: 'invalid',
+        response: {
           response: {
             reason: 'Not Found',
             message: 'Could not find'
           },
           status: 404
-      }}
+        }
+      }
     ],
     '/lookup': [
       { query: { name: 'WP1' }, response: INFO },
@@ -66,8 +69,8 @@ beforeEach(async () => {
           tierType: 'folder'
         }
       },
-      { 
-        query: {name: 'invalid'},
+      {
+        query: { name: 'invalid' },
         response: {
           reason: 'Not Found',
           message: 'Could not find'
@@ -95,14 +98,16 @@ describe('tier browser', () => {
 
   test('preview invalid ids', async () => {
     expect(Notification.manager.notifications[0]?.message).toBeUndefined();
-    
+
     const widget = new TierBrowser();
     widget.previewTier('invalid');
-    
-    await signalToPromise(Notification.manager.changed)
 
-    expect(Notification.manager.notifications[0]?.message).toContain('Not Found');
-  })
+    await signalToPromise(Notification.manager.changed);
+
+    expect(Notification.manager.notifications[0]?.message).toContain(
+      'Not Found'
+    );
+  });
 });
 
 describe('tree browser', () => {
@@ -180,7 +185,7 @@ describe('tree browser', () => {
 
     expect(Object.keys(widget.tierChildren)).toContain('3');
     expect(widget.childMetas).toEqual(new Set(['Fishes', 'Crabs', 'x']));
-  });  
+  });
 });
 
 describe('crumbs', () => {
