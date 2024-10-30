@@ -11,7 +11,7 @@ import {
   TierTreeBrowser,
   ChildrenTable
 } from '../../ui/treeview';
-import { TierBrowserModel } from '../../models';
+import { TierBrowserModel, NotebookTierModel } from '../../models';
 import { treeResponseToData } from '../../utils';
 
 import {
@@ -24,7 +24,8 @@ import {
   HOME_TREE,
   WP1_TREE,
   WP1_INFO,
-  TEST_META_CONTENT
+  TEST_META_CONTENT,
+  TEST_HLT_CONTENT
 } from '../test_cases';
 import { TreeResponse } from '../../schema/types';
 import { TierViewer } from '../../ui/tierviewer';
@@ -38,7 +39,7 @@ beforeEach(async () => {
   mockCassini();
 
   const INFO = WP1_INFO;
-  delete INFO['hltsPath'];
+  //delete INFO['hltsPath'];
 
   home_tree = structuredClone(HOME_TREE);
   wp1_tree = structuredClone(WP1_TREE);
@@ -79,7 +80,12 @@ beforeEach(async () => {
       }
     ]
   });
-  createTierFiles([{ path: WP1_INFO.metaPath, content: TEST_META_CONTENT }]);
+  createTierFiles([
+    { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
+    { path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT }
+  ]);
+
+  Notification.manager.dismiss();
 });
 
 describe('tier browser', () => {
@@ -281,5 +287,47 @@ describe('tree browser component', () => {
 
     const previewButton = screen.getByRole('button', { name: 'Preview WP1.1' });
     expect(previewButton).toBeDisabled();
+  });
+});
+
+describe('tier viewer', () => {
+  test('construct', async () => {
+    const model = new NotebookTierModel(WP1_INFO);
+    const widget = new TierViewer(model);
+
+    await awaitSignalType(model.changed, 'ready');
+
+    expect(widget.descriptionCell.source).toEqual(
+      TEST_META_CONTENT.description
+    );
+    expect(widget.concCell.source).toEqual(TEST_META_CONTENT.conclusion);
+    expect(widget.highlightsBox?.widgets[0].node.textContent).toEqual('## cos');
+  });
+
+  test('refresh raises', async () => {
+    const model = new NotebookTierModel(WP1_INFO);
+    const widget = new TierViewer(model);
+
+    await awaitSignalType(model.changed, 'ready');
+    mockServerAPI({
+      '/lookup': [
+        {
+          query: { name: 'WP1' },
+          response: {
+            reason: 'Not Found',
+            message: 'Could not find'
+          },
+          status: 404
+        }
+      ]
+    });
+
+    widget.refresh();
+
+    await signalToPromise(Notification.manager.changed);
+
+    expect(Notification.manager.notifications[0]?.message).toContain(
+      'Not Found'
+    );
   });
 });
