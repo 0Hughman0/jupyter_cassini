@@ -13,6 +13,7 @@ import { MarkdownEditor } from './tierviewer';
 import { FolderTierModel, NotebookTierModel } from '../models';
 import { ChildrenSummaryWidget } from './nbheadercomponents';
 import { openNewChildDialog } from './newchilddialog';
+import { CasServerError } from '../services';
 
 /**
  * Additional toolbar to insert at the top of notebooks that correspond to tiers.
@@ -75,21 +76,37 @@ export class TierNotebookHeaderTB extends BoxPanel {
   ): Promise<TierNotebookHeaderTB | undefined> {
     const tierName = PathExt.basename(context.path, '.ipynb');
 
-    return cassini.tierModelManager.get(tierName).then(tierModel => {
-      if (tierModel && tierModel instanceof NotebookTierModel) {
-        const widget = new TierNotebookHeaderTB(tierModel);
-
-        panel.contentHeader.addWidget(widget);
-
-        context.saveState.connect((sender, state) => {
-          if (state === 'started') {
-            widget.model.save();
+    return cassini.tierModelManager
+      .get(tierName)
+      .then(tierModel => {
+        if (tierModel && tierModel instanceof NotebookTierModel) {
+          if (tierModel.notebookPath !== context.path) {
+            return;
           }
-        }, this);
 
-        return widget;
-      }
-    });
+          const widget = new TierNotebookHeaderTB(tierModel);
+
+          panel.contentHeader.addWidget(widget);
+
+          context.saveState.connect((sender, state) => {
+            if (state === 'started') {
+              widget.model.save();
+            }
+          }, this);
+
+          return widget;
+        }
+      })
+      .catch(reason => {
+        if (reason instanceof CasServerError) {
+          console.debug(
+            `No tier found associated with this notebook ${tierName}`
+          );
+          return undefined;
+        } else {
+          throw reason;
+        }
+      });
   }
 
   /**
@@ -269,6 +286,12 @@ export class RMHeader extends Panel implements IRenderMime.IRenderer {
         this.addWidget(new TierNotebookHeader(this.model));
 
         return this.model;
+      })
+      .catch((reason: CasServerError) => {
+        console.debug(
+          `Not tier found associated with this notebook ${this.name}`
+        );
+        return undefined;
       });
   }
 

@@ -2,12 +2,15 @@ import { expect, test, galata } from '@jupyterlab/galata';
 import { ContentsHelper } from '@jupyterlab/galata/lib/contents';
 import * as path from 'path';
 
+const BASE_URL = 'http://localhost:9001';
+
 /**
  * Don't load JupyterLab webpage before running the tests.
  * This is required to ensure we capture all log messages.
  */
 test.use({
-  autoGoto: false
+  autoGoto: false,
+  baseURL: BASE_URL
 });
 
 test('Extension activates', async ({ page }) => {
@@ -29,7 +32,7 @@ test('Extension activates', async ({ page }) => {
 });
 
 test('Launcher Available', async ({ page }) => {
-  await page.goto('http://localhost:8888/lab?');
+  await page.goto(`${BASE_URL}/lab?`);
   const launcherButton = await page.getByLabel('Launcher').getByText('Browser'); // fails if two launchers are open!
   await expect(launcherButton).toBeVisible();
   await launcherButton.click();
@@ -79,7 +82,7 @@ test.describe('Cassini-Browser', async () => {
 
     // keep in mind that the server is only started once.
     // this means the test isolation isn't great in terms of the state of cassini backend.
-    await page.goto('http://localhost:8888/lab?', {
+    await page.goto(`${BASE_URL}/lab?`, {
       waitUntil: 'domcontentloaded'
     });
     await page.getByLabel('Launcher').getByText('Browser').click();
@@ -261,7 +264,7 @@ test.describe('Cassini-Browser', async () => {
     test.beforeEach(async ({ page }) => {
       // keep in mind that the server is only started once.
       // this means the test isolation isn't great in terms of the state of cassini backend.
-      await page.goto('http://localhost:8888/lab?', {
+      await page.goto(`${BASE_URL}/lab?`, {
         waitUntil: 'domcontentloaded'
       });
       await page.getByLabel('Launcher').getByText('Browser').click();

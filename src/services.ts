@@ -5,14 +5,37 @@ import { URLExt } from '@jupyterlab/coreutils';
 
 import { ServerConnection } from '@jupyterlab/services';
 import { paths } from './schema/schema';
-import {
-  TierInfo,
-  TreeResponse,
-  NewChildInfo,
-  Status,
-  CassiniServerError
-} from './schema/types';
+import { TierInfo, TreeResponse, NewChildInfo, Status } from './schema/types';
 import { warnError } from './utils';
+
+export class CasServerError extends Error {
+  endpoint: string;
+  query: string | null;
+  info: string | null;
+
+  constructor(reason: string, url: string, info?: string) {
+    super(reason);
+    const { pathname, search } = URLExt.parse(url);
+
+    this.endpoint = pathname;
+    this.query = search || null;
+    this.info = info || null;
+  }
+
+  notify(): void {
+    const notifyMessage = `${this.endpoint}${this.query}, returned ${this.message}, check out browser and server log for more details.`;
+    const logMessage = `Cassini server error ${this.message} at ${this.endpoint}${this.query}, caused by: \n\n ${this.info}`;
+    warnError(notifyMessage, logMessage);
+  }
+
+  static notifyOrThrow(error: CasServerError | Error) {
+    if (error instanceof CasServerError) {
+      error.notify();
+    } else {
+      throw error;
+    }
+  }
+}
 
 const JLfetch = async (info: Request) => {
   const url = info.url;
@@ -40,19 +63,6 @@ export const client = createClient<paths>({
   fetch: JLfetch
 });
 
-export function handleServerError(
-  response: Response,
-  error: CassiniServerError
-): string {
-  const { pathname, search } = URLExt.parse(response.url);
-
-  const notifyMessage = `${pathname}${search}, returned ${error?.reason}, check out browser and server log for more details.`;
-  const logMessage = `Cassini server error ${error.reason} at ${pathname}${search}, caused by: \n\n ${error.message}`;
-  warnError(notifyMessage, logMessage);
-
-  return error.reason;
-}
-
 /**
  * Wrapper for the requestAPI.
  */
@@ -75,8 +85,7 @@ export namespace CassiniServer {
         if (data) {
           return val.data;
         } else {
-          const reason = handleServerError(response, error);
-          throw Error(reason);
+          throw new CasServerError(error.reason, response.url, error.message);
         }
       });
   }
@@ -100,8 +109,7 @@ export namespace CassiniServer {
         if (data) {
           return val.data;
         } else {
-          const reason = handleServerError(response, error);
-          throw Error(reason);
+          throw new CasServerError(error.reason, response.url, error.message);
         }
       });
   }
@@ -122,8 +130,7 @@ export namespace CassiniServer {
         if (data) {
           return val.data;
         } else {
-          const reason = handleServerError(response, error);
-          throw Error(reason);
+          throw new CasServerError(error.reason, response.url, error.message);
         }
       });
   }
@@ -140,8 +147,7 @@ export namespace CassiniServer {
         if (data) {
           return val.data;
         } else {
-          const reason = handleServerError(response, error);
-          throw Error(reason);
+          throw new CasServerError(error.reason, response.url, error.message);
         }
       });
   }

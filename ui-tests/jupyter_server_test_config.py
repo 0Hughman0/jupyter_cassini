@@ -8,6 +8,9 @@ from jupyterlab.galata import configure_jupyter_server
 
 configure_jupyter_server(c)
 
+c.ServerApp.port = 9001
+
 # Uncomment to set server log level to debug level
 # c.ServerApp.log_level = "DEBUG"
 c.ContentsManager.allow_hidden=True
+

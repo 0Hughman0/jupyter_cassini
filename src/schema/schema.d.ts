@@ -41,7 +41,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['CassiniServerError'];
+            'application/json': components['schemas']['CassiniErrorInfo'];
           };
         };
       };
@@ -91,7 +91,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['CassiniServerError'];
+            'application/json': components['schemas']['CassiniErrorInfo'];
           };
         };
       };
@@ -141,7 +141,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['CassiniServerError'];
+            'application/json': components['schemas']['CassiniErrorInfo'];
           };
         };
       };
@@ -187,6 +187,15 @@ export interface paths {
           };
           content: {
             'application/json': components['schemas']['TreeResponse'];
+          };
+        };
+        /** @description Not Found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['CassiniErrorInfo'];
           };
         };
       };
@@ -313,7 +322,7 @@ export interface components {
     } & {
       [key: string]: unknown;
     };
-    CassiniServerError: {
+    CassiniErrorInfo: {
       reason: string;
       message: string;
     };

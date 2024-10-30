@@ -238,7 +238,7 @@ components:
         - id
         - parent
     
-    CassiniServerError:
+    CassiniErrorInfo:
       type: object
       properties:
         reason:
@@ -273,7 +273,7 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: "#/components/schemas/CassiniServerError"
+                  $ref: "#/components/schemas/CassiniErrorInfo"
   /tree/{ids}:
     get:
       summary: View the tier tree
@@ -296,7 +296,7 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: "#/components/schemas/CassiniServerError"
+                  $ref: "#/components/schemas/CassiniErrorInfo"
   /open:
     get:
       summary: Open a tier in file explorer
@@ -319,7 +319,7 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: "#/components/schemas/CassiniServerError"
+                  $ref: "#/components/schemas/CassiniErrorInfo"
   /newChild:
     post:
       summary: Create a new child
@@ -336,5 +336,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TreeResponse"
+        "404":
+            description: "Not Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/CassiniErrorInfo"
 
 

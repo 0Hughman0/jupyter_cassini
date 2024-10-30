@@ -6,6 +6,7 @@ import { NotebookTierModel, TierBrowserModel } from '../models';
 import { TierTreeBrowser } from './treeview';
 import { TierViewer } from './tierviewer';
 import { openNewChildDialog } from './newchilddialog';
+import { CasServerError } from '../services';
 
 /**
  * BrowserPanel contains a TierBrowser, and TierViewer.
@@ -27,13 +28,16 @@ export class TierBrowser extends SplitPanel {
   constructor(identifiers?: string[]) {
     super();
 
+    console.debug(this);
+
     const ids = identifiers || [];
 
     this.id = `cas-container-${ids}`;
 
     const treeModel = (this.model = new TierBrowserModel());
 
-    console.log(this);
+    treeModel.currentPath.clear();
+    treeModel.currentPath.pushAll(ids);
 
     const browser = (this.browser = new TierTreeBrowser(
       treeModel,
@@ -53,13 +57,7 @@ export class TierBrowser extends SplitPanel {
     this.setRelativeSizes([5, 3]);
 
     cassini.treeManager.get(ids).then(tier => {
-      if (!tier) {
-        return;
-      }
-
-      treeModel.currentPath.clear();
-      treeModel.currentPath.pushAll(ids);
-      this.previewTier(tier.name);
+      tier && this.previewTier(tier.name);
     });
   }
 
@@ -69,11 +67,16 @@ export class TierBrowser extends SplitPanel {
    * @param name { string }
    */
   previewTier(name: string): void {
-    cassini.tierModelManager.get(name).then(tierModel => {
-      if (tierModel instanceof NotebookTierModel) {
-        this.viewer.model = tierModel;
-      }
-    });
+    cassini.tierModelManager
+      .get(name)
+      .then(tierModel => {
+        if (tierModel instanceof NotebookTierModel) {
+          this.viewer.model = tierModel;
+        }
+      })
+      .catch(reason => {
+        CasServerError.notifyOrThrow(reason);
+      });
   }
 
   /**

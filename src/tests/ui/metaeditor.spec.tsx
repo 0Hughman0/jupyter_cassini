@@ -4,6 +4,8 @@ import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 
 import { InputDialog } from '@jupyterlab/apputils';
+import { defaultRenderMime } from '@jupyterlab/testutils';
+import { RenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { cassini } from '../../core';
 import {
@@ -19,7 +21,8 @@ import {
 import {
   createMetaInput,
   createValidatedInput,
-  MetaEditor
+  MetaEditor,
+  RenderMimeMetaEditor
 } from '../../ui/metaeditor';
 
 import { mockServerAPI, createTierFiles, mockCassini } from '../tools';
@@ -241,7 +244,15 @@ describe('metaeditor widget', () => {
     mockServerAPI({
       '/lookup': [
         { query: { name: 'WP1' }, response: WP1_NO_HLTS },
-        { query: { name: 'WP1.1' }, response: WP1_1_NO_HLTS }
+        { query: { name: 'WP1.1' }, response: WP1_1_NO_HLTS },
+        {
+          query: { name: 'invalid' },
+          response: {
+            reason: 'Not Found',
+            message: 'Could not find'
+          },
+          status: 404
+        }
       ]
     });
 
@@ -462,6 +473,51 @@ describe('metaeditor widget', () => {
 
     expect(table.values).toEqual({ B: 'b' });
     expect(table.schema.properties).toEqual({ B: { type: 'string' } });
+  });
+
+  describe('rendermime widget', () => {
+    test('construct', async () => {
+      const rm = defaultRenderMime();
+      const resolver = new RenderMimeRegistry.UrlResolver({
+        path: '/WP1.ipynb',
+        contents: cassini.contentService.contents
+      });
+
+      const widget = new RenderMimeMetaEditor({
+        mimeType: '',
+        sanitizer: rm.sanitizer,
+        resolver: resolver,
+        linkHandler: rm.linkHandler,
+        latexTypesetter: rm.latexTypesetter
+      });
+
+      expect(widget.name).toEqual('WP1');
+    });
+
+    test('reports if not found', async () => {
+      const rm = defaultRenderMime();
+      const resolver = new RenderMimeRegistry.UrlResolver({
+        path: '/invalid.ipynb',
+        contents: cassini.contentService.contents
+      });
+
+      const mock = jest.spyOn(console, 'debug');
+
+      const widget = new RenderMimeMetaEditor({
+        mimeType: '',
+        sanitizer: rm.sanitizer,
+        resolver: resolver,
+        linkHandler: rm.linkHandler,
+        latexTypesetter: rm.latexTypesetter
+      });
+
+      expect(widget.name).toEqual('invalid');
+
+      await widget.ready();
+      expect(mock).toBeCalledWith(
+        "Couldn't load widget because tier model couldn't be loaded for invalid"
+      );
+    });
   });
 });
 

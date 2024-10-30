@@ -22,6 +22,7 @@ import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
 import { cassini } from '../core';
 import { NotebookTierModel } from '../models';
 import { MetaEditor } from './metaeditor';
+import { CasServerError } from '../services';
 
 export function createElementWidget(
   element: string,
@@ -415,6 +416,9 @@ export class TierViewer extends BoxPanel {
         if (tierModel instanceof NotebookTierModel) {
           this.model = tierModel;
         }
+      })
+      .catch(reason => {
+        CasServerError.notifyOrThrow(reason);
       });
   }
 }

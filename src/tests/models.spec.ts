@@ -1,5 +1,7 @@
 import 'jest';
 import { ServiceManager } from '@jupyterlab/services';
+import { Notification } from '@jupyterlab/apputils';
+import { signalToPromise } from '@jupyterlab/testutils';
 
 import {
   TierBrowserModel,
@@ -9,7 +11,6 @@ import {
 import { cassini } from '../core';
 import { treeChildrenToData, treeResponseToData } from '../utils';
 import { FolderTierInfo } from '../schema/types';
-import { CassiniServer } from '../services';
 
 import {
   HOME_TREE,
@@ -18,7 +19,12 @@ import {
   TEST_META_CONTENT,
   WP1_INFO
 } from './test_cases';
-import { createTierFiles, awaitSignalType, mockServerAPI } from './tools';
+import {
+  createTierFiles,
+  awaitSignalType,
+  mockServerAPI,
+  mockCassini
+} from './tools';
 
 describe('TierModel', () => {
   let theManager: ServiceManager.IManager;
@@ -30,7 +36,18 @@ describe('TierModel', () => {
     ]);
 
     mockServerAPI({
-      '/tree/{ids}': [{ path: '1', response: WP1_TREE }]
+      '/tree/{ids}': [
+        { path: '', response: HOME_TREE },
+        { path: '1', response: WP1_TREE },
+        {
+          path: '1/1',
+          response: {
+            reason: 'Not Found',
+            message: 'Could not find'
+          },
+          status: 404
+        }
+      ]
     });
 
     await manager.ready;
@@ -227,12 +244,25 @@ describe('TierBrowserModel', () => {
   let model: TierBrowserModel;
 
   beforeEach(() => {
-    CassiniServer.tree = jest.fn(
-      query => new Promise(resolve => resolve(HOME_TREE))
-    ) as jest.Mocked<typeof CassiniServer.tree>;
+    mockCassini();
+
+    mockServerAPI({
+      '/tree/{ids}': [
+        { path: '', response: HOME_TREE },
+        { path: '1', response: WP1_TREE },
+        { path: '1/1', response: WP1_TREE },
+        {
+          path: '1/throws',
+          response: {
+            reason: 'Not Found',
+            message: 'Could not find'
+          },
+          status: 404
+        }
+      ]
+    });
 
     model = new TierBrowserModel();
-    cassini.treeManager.cache = {};
   });
 
   test('initial', async () => {
@@ -255,17 +285,28 @@ describe('TierBrowserModel', () => {
     model.currentPath.pushAll(ids);
     await awaitSignalType(model.changed, 'current');
 
-    const childReponse = Object.assign(HOME_TREE);
+    const childReponse = Object.assign(WP1_TREE);
 
     expect(model.current).toMatchObject(
       treeResponseToData(childReponse, ['1', '1'])
     );
-    expect(CassiniServer.tree).lastCalledWith(ids);
+  });
+
+  test('updating with server error reports', async () => {
+    Notification.dismiss();
+
+    model.currentPath.pushAll(['1', 'throws']);
+
+    await signalToPromise(Notification.manager.changed);
+
+    expect(Notification.manager.notifications[0]?.message).toContain(
+      'Not Found'
+    );
   });
 
   test('additionalColumns', () => {
     expect(model.additionalColumns).toEqual(new Set());
-    model.currentPath.push('a');
+    model.currentPath.push('1');
 
     expect(model.additionalColumns).toEqual(new Set());
     model.additionalColumns.add('new Col');
@@ -276,12 +317,12 @@ describe('TierBrowserModel', () => {
 
     expect(model.additionalColumns).toEqual(new Set());
 
-    model.currentPath.pushAll(['b', 'd']);
+    model.currentPath.pushAll(['1', '1']);
 
     expect(model.additionalColumns).toEqual(new Set());
 
     model.currentPath.clear();
-    model.currentPath.pushAll(['a']);
+    model.currentPath.pushAll(['1']);
 
     // should remember.
     expect(model.additionalColumns).toEqual(new Set(['new Col']));

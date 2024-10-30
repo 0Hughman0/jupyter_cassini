@@ -17,6 +17,7 @@ import { Notification } from '@jupyterlab/apputils';
 import { cassini, TreeChildren, ITreeData, TreeManager } from './core';
 import { MetaSchema, FolderTierInfo, NotebookTierInfo } from './schema/types';
 import { treeChildrenToData } from './utils';
+import { CasServerError } from './services';
 
 export interface INewModel<Old, New> {
   old: Old;
@@ -428,14 +429,19 @@ export class TierBrowserModel {
     this.currentPath.changed.connect(path => {
       this._changed.emit({ type: 'path', path: path });
 
-      this.treeManager.get(this.sCurrentPath).then(value => {
-        this._current = value;
-        this._changed.emit({ type: 'current', current: value });
+      this.treeManager
+        .get(this.sCurrentPath)
+        .then(value => {
+          this._current = value;
+          this._changed.emit({ type: 'current', current: value });
 
-        if (value?.children) {
-          this._changed.emit({ type: 'children', children: value.children });
-        }
-      });
+          if (value?.children) {
+            this._changed.emit({ type: 'children', children: value.children });
+          }
+        })
+        .catch(reason => {
+          CasServerError.notifyOrThrow(reason);
+        });
     }, this);
 
     cassini.treeManager.changed.connect((sender, { ids, data }) => {

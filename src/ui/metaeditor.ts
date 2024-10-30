@@ -23,6 +23,7 @@ import {
   ValidatingInput
 } from './dialogwidgets';
 import { MetaSchema, ObjectDef } from '../schema/types';
+import { CasServerError } from '../services';
 
 export function createMetaInput(
   propertySchema: ObjectDef,
@@ -357,7 +358,7 @@ export class RenderMimeMetaEditor
   protected _path: string;
   protected _model: NotebookTierModel | null;
   protected editor: MetaEditor;
-  private fetchModel: Promise<NotebookTierModel | undefined>;
+  private fetchModel: Promise<NotebookTierModel | undefined | void>;
 
   /**
    * Strange thing is that the data from the rendermime are not passed at initialisation, but during renderModel, hence we have to be ready for that.
@@ -389,8 +390,12 @@ export class RenderMimeMetaEditor
 
         this.model = tierModel;
         return this.model;
-      });
-
+      })
+      .catch((reason: CasServerError) =>
+        console.debug(
+          `Couldn't load widget because tier model couldn't be loaded for ${this.name}`
+        )
+      );
     this.fetchModel.then(model => {
       if (model) {
         this.editor = new MetaEditor(model);

@@ -1,5 +1,7 @@
+import { NBTestUtils } from '@jupyterlab/testutils';
+
 import { NotebookTierModel } from '../../models';
-import { TierNotebookHeader } from '../../ui/nbheader';
+import { TierNotebookHeader, TierNotebookHeaderTB } from '../../ui/nbheader';
 import { treeChildrenToData } from '../../utils';
 import { WP1_INFO, TEST_META_CONTENT, TEST_HLT_CONTENT } from '../test_cases';
 import {
@@ -22,6 +24,14 @@ beforeEach(() => {
           children: ['WP1', 'WP2'],
           tierType: 'folder'
         }
+      },
+      {
+        query: { name: 'invalid' },
+        response: {
+          reason: 'Not Found',
+          message: 'Could not find'
+        },
+        status: 404
       }
     ]
   });
@@ -29,6 +39,46 @@ beforeEach(() => {
     { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
     { path: WP1_INFO.hltsPath as string, content: TEST_HLT_CONTENT }
   ]);
+});
+
+describe('nb toolbar', () => {
+  test('attaches', async () => {
+    const context = await NBTestUtils.createMockContext();
+    const panel = NBTestUtils.createNotebookPanel(context);
+
+    await context.rename('WorkPackages/WP1.ipynb');
+
+    const tb = await TierNotebookHeaderTB.attachToNotebook(panel, context);
+
+    expect(tb?.nameLabel.node.textContent).toEqual('WP1');
+  });
+
+  test('no toolbar if paths no match', async () => {
+    const context = await NBTestUtils.createMockContext();
+    const panel = NBTestUtils.createNotebookPanel(context);
+
+    await context.rename('WP1.ipynb');
+
+    const tb = await TierNotebookHeaderTB.attachToNotebook(panel, context);
+
+    expect(tb).toBeUndefined();
+  });
+
+  test('only reports debug if not a tier', async () => {
+    const context = await NBTestUtils.createMockContext();
+    const panel = NBTestUtils.createNotebookPanel(context);
+
+    const mock = jest.spyOn(console, 'debug');
+
+    await context.rename('WorkPackages/invalid.ipynb');
+
+    const tb = await TierNotebookHeaderTB.attachToNotebook(panel, context);
+
+    expect(tb).toBeUndefined();
+    expect(mock).toBeCalledWith(
+      'No tier found associated with this notebook invalid'
+    );
+  });
 });
 
 describe('nb header', () => {

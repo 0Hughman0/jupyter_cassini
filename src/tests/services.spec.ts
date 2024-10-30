@@ -1,9 +1,9 @@
 import { Notification } from '@jupyterlab/apputils';
 
-import { CassiniServer, handleServerError } from '../services';
+import { CassiniServer, CasServerError } from '../services';
 import { mockServerAPI } from './tools';
 import { WP1_TREE, WP1_INFO, TEST_NEW_CHILD_INFO } from './test_cases';
-import { CassiniServerError } from '../schema/types';
+import { CassiniErrorInfo } from '../schema/types';
 
 import 'jest';
 
@@ -15,12 +15,17 @@ describe('Error logging', () => {
   });
 
   test('error content', async () => {
-    const response = { url: 'http://jupyter_cassini/tree' } as Response;
-
-    handleServerError(response, {
+    const options: CassiniErrorInfo = {
       reason: 'The Reason is short!',
       message: 'The Error Message is long... apparently!'
-    });
+    };
+
+    const error = new CasServerError(
+      options.reason,
+      'http://jupyter_cassini/tree',
+      options.message
+    );
+    error.notify();
 
     expect(Notification.manager.notifications[0].message).toContain('/tree');
     expect(Notification.manager.notifications[0].message).toContain(
@@ -33,16 +38,18 @@ describe('Error logging', () => {
       'The Error Message is long... apparently!'
     );
   });
+
+  test('regular errors throw through', () => {
+    expect(() => {
+      CasServerError.notifyOrThrow(new Error());
+    }).toThrow();
+  });
 });
 
 const { name, ...badWP1 } = structuredClone(WP1_TREE);
 
 describe('tree', () => {
-  let errorLog: jest.Mock<typeof console.log>;
-
   beforeEach(() => {
-    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
-
     mockServerAPI({
       '/tree/{ids}': [
         { path: '1', response: WP1_TREE },
@@ -82,19 +89,11 @@ describe('tree', () => {
     await expect(
       async () => await CassiniServer.tree(['bad request'])
     ).rejects.toThrowError('Bad Request');
-    expect(Notification.manager.notifications[0].message).toMatch(
-      'Bad Request'
-    );
-    expect(errorLog.mock.lastCall[0]).toContain('Bad Request');
   });
 });
 
 describe('lookup', () => {
-  let errorLog: jest.Mock<typeof console.log>;
-
   beforeEach(() => {
-    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
-
     mockServerAPI({
       '/lookup': [
         { query: { name: 'WP1' }, response: WP1_INFO },
@@ -103,7 +102,7 @@ describe('lookup', () => {
           response: {
             reason: 'Bad Request',
             message: 'Bad query'
-          } as CassiniServerError,
+          } as CassiniErrorInfo,
           status: 405
         }
       ]
@@ -119,19 +118,11 @@ describe('lookup', () => {
     await expect(
       async () => await CassiniServer.lookup('bad request')
     ).rejects.toThrowError('Bad Request');
-    expect(Notification.manager.notifications[0].message).toMatch(
-      'Bad Request'
-    );
-    expect(errorLog.mock.lastCall[0]).toContain('Bad Request');
   });
 });
 
 describe('newChild', () => {
-  let errorLog: jest.Mock<typeof console.log>;
-
   beforeEach(() => {
-    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
-
     mockServerAPI({
       '/newChild': [
         { body: TEST_NEW_CHILD_INFO, response: WP1_INFO },
@@ -140,7 +131,7 @@ describe('newChild', () => {
           response: {
             reason: 'Bad Request',
             message: 'Bad query'
-          } as CassiniServerError,
+          } as CassiniErrorInfo,
           status: 405
         }
       ]
@@ -156,19 +147,11 @@ describe('newChild', () => {
     await expect(
       async () => await CassiniServer.newChild({ name: 'bad request' } as any)
     ).rejects.toThrowError('Bad Request');
-    expect(Notification.manager.notifications[0].message).toMatch(
-      'Bad Request'
-    );
-    expect(errorLog.mock.lastCall[0]).toContain('Bad Request');
   });
 });
 
 describe('open', () => {
-  let errorLog: jest.Mock<typeof console.log>;
-
   beforeEach(() => {
-    errorLog = console.warn = jest.fn() as jest.Mock<typeof console.log>;
-
     mockServerAPI({
       '/open': [
         { query: { name: 'WP1' }, response: { status: 'success' } },
@@ -177,7 +160,7 @@ describe('open', () => {
           response: {
             reason: 'Bad Request',
             message: 'Bad query'
-          } as CassiniServerError,
+          } as CassiniErrorInfo,
           status: 405
         }
       ]
@@ -193,9 +176,5 @@ describe('open', () => {
     await expect(
       async () => await CassiniServer.openTier('bad request')
     ).rejects.toThrowError('Bad Request');
-    expect(Notification.manager.notifications[0].message).toMatch(
-      'Bad Request'
-    );
-    expect(errorLog.mock.lastCall[0]).toContain('Bad Request');
   });
 });
