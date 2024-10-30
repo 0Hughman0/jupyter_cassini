@@ -94,7 +94,8 @@ export class NewChildWidget extends Widget {
       ));
 
       const metaLabel = createElementWidget('label', 'Meta');
-      (metaLabel.node as HTMLLabelElement).htmlFor = metaTable.node.id;
+      (metaLabel.node as HTMLLabelElement).htmlFor = metaTable.node.id =
+        'cas-meta-editor-id';
       layout.addWidget(metaLabel);
       layout.addWidget(metaTable);
     }
