@@ -11,7 +11,6 @@ import {
 } from './dialogwidgets';
 import { NotebookTierModel } from '../models';
 
-//import { createValidatedInput } from './metaeditor';
 import { JSONValue } from '@lumino/coreutils';
 import { MetaTableWidget } from './metatable';
 

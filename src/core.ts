@@ -7,7 +7,7 @@ import { ServiceManager } from '@jupyterlab/services';
 import { IEditorFactoryService } from '@jupyterlab/codeeditor';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import { CassiniServer } from './services';
+import { CasServerError, CassiniServer } from './services';
 import { FolderTierModel, NotebookTierModel, TierModel } from './models';
 import {
   TreeResponse,
@@ -427,9 +427,14 @@ export class Cassini {
     parentTier: ITreeData,
     newChildInfo: NewChildInfo
   ): Promise<ITreeData | null> {
-    return CassiniServer.newChild(newChildInfo).then(treeResponse => {
-      return this.treeManager.fetchTierData(parentTier.ids); // refresh the tree.
-    });
+    return CassiniServer.newChild(newChildInfo)
+      .then(treeResponse => {
+        return this.treeManager.fetchTierData(parentTier.ids); // refresh the tree.
+      })
+      .catch(reason => {
+        CasServerError.notifyOrThrow(reason);
+        return null;
+      });
   }
 }
 
