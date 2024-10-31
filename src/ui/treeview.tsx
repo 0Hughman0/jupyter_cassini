@@ -524,11 +524,6 @@ export function ChildrenTable(props: IChildrenTableProps) {
             {table.getFlatHeaders().map(header => (
               <th
                 key={header.id}
-                className={
-                  ['addColumns', 'launch', 'select'].includes(header.id)
-                    ? ''
-                    : 'jp-DirListing-headerItem jp-id-name'
-                }
                 style={{
                   width: `${
                     (header.getSize() / table.getCenterTotalSize()) * 100

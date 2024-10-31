@@ -14,6 +14,7 @@ import {
 import { NotebookTierModel } from '../models';
 import { MetaTableWidget } from './metatable';
 import { createElementWidget } from '../utils';
+import { NewChildInfo } from '../schema/types';
 
 /**
  * A widget that creates a dialog for creating a new tier child.
@@ -31,6 +32,8 @@ export class NewChildWidget extends Widget {
 
   constructor(tier: Required<ITreeData>) {
     super();
+    this.addClass('cas-new-child-body');
+
     this.parentName = tier.name;
 
     const layout = (this.layout = new PanelLayout());
@@ -54,6 +57,7 @@ export class NewChildWidget extends Widget {
         }
       }
     ));
+    identifierInput.wrappedInput.addClass('cas-new-child-input');
 
     this.subInputs = {
       id: identifierInput
@@ -68,6 +72,7 @@ export class NewChildWidget extends Widget {
           label: 'Description'
         }
       ));
+      descriptionInput.addClass('cas-new-child-input');
 
       layout.addWidget(descriptionInput);
 
@@ -77,6 +82,7 @@ export class NewChildWidget extends Widget {
         items: tier.childClsInfo.templates || [],
         placeholder: 'Select a Template'
       }));
+      templateSelector.addClass('cas-new-child-input');
 
       layout.addWidget(templateSelector);
 
@@ -92,6 +98,7 @@ export class NewChildWidget extends Widget {
         undefined,
         false
       ));
+      metaTable.addClass('cas-new-child-input');
 
       const metaLabel = createElementWidget('label', 'Meta');
       (metaLabel.node as HTMLLabelElement).htmlFor = metaTable.node.id =
@@ -105,7 +112,7 @@ export class NewChildWidget extends Widget {
    * Serilaises the contents of the dialogs widgets into an object and returns them for handling.
    * @returns
    */
-  getValue() {
+  getValue(): NewChildInfo {
     const values: { [name: string]: JSONValue } = {};
 
     for (const name in this.subInputs) {
@@ -120,11 +127,11 @@ export class NewChildWidget extends Widget {
       Object.assign(values, this.metaTable.getValue());
     }
 
-    return values;
+    return values as NewChildInfo;
   }
 }
 
-class textAreaAbleDialog extends Dialog<any> {
+class textAreaAbleDialog<T> extends Dialog<T> {
   protected _evtKeydown(event: KeyboardEvent): void {
     switch (event.keyCode) {
       case 13: {
@@ -146,7 +153,7 @@ class textAreaAbleDialog extends Dialog<any> {
  */
 export function openNewChildDialog(tier: ITreeData): Promise<ITreeData | null> {
   const body = new NewChildWidget(tier as Required<ITreeData>);
-  const dialog = new textAreaAbleDialog({
+  const dialog = new textAreaAbleDialog<any>({
     title: `Create New ${tier.childClsInfo?.name}`,
     body: body
   });

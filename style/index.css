@@ -119,13 +119,27 @@ div.cas-invalid-id * {
   background-color: var(--jp-layout-color2);
 }
 
-.cas-dialogue-input input,
-textarea {
+.cas-dialogue-input input {
   width: 100%;
+}
+
+.cas-dialogue-input textarea {
+  width: 98%;
+  resize: vertical;
+  min-height: 75px;
 }
 
 .cas-floating-preview {
   top: 0;
   position: absolute;
   right: 0;
+}
+
+.cas-new-child-body {
+  overflow: auto !important;
+  min-width: 400px;
+}
+
+.cas-new-child-input {
+  overflow: visible !important;
 }
