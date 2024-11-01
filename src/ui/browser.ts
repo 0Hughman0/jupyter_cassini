@@ -27,7 +27,8 @@ export class TierBrowser extends SplitPanel {
 
   constructor(identifiers?: string[]) {
     super();
-
+    this.addClass('cas-SplitPanel')
+    
     console.debug(this);
 
     const ids = identifiers || [];

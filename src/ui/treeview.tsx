@@ -124,8 +124,8 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps> {
     }
     return (
       <div className="cas-CassiniCrumbs-box">
-        <div className="jp-BreadCrumbs jp-FileBrowser-crumbs cas-CassiniCrumbs-row">
-          <span className="jp-BreadCrumbs-home">
+        <div className="cas-CassiniCrumbs-row">
+          <span>
             <ToolbarButtonComponent
               icon={homeIcon}
               onClick={() => path.clear()}
@@ -144,13 +144,13 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps> {
             </span>
           </div>
         </div>
-        <div className="jp-BreadCrumbs jp-FileBrowser-crumbs cas-CassiniCrumbs-row">
+        <div className="cas-CassiniCrumbs-row">
           <span className="cas-tier-name">{tier?.name}</span>
           <span>/</span>
           <span>
             <ToolbarButtonComponent
               icon={addIcon}
-              className="jp-BreadCrumbs-home jp-ToolbarButtonComponent-icon"
+              className="jp-ToolbarButtonComponent-icon"
               onClick={() => {
                 tier && onCreateChild(tier);
               }}
@@ -160,7 +160,7 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps> {
           <div className="cas-icon-area">
             <ToolbarButtonComponent
               icon={launcherIcon}
-              className="jp-BreadCrumbs-home jp-ToolbarButtonComponent-icon"
+              className="jp-ToolbarButtonComponent-icon"
               onClick={() => {
                 tier && onTierLaunched(tier);
               }}
@@ -169,7 +169,7 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps> {
             <span>
               <ToolbarButtonComponent
                 icon={caretRightIcon}
-                className="jp-BreadCrumbs-home jp-ToolbarButtonComponent-icon"
+                className="jp-ToolbarButtonComponent-icon"
                 onClick={() => {
                   tier && onTierSelected([...path], tier.name);
                 }}
@@ -513,10 +513,9 @@ export function ChildrenTable(props: IChildrenTableProps) {
   });
 
   return (
-    <div>
+    <div className="cas-ChildrenTable-table">
       <h1>{props.currentTier.name}</h1>
       <table
-        className="cas-ChildrenTable-table"
         // style={{width: table.getCenterTotalSize()}}
       >
         <thead onContextMenu={event => props.onSelectMetas(event)}>
