@@ -428,7 +428,7 @@ export class TierBrowserModel {
 
     this.currentPath.changed.connect((path, change) => {
       this._changed.emit({ type: 'path', path: path });
-      
+
       this.treeManager
         .get(this.sCurrentPath)
         .then(value => {

@@ -308,9 +308,9 @@ describe('TierBrowserModel', () => {
   test('updating invalid path reverts', async () => {
     model.currentPath.push('1');
     model.currentPath.push('throws');
-    
+
     expect(model.sCurrentPath).toEqual(['1', 'throws']);
-    
+
     await awaitSignalType(model.changed, 'path');
     // reverted
     expect(model.sCurrentPath).toEqual(['1']);
