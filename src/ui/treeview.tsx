@@ -163,13 +163,13 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps> {
               tooltip={`Open ${tier?.name}`}
             />
             <ToolbarButtonComponent
-                icon={caretRightIcon}
-                className="jp-ToolbarButtonComponent-icon"
-                onClick={() => {
-                  tier && onTierSelected([...path], tier.name);
-                }}
-                enabled={Boolean(tier?.metaPath)}
-                tooltip={`Preview ${tier?.name}`}
+              icon={caretRightIcon}
+              className="jp-ToolbarButtonComponent-icon"
+              onClick={() => {
+                tier && onTierSelected([...path], tier.name);
+              }}
+              enabled={Boolean(tier?.metaPath)}
+              tooltip={`Preview ${tier?.name}`}
             />
           </div>
         </div>
