@@ -8,7 +8,8 @@
   overflow-y: auto;
 }
 
-.cas-tier-widget-content > div, h1 {
+.cas-tier-widget-content > div,
+h1 {
   padding: 5px;
 }
 

@@ -516,7 +516,7 @@ export function ChildrenTable(props: IChildrenTableProps) {
     <div className="cas-ChildrenTable-table">
       <h1>{props.currentTier.name}</h1>
       <table
-        // style={{width: table.getCenterTotalSize()}}
+      // style={{width: table.getCenterTotalSize()}}
       >
         <thead onContextMenu={event => props.onSelectMetas(event)}>
           <tr>
