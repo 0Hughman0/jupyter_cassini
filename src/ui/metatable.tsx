@@ -139,7 +139,7 @@ export function MetaTable(props: IMetaTableProps) {
 
   return (
     <div>
-      <table className="cas-ChildrenTable-table">
+      <table className="cas-MetaEditor-table">
         <thead>
           <tr>
             {table.getFlatHeaders().map(header => (
