@@ -30,6 +30,11 @@ h2 {
   border: var(--jp-border-width) solid var(--jp-cell-editor-border-color);
 }
 
+.cas-MetaEditor-table {
+  width: 100%;
+  max-width: 400px;
+}
+
 .cas-icon-area {
   position: absolute;
   right: 3px;
@@ -74,6 +79,10 @@ h2 {
 
 .cas-CassiniCrumbs-row span {
   align-self: flex-end;
+  padding-top: 3px;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  margin-top: 4px;
 }
 
 .cas-TierBrowser {

@@ -125,13 +125,11 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps> {
     return (
       <div className="cas-CassiniCrumbs-box">
         <div className="cas-CassiniCrumbs-row">
-          <span>
-            <ToolbarButtonComponent
-              icon={homeIcon}
-              onClick={() => path.clear()}
-              tooltip="Go Home"
-            />
-          </span>
+          <ToolbarButtonComponent
+            icon={homeIcon}
+            onClick={() => path.clear()}
+            tooltip="Go Home"
+          />
           <span>/</span>
           {elements}
           <div className="cas-icon-area">
@@ -147,16 +145,14 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps> {
         <div className="cas-CassiniCrumbs-row">
           <span className="cas-tier-name">{tier?.name}</span>
           <span>/</span>
-          <span>
-            <ToolbarButtonComponent
-              icon={addIcon}
-              className="jp-ToolbarButtonComponent-icon"
-              onClick={() => {
-                tier && onCreateChild(tier);
-              }}
-              tooltip={`Add new child of ${tier?.name}`}
-            />
-          </span>
+          <ToolbarButtonComponent
+            icon={addIcon}
+            className="jp-ToolbarButtonComponent-icon"
+            onClick={() => {
+              tier && onCreateChild(tier);
+            }}
+            tooltip={`Add new child of ${tier?.name}`}
+          />
           <div className="cas-icon-area">
             <ToolbarButtonComponent
               icon={launcherIcon}
@@ -166,8 +162,7 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps> {
               }}
               tooltip={`Open ${tier?.name}`}
             />
-            <span>
-              <ToolbarButtonComponent
+            <ToolbarButtonComponent
                 icon={caretRightIcon}
                 className="jp-ToolbarButtonComponent-icon"
                 onClick={() => {
@@ -175,8 +170,7 @@ export class CassiniCrumbs extends React.Component<ICrumbsProps> {
                 }}
                 enabled={Boolean(tier?.metaPath)}
                 tooltip={`Preview ${tier?.name}`}
-              />
-            </span>
+            />
           </div>
         </div>
       </div>
