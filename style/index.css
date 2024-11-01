@@ -8,6 +8,11 @@
   overflow-y: auto;
 }
 
+.cas-tier-widget-content > div,
+h1 {
+  padding: 5px;
+}
+
 .cas-tier-widget-content h1,
 h2 {
   margin-top: 0;
@@ -59,11 +64,16 @@ h2 {
 .cas-CassiniCrumbs-box {
   position: relative;
   border-bottom: var(--jp-border-color2) solid 1px;
+  padding: 5px;
 }
 
 .cas-CassiniCrumbs-row {
   display: flex;
   position: inherit;
+}
+
+.cas-CassiniCrumbs-row span {
+  align-self: flex-end;
 }
 
 .cas-TierBrowser {
@@ -82,7 +92,15 @@ div.cas-invalid-id * {
   background-color: var(--jp-error-color3) !important;
 }
 
-.cas-ChildrenTable-table {
+.cas-SplitPanel > .lm-SplitPanel-handle {
+  background-color: var(--jp-layout-color3);
+}
+
+.cas-ChildrenTable-table h1 {
+  padding: 5px;
+}
+
+.cas-ChildrenTable-table table {
   width: 100%;
   table-layout: auto;
 }
