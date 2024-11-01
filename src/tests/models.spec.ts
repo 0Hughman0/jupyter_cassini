@@ -295,13 +295,25 @@ describe('TierBrowserModel', () => {
   test('updating with server error reports', async () => {
     Notification.dismiss();
 
-    model.currentPath.pushAll(['1', 'throws']);
+    model.currentPath.push('1');
+    model.currentPath.push('throws');
 
     await signalToPromise(Notification.manager.changed);
 
     expect(Notification.manager.notifications[0]?.message).toContain(
       'Not Found'
     );
+  });
+
+  test('updating invalid path reverts', async () => {
+    model.currentPath.push('1');
+    model.currentPath.push('throws');
+
+    expect(model.sCurrentPath).toEqual(['1', 'throws']);
+
+    await awaitSignalType(model.changed, 'path');
+    // reverted
+    expect(model.sCurrentPath).toEqual(['1']);
   });
 
   test('additionalColumns', () => {
