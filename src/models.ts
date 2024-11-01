@@ -426,9 +426,9 @@ export class TierBrowserModel {
     this.treeManager = cassini.treeManager;
     this._current = null;
 
-    this.currentPath.changed.connect(path => {
+    this.currentPath.changed.connect((path, change) => {
       this._changed.emit({ type: 'path', path: path });
-
+      
       this.treeManager
         .get(this.sCurrentPath)
         .then(value => {
@@ -441,6 +441,10 @@ export class TierBrowserModel {
         })
         .catch(reason => {
           CasServerError.notifyOrThrow(reason);
+          // revert change
+          for (const newValue of change.newValues) {
+            this.currentPath.removeValue(newValue);
+          }
         });
     }, this);
 

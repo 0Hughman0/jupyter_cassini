@@ -125,7 +125,7 @@ export function mockServerAPI(
     const mockResponses = calls[endpoint] as MockAPICall[] | undefined;
 
     if (!mockResponses) {
-      throw TypeError('No mocked responses found for this endpoint');
+      throw TypeError(`No mocked responses found for this endpoint ${endpoint}`);
     }
 
     if (init.method == 'GET') {
