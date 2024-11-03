@@ -270,7 +270,8 @@ test.describe('Cassini-Browser', async () => {
       await page.getByLabel('Launcher').getByText('Browser').click();
     });
 
-    test('header-content', async ({ page }) => {
+    test('header-content', async ({ page, request }) => {
+      await page.filebrowser.revealFileInBrowser('WorkPackages/WP1.ipynb');
       await page.filebrowser.open('WorkPackages/WP1.ipynb');
 
       await expect(page.getByRole('heading', { name: 'WP1' })).toBeVisible();
@@ -300,12 +301,10 @@ test.describe('Cassini-Browser', async () => {
         page.getByRole('button', { name: 'Open WP1.1' })
       ).toBeVisible();
 
-      await page.filebrowser.contents.fileExists(
-        'WorkPackages/WP1/WP1.1.ipynb'
-      );
-      await page.filebrowser.contents.fileExists(
-        'WorkPackages/WP1/.exps/WP1.1.json'
-      );
+      const contentMangager = new ContentsHelper(request);
+
+      expect(await contentMangager.fileExists('WorkPackages/WP1/WP1.1.ipynb')).toBeTruthy();
+      expect(await contentMangager.fileExists('WorkPackages/WP1/.exps/WP1.1.json')).toBeTruthy();
     });
   });
 });
