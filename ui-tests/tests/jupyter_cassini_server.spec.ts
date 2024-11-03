@@ -303,8 +303,12 @@ test.describe('Cassini-Browser', async () => {
 
       const contentMangager = new ContentsHelper(request);
 
-      expect(await contentMangager.fileExists('WorkPackages/WP1/WP1.1.ipynb')).toBeTruthy();
-      expect(await contentMangager.fileExists('WorkPackages/WP1/.exps/WP1.1.json')).toBeTruthy();
+      expect(
+        await contentMangager.fileExists('WorkPackages/WP1/WP1.1.ipynb')
+      ).toBeTruthy();
+      expect(
+        await contentMangager.fileExists('WorkPackages/WP1/.exps/WP1.1.json')
+      ).toBeTruthy();
     });
   });
 });
