@@ -2,9 +2,11 @@
 import { SplitPanel } from '@lumino/widgets';
 
 import { cassini, ILaunchable } from '../core';
-import { TierModel, TierBrowserModel as TierTreeModel } from '../models';
-import { TierBrowser as TierTree } from './treeview';
+import { NotebookTierModel, TierBrowserModel } from '../models';
+import { TierTreeBrowser } from './treeview';
 import { TierViewer } from './tierviewer';
+import { openNewChildDialog } from './newchilddialog';
+import { CasServerError } from '../services';
 
 /**
  * BrowserPanel contains a TierBrowser, and TierViewer.
@@ -17,79 +19,65 @@ import { TierViewer } from './tierviewer';
  *
  *
  */
-export class BrowserPanel extends SplitPanel {
-  model: TierTreeModel;
-  browser: TierTree;
+export class TierBrowser extends SplitPanel {
+  model: TierBrowserModel;
+  browser: TierTreeBrowser;
   viewer: TierViewer;
+  panelSizes: { browser: number; viewer: number };
 
   constructor(identifiers?: string[]) {
     super();
+    this.addClass('cas-SplitPanel');
+
+    console.debug(this);
 
     const ids = identifiers || [];
 
     this.id = `cas-container-${ids}`;
 
-    const treeModel = (this.model = new TierTreeModel());
+    const treeModel = (this.model = new TierBrowserModel());
 
-    console.log(this);
+    treeModel.currentPath.clear();
+    treeModel.currentPath.pushAll(ids);
+
+    const browser = (this.browser = new TierTreeBrowser(
+      treeModel,
+      (path: string[], name: string) => this.previewTier(name),
+      this.launchTier,
+      currentTier => openNewChildDialog(currentTier)
+    ));
+
+    this.addWidget(browser);
+    SplitPanel.setStretch(browser, 1);
+
+    const tierContent = (this.viewer = new TierViewer());
+
+    this.addWidget(tierContent);
+    SplitPanel.setStretch(tierContent, 0);
+
+    this.setRelativeSizes([5, 3]);
 
     cassini.treeManager.get(ids).then(tier => {
-      if (!tier) {
-        return;
-      }
-
-      const browser = (this.browser = new TierTree(treeModel));
-
-      browser.tierSelected.connect((sender, tierSelectedSignal) => {
-        this.openTier(tierSelectedSignal.path, tierSelectedSignal.tier);
-      }, this);
-      browser.tierLaunched.connect((sender, tierData) => {
-        this.launchTier(tierData);
-      }, this);
-
-      this.addWidget(browser);
-      SplitPanel.setStretch(browser, 0);
-
-      const tierContent = (this.viewer = new TierViewer(tier));
-
-      this.addWidget(tierContent);
-      SplitPanel.setStretch(tierContent, 1);
-
-      this.setRelativeSizes([3, 1]);
-
-      browser.renderPromise?.then(val => {
-        // browser.renderPromise is undefined until the react widget is attached to the window... I think!
-        treeModel.currentPath.clear();
-        treeModel.currentPath.pushAll(ids);
-      });
+      tier && this.previewTier(tier.name);
     });
   }
 
   /**
    * View a tier in the brower's TierViewer, which is kinda like a preview.
    *
-   * @param casPath { string[] } - not currently used.
-   * @param tierData { TierModel.IOptions } - info required to open (preview?) a tier in a tierView
+   * @param name { string }
    */
-  openTier(casPath: string[], tierData: TierModel.IOptions): void {
-    this.viewer.setHidden(true);
-    this.viewer.dispose();
-    const newTier = (this.viewer = new TierViewer(tierData));
-
-    if (newTier.model.metaFile) {
-      newTier.model.metaFile.ready.then(value => {
-        this.viewer.update();
+  previewTier(name: string): void {
+    cassini.tierModelManager
+      .get(name)
+      .then(tierModel => {
+        if (tierModel instanceof NotebookTierModel) {
+          this.viewer.model = tierModel;
+        }
+      })
+      .catch(reason => {
+        CasServerError.notifyOrThrow(reason);
       });
-    }
-
-    if (newTier.model.hltsFile) {
-      newTier.model.hltsFile.ready.then(value => {
-        this.viewer.update();
-      });
-    }
-
-    this.addWidget(newTier);
-    SplitPanel.setStretch(newTier, 1);
   }
 
   /**
@@ -98,5 +86,9 @@ export class BrowserPanel extends SplitPanel {
    */
   launchTier(tier: ILaunchable): void {
     cassini.launchTier(tier);
+  }
+
+  onResize(): void {
+    //this.setRelativeSizes([5, 3]);
   }
 }

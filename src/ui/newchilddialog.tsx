@@ -1,62 +1,20 @@
+import { JSONValue } from '@lumino/coreutils';
 import { Widget, PanelLayout } from '@lumino/widgets';
-import { InputDialog, Dialog } from '@jupyterlab/apputils';
+
+import { Dialog } from '@jupyterlab/apputils';
 
 import { ITreeData, cassini } from '../core';
 import {
-  InputDialogBase,
-  InputTextDialog,
+  InputIdDialogue,
+  IDialogueInput,
   InputItemsDialog,
   InputTextAreaDialog,
-  InputNumberDialog
+  ValidatingInput
 } from './dialogwidgets';
-
-export interface IIdDialogOptions extends InputDialog.ITextOptions {
-  idRegex: string;
-  nameTemplate: string;
-}
-
-/**
- * Version of InputTextDialog that indicates is the contents of the input does not match `idRegex`
- */
-export class IdDialog extends InputTextDialog {
-  idRegex: RegExp;
-  nameTemplate: string;
-  previewBox: HTMLSpanElement;
-
-  constructor(options: IIdDialogOptions) {
-    super(options);
-    this.idRegex = new RegExp(`^${options.idRegex}$`);
-    this.nameTemplate = options.nameTemplate;
-
-    this.input.addEventListener('input', this.validateInput.bind(this));
-
-    this.previewBox = document.createElement('span');
-    this.node.appendChild(this.previewBox);
-    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
-      '{}',
-      '?'
-    )}`;
-  }
-
-  validateInput(): boolean {
-    const id = this.input.value;
-
-    this.previewBox.textContent = `Preview: ${this.nameTemplate.replace(
-      '{}',
-      id
-    )}`;
-
-    if (id && !this.idRegex.test(id)) {
-      this.input.classList.add('cas-invalid-id');
-
-      return false;
-    } else {
-      this.input.classList.remove('cas-invalid-id');
-
-      return true;
-    }
-  }
-}
+import { NotebookTierModel } from '../models';
+import { MetaTableWidget } from './metatable';
+import { createElementWidget } from '../utils';
+import { NewChildInfo } from '../schema/types';
 
 /**
  * A widget that creates a dialog for creating a new tier child.
@@ -64,63 +22,89 @@ export class IdDialog extends InputTextDialog {
 export class NewChildWidget extends Widget {
   parentName: string;
 
-  identifierInput: IdDialog;
+  identifierInput: ValidatingInput<string | undefined, string>;
   descriptionInput: InputTextAreaDialog;
   templateSelector: InputItemsDialog;
 
-  metaInputs: (InputTextDialog | InputNumberDialog)[];
+  subInputs: { [name: string]: ValidatingInput<any> | IDialogueInput<any> };
 
-  subInputs: { [name: string]: InputDialogBase<any> };
+  metaTable?: MetaTableWidget;
 
   constructor(tier: Required<ITreeData>) {
     super();
+    this.addClass('cas-new-child-body');
+
     this.parentName = tier.name;
 
     const layout = (this.layout = new PanelLayout());
-    const namePrefix = tier.identifiers.length ? tier.name : '';
+    const namePrefix = tier.ids.length ? tier.name : '';
+    const idRegex = new RegExp(`^${tier.childClsInfo.idRegex}$`);
+
     const nameTemplate = namePrefix + tier.childClsInfo.namePartTemplate;
-    const identifierInput = (this.identifierInput = new IdDialog({
-      title: 'Identitifier',
-      label: 'Identifier',
-      idRegex: tier.childClsInfo.idRegex as string,
-      nameTemplate: nameTemplate
-    }));
-    const descriptionInput = (this.descriptionInput = new InputTextAreaDialog({
-      title: 'Da Description',
-      label: 'Description'
-    }));
-    const templateSelector = (this.templateSelector = new InputItemsDialog({
-      title: 'template',
-      label: 'Template',
-      items: tier.childClsInfo.templates || []
-    }));
+    const identifierInput = (this.identifierInput = new ValidatingInput(
+      new InputIdDialogue({
+        title: 'Identitifier',
+        nameTemplate: nameTemplate,
+        label: 'Identifier'
+      }),
+      (value: string | undefined) => {
+        if (value) {
+          return (
+            idRegex.test(value) && !Object.keys(tier.children).includes(value)
+          );
+        } else {
+          return false;
+        }
+      }
+    ));
+    identifierInput.wrappedInput.addClass('cas-new-child-input');
 
     this.subInputs = {
-      id: identifierInput,
-      description: descriptionInput,
-      template: templateSelector
+      id: identifierInput
     };
 
-    const metaInputs: (InputTextDialog | InputNumberDialog)[] =
-      (this.metaInputs = []);
+    layout.addWidget(identifierInput.wrappedInput);
 
-    layout.addWidget(identifierInput);
-    layout.addWidget(descriptionInput);
-    layout.addWidget(templateSelector);
+    if (tier.childClsInfo.tierType === 'notebook') {
+      const descriptionInput = (this.descriptionInput = new InputTextAreaDialog(
+        {
+          title: 'Description',
+          label: 'Description'
+        }
+      ));
+      descriptionInput.addClass('cas-new-child-input');
 
-    for (const additionalMeta of tier.childClsInfo.metaNames) {
-      let input;
+      layout.addWidget(descriptionInput);
 
-      if (typeof additionalMeta === 'string') {
-        input = new InputTextDialog({ title: '', label: additionalMeta });
-      } else {
-        input = new InputNumberDialog({ title: '', label: additionalMeta });
-      }
+      const templateSelector = (this.templateSelector = new InputItemsDialog({
+        title: 'template',
+        label: 'Template',
+        items: tier.childClsInfo.templates || [],
+        placeholder: 'Select a Template'
+      }));
+      templateSelector.addClass('cas-new-child-input');
 
-      metaInputs.push(input);
-      this.subInputs[additionalMeta] = input;
+      layout.addWidget(templateSelector);
 
-      layout.addWidget(input);
+      this.subInputs.description = descriptionInput;
+      this.subInputs.template = templateSelector;
+
+      const metaTable = (this.metaTable = new MetaTableWidget(
+        NotebookTierModel.createPublicMetaSchema(tier.childClsInfo.metaSchema),
+        Object.fromEntries(
+          tier.childClsInfo.additionalMetaKeys.map(v => [v, undefined])
+        ),
+        undefined,
+        undefined,
+        false
+      ));
+      metaTable.addClass('cas-new-child-input');
+
+      const metaLabel = createElementWidget('label', 'Meta');
+      (metaLabel.node as HTMLLabelElement).htmlFor = metaTable.node.id =
+        'cas-meta-editor-id';
+      layout.addWidget(metaLabel);
+      layout.addWidget(metaTable);
     }
   }
 
@@ -128,17 +112,26 @@ export class NewChildWidget extends Widget {
    * Serilaises the contents of the dialogs widgets into an object and returns them for handling.
    * @returns
    */
-  getValue() {
-    const values: { [name: string]: any } = {};
+  getValue(): NewChildInfo {
+    const values: { [name: string]: JSONValue } = {};
+
     for (const name in this.subInputs) {
-      values[name] = this.subInputs[name].getValue();
+      const value = this.subInputs[name].getValue();
+      if (value !== undefined) {
+        values[name] = value;
+      }
     }
     values['parent'] = this.parentName;
-    return values;
+
+    if (this.metaTable) {
+      Object.assign(values, this.metaTable.getValue());
+    }
+
+    return values as NewChildInfo;
   }
 }
 
-class textAreaAbleDialog extends Dialog<any> {
+class textAreaAbleDialog<T> extends Dialog<T> {
   protected _evtKeydown(event: KeyboardEvent): void {
     switch (event.keyCode) {
       case 13: {
@@ -160,7 +153,7 @@ class textAreaAbleDialog extends Dialog<any> {
  */
 export function openNewChildDialog(tier: ITreeData): Promise<ITreeData | null> {
   const body = new NewChildWidget(tier as Required<ITreeData>);
-  const dialog = new textAreaAbleDialog({
+  const dialog = new textAreaAbleDialog<any>({
     title: `Create New ${tier.childClsInfo?.name}`,
     body: body
   });

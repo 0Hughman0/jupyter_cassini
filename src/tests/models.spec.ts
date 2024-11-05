@@ -1,60 +1,74 @@
-import { Contents } from '@jupyterlab/services';
-import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
-
-import { TierModel, TierBrowserModel } from '../models';
-import { TreeManager, cassini } from '../core';
-
-import { CassiniServer } from '../services';
+import 'jest';
+import { ServiceManager } from '@jupyterlab/services';
+import { Notification } from '@jupyterlab/apputils';
+import { signalToPromise } from '@jupyterlab/testutils';
 
 import {
-  HOME_RESPONSE,
-  WP1_RESPONSE,
-  createTierFiles,
+  TierBrowserModel,
+  NotebookTierModel,
+  FolderTierModel
+} from '../models';
+import { cassini } from '../core';
+import { treeChildrenToData, treeResponseToData } from '../utils';
+import { FolderTierInfo } from '../schema/types';
+
+import {
+  HOME_TREE,
+  WP1_TREE,
+  TEST_HLT_CONTENT,
   TEST_META_CONTENT,
-  TEST_HLT_CONTENT
+  WP1_INFO
+} from './test_cases';
+import {
+  createTierFiles,
+  awaitSignalType,
+  mockServerAPI,
+  mockCassini
 } from './tools';
 
-import 'jest';
-
 describe('TierModel', () => {
-  let manager = new ServiceManagerMock();
-  let metaFile: Contents.IModel;
-  let hltsFile: Contents.IModel;
+  let theManager: ServiceManager.IManager;
 
   beforeEach(async () => {
-    ({ manager, metaFile, hltsFile } = await createTierFiles(
-      TEST_META_CONTENT,
-      TEST_HLT_CONTENT
-    ));
+    const { manager } = await createTierFiles([
+      { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
+      { path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT }
+    ]);
+
+    mockServerAPI({
+      '/tree/{ids}': [
+        { path: '', response: HOME_TREE },
+        { path: '1', response: WP1_TREE },
+        {
+          path: '1/1',
+          response: {
+            reason: 'Not Found',
+            message: 'Could not find'
+          },
+          status: 404
+        }
+      ]
+    });
+
+    await manager.ready;
+    theManager = manager;
   });
 
   describe('complete-meta', () => {
     test('meta', async () => {
-      const tier = new TierModel({
-        name: 'WP1',
-        identifiers: ['1'],
-        metaPath: metaFile.path
-      });
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.meta).toEqual(TEST_META_CONTENT);
     });
 
     test('name', async () => {
-      const tier = new TierModel({
-        name: 'WP1',
-        identifiers: ['1'],
-        metaPath: metaFile.path
-      });
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.name).toBe('WP1');
     });
 
     test('description', async () => {
-      const tier = new TierModel({
-        name: 'WP1',
-        identifiers: ['1'],
-        metaPath: metaFile.path
-      });
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.description).toBe(TEST_META_CONTENT['description']);
 
@@ -65,11 +79,7 @@ describe('TierModel', () => {
     });
 
     test('conclusion', async () => {
-      const tier = new TierModel({
-        name: 'WP1',
-        identifiers: ['1'],
-        metaPath: metaFile.path
-      });
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.conclusion).toBe(TEST_META_CONTENT['conclusion']);
 
@@ -80,86 +90,91 @@ describe('TierModel', () => {
     });
 
     test('additionalMeta', async () => {
-      const tier = new TierModel({
-        name: 'WP1',
-        identifiers: ['1'],
-        metaPath: metaFile.path
-      });
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
       expect(tier.additionalMeta).toEqual({ temperature: 273 });
     });
 
-    test('treeData', async () => {
-      const tier = new TierModel({
-        name: 'WP1',
-        identifiers: ['1'],
-        metaPath: metaFile.path
-      });
+    test('addingInvalidMeta', async () => {
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
+      expect(tier.setMetaValue('description', 'new')).toEqual(true);
+      expect(tier.setMetaValue('description', 15)).toEqual(false);
+    });
 
-      //cassini.treeManager.cache = {}
+    test('treeData', async () => {
+      const tier = new NotebookTierModel(WP1_INFO);
+      await tier.ready;
 
       await cassini.treeManager.cacheTreeData(
         ['1'],
-        TreeManager._treeResponseToData(WP1_RESPONSE, ['1'])
+        treeResponseToData(WP1_TREE, ['1'])
       );
 
       await expect(tier.treeData).resolves.toEqual(
-        TreeManager._treeResponseToData(WP1_RESPONSE, ['1'])
+        treeResponseToData(WP1_TREE, ['1'])
       );
-      await expect(tier.children).resolves.toEqual(
-        TreeManager._treeResponseToData(WP1_RESPONSE, ['1']).children
+    });
+
+    test('children updates from tree manager', async () => {
+      const tier = new NotebookTierModel(WP1_INFO);
+      await tier.ready;
+
+      const sentinal = jest.fn();
+      tier.changed.connect((sender, change) => {
+        if (change.type === 'children') {
+          sentinal(change);
+        }
+      });
+
+      const oldChildren = tier.children;
+
+      expect(tier.children).toEqual(
+        treeChildrenToData(WP1_INFO.children || {})
       );
 
-      //cassini.treeManager.cache = {}
+      await cassini.treeManager.get(['1'], true);
+
+      expect(sentinal).toBeCalled();
+      expect(tier.children).not.toBe(oldChildren);
     });
   });
 
   describe('missing meta', () => {
     test('no meta', () => {
-      const tier = new TierModel({ name: 'No meta Yoo', identifiers: ['1'] });
+      const { ids, children } = WP1_INFO;
+      const noMeta: FolderTierInfo = {
+        name: 'No meta Yoo',
+        ids,
+        children,
+        tierType: 'folder'
+      };
+
+      const tier = new FolderTierModel(noMeta);
 
       expect(tier.name).toBe('No meta Yoo');
-
-      expect(tier.meta).toEqual({});
-
-      expect(tier.description).toBe('');
-      expect(tier.conclusion).toBe('');
-
-      expect(() => {
-        tier.description = 'new';
-      }).toThrow('Tier has no meta, cannot store description');
-      expect(tier.description).toBe('');
-
-      expect(() => {
-        tier.conclusion = 'new';
-      }).toThrow('Tier has no meta, cannot store conclusion');
-      expect(tier.conclusion).toBe('');
     });
 
     test('missing description', async () => {
       const { description, ...noDescription } = TEST_META_CONTENT;
 
-      (metaFile.content as any) = JSON.stringify(noDescription);
+      const tier = new NotebookTierModel(WP1_INFO);
 
-      const tier = new TierModel({
-        name: 'WP1',
-        identifiers: ['1'],
-        metaPath: metaFile.path
-      });
       await tier.ready;
 
+      tier.metaFile && tier.metaFile?.model.fromJSON(noDescription);
       expect(tier.description).toBe('');
     });
   });
 
   describe('hlts', () => {
     test('no-hlts', async () => {
-      const tier = new TierModel({
-        name: 'WP1',
-        identifiers: ['1'],
-        metaPath: metaFile.path
-      });
+      const tierInfo = Object.assign({}, WP1_INFO);
+      delete tierInfo['hltsPath'];
+
+      expect(tierInfo.hltsPath).toBeUndefined();
+
+      const tier = new NotebookTierModel(tierInfo);
       await tier.ready;
 
       expect(tier.hltsFile).toBe(undefined);
@@ -167,51 +182,12 @@ describe('TierModel', () => {
     });
 
     test('init', async () => {
-      const tier = new TierModel({
-        name: 'WP1',
-        identifiers: ['1'],
-        metaPath: metaFile.path,
-        hltsPath: hltsFile.path
-      });
+      expect(WP1_INFO.hltsPath).toBeDefined();
+
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
 
       expect(tier.hltsFile).not.toEqual(undefined);
-
-      expect(tier.hltsOutputs).toEqual([
-        {
-          data: { 'text/markdown': '## cos' },
-          metadata: {},
-          output_type: 'display_data',
-          transient: {}
-        }
-      ]);
-    });
-
-    test('later-load-hlts', async () => {
-      manager.contents.delete(hltsFile.path);
-
-      const tier = new TierModel({
-        name: 'WP1',
-        identifiers: ['1'],
-        metaPath: metaFile.path,
-        hltsPath: hltsFile.path
-      });
-      await tier.ready;
-
-      expect(tier.hltsFile).toBe(undefined);
-
-      const newHlts = await manager.contents.newUntitled({
-        path: '/WorkPackages/WP1/.exps/', // filename is set as unique
-        type: 'file'
-      });
-
-      (newHlts as any).content = JSON.stringify(TEST_HLT_CONTENT);
-
-      (tier as any).hltsPath = newHlts.path;
-
-      await tier.revert();
-
-      expect(tier.hltsFile?.isReady).toBe(true);
 
       expect(tier.hltsOutputs).toEqual([
         {
@@ -226,12 +202,7 @@ describe('TierModel', () => {
 
   describe('io', () => {
     test('save', async () => {
-      const tier = new TierModel({
-        name: 'WP1',
-        identifiers: ['1'],
-        metaPath: metaFile.path,
-        hltsPath: hltsFile.path
-      });
+      const tier = new NotebookTierModel(WP1_INFO);
       await tier.ready;
 
       expect(tier.dirty).toBe(false);
@@ -244,7 +215,7 @@ describe('TierModel', () => {
 
       expect(tier.dirty).toBe(false);
 
-      const contentModel = (await manager.contents.get(
+      const contentModel = (await theManager.contents.get(
         tier.metaFile?.path as string,
         { content: true }
       )) as any;
@@ -273,40 +244,81 @@ describe('TierBrowserModel', () => {
   let model: TierBrowserModel;
 
   beforeEach(() => {
-    CassiniServer.tree = jest.fn(
-      query => new Promise(resolve => resolve(HOME_RESPONSE))
-    ) as jest.Mocked<typeof CassiniServer.tree>;
+    mockCassini();
+
+    mockServerAPI({
+      '/tree/{ids}': [
+        { path: '', response: HOME_TREE },
+        { path: '1', response: WP1_TREE },
+        { path: '1/1', response: WP1_TREE },
+        {
+          path: '1/throws',
+          response: {
+            reason: 'Not Found',
+            message: 'Could not find'
+          },
+          status: 404
+        }
+      ]
+    });
 
     model = new TierBrowserModel();
-    cassini.treeManager.cache = {};
   });
 
   test('initial', async () => {
-    await expect(model.current).resolves.toMatchObject(
-      TreeManager._treeResponseToData(HOME_RESPONSE, [])
-    );
+    expect(Array.from(model.currentPath)).toEqual([]);
+    expect(model.current).toBeNull();
 
-    await expect(model.getChildren()).resolves.toMatchObject(
-      TreeManager._treeResponseToData(HOME_RESPONSE, ['1']).children
+    model.currentPath.clear();
+    await awaitSignalType(model.changed, 'current');
+
+    expect(model.current).toMatchObject(treeResponseToData(HOME_TREE, []));
+
+    expect(model.current?.children).toMatchObject(
+      treeResponseToData(HOME_TREE, ['1']).children
     );
   });
 
-  test('updating', () => {
+  test('updating', async () => {
     const ids = ['1', '1'];
+
     model.currentPath.pushAll(ids);
+    await awaitSignalType(model.changed, 'current');
 
-    const childReponse = Object.assign(HOME_RESPONSE);
-    childReponse.name = 'WP1.1';
+    const childReponse = Object.assign(WP1_TREE);
 
-    expect(model.current).resolves.toMatchObject(
-      TreeManager._treeResponseToData(childReponse, ['1', '1'])
+    expect(model.current).toMatchObject(
+      treeResponseToData(childReponse, ['1', '1'])
     );
-    expect(CassiniServer.tree).lastCalledWith(ids);
+  });
+
+  test('updating with server error reports', async () => {
+    Notification.dismiss();
+
+    model.currentPath.push('1');
+    model.currentPath.push('throws');
+
+    await signalToPromise(Notification.manager.changed);
+
+    expect(Notification.manager.notifications[0]?.message).toContain(
+      'Not Found'
+    );
+  });
+
+  test('updating invalid path reverts', async () => {
+    model.currentPath.push('1');
+    model.currentPath.push('throws');
+
+    expect(model.sCurrentPath).toEqual(['1', 'throws']);
+
+    await awaitSignalType(model.changed, 'path');
+    // reverted
+    expect(model.sCurrentPath).toEqual(['1']);
   });
 
   test('additionalColumns', () => {
     expect(model.additionalColumns).toEqual(new Set());
-    model.currentPath.push('a');
+    model.currentPath.push('1');
 
     expect(model.additionalColumns).toEqual(new Set());
     model.additionalColumns.add('new Col');
@@ -317,8 +329,22 @@ describe('TierBrowserModel', () => {
 
     expect(model.additionalColumns).toEqual(new Set());
 
-    model.currentPath.pushAll(['b', 'd']);
+    model.currentPath.pushAll(['1', '1']);
 
     expect(model.additionalColumns).toEqual(new Set());
+
+    model.currentPath.clear();
+    model.currentPath.pushAll(['1']);
+
+    // should remember.
+    expect(model.additionalColumns).toEqual(new Set(['new Col']));
+  });
+
+  test('childMetas', async () => {
+    model.currentPath.clear();
+
+    await awaitSignalType(model.changed, 'current');
+
+    expect(model.childMetas).toEqual(new Set(['Fishes', 'Crabs']));
   });
 });

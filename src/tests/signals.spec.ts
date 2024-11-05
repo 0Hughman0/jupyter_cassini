@@ -1,30 +1,25 @@
-import { TierBrowserModel, TierModel } from '../models';
+import { NotebookTierModel, TierBrowserModel } from '../models';
+import { awaitSignalType, createTierFiles, mockServerAPI } from './tools';
 import {
-  createTierFiles,
-  mockServer,
   TEST_HLT_CONTENT,
-  TEST_META_CONTENT
-} from './tools';
+  TEST_META_CONTENT,
+  WP1_INFO,
+  WP1_TREE,
+  HOME_TREE
+} from './test_cases';
 
 import 'jest';
 
 describe('tier-model', () => {
-  let metaFile: any;
-  let hltsFile: any;
-
   beforeEach(async () => {
-    ({ metaFile, hltsFile } = await createTierFiles(
-      TEST_META_CONTENT,
-      TEST_HLT_CONTENT
-    ));
+    await createTierFiles([
+      { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
+      { path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT }
+    ]);
   });
 
   test('model-ready-no-hlts', async () => {
-    const tier = new TierModel({
-      name: 'WP1',
-      identifiers: ['1'],
-      metaPath: metaFile.path
-    });
+    const tier = new NotebookTierModel(WP1_INFO);
     expect(tier.metaFile?.isReady).toBe(false);
 
     expect(tier.description).toBe('');
@@ -37,12 +32,7 @@ describe('tier-model', () => {
   });
 
   test('model-ready-hlts', async () => {
-    const tier = new TierModel({
-      name: 'WP1',
-      identifiers: ['1'],
-      metaPath: metaFile.path,
-      hltsPath: hltsFile.path
-    });
+    const tier = new NotebookTierModel(WP1_INFO);
     expect(tier.metaFile?.isReady).toBe(false);
     // expect(tier.hltsFile?.isReady).toBe(false) // doesn't work because hlts file is set in a callback... hmmm
 
@@ -59,12 +49,7 @@ describe('tier-model', () => {
   });
 
   test('changed', async () => {
-    const tier = await new TierModel({
-      name: 'WP1',
-      identifiers: ['1'],
-      metaPath: metaFile.path,
-      hltsPath: hltsFile.path
-    }).ready;
+    const tier = await new NotebookTierModel(WP1_INFO).ready;
     const sentinal = jest.fn();
 
     tier.changed.connect(sentinal);
@@ -75,7 +60,7 @@ describe('tier-model', () => {
     tier.description = 'new value';
     expect(tier.dirty).toBe(true);
 
-    expect(sentinal).toBeCalledTimes(calls + 2); // once for meta contents and once for making dirty
+    expect(sentinal).toBeCalledTimes(calls + 3); // once for meta contents and once for making dirty
 
     calls = sentinal.mock.calls.length;
 
@@ -105,27 +90,52 @@ describe('tier-model', () => {
 
 describe('tree-model', () => {
   beforeEach(() => {
-    mockServer();
+    mockServerAPI({
+      '/tree/{ids}': [
+        { path: '', response: HOME_TREE },
+        { path: '1', response: WP1_TREE }
+      ]
+    });
   });
 
   test('currentPath', async () => {
     const browserModel = new TierBrowserModel();
 
-    const childrenSentinal = jest.fn();
-    browserModel.childrenUpdated.connect(childrenSentinal);
-
     const pathSentinal = jest.fn();
+    const currentSentinal = jest.fn();
+    const childrenSentinal = jest.fn();
+    const refreshSentinal = jest.fn();
 
-    browserModel.currentPath.changed.connect(pathSentinal);
+    browserModel.changed.connect((sender, change) => {
+      switch (change.type) {
+        case 'path': {
+          pathSentinal(change);
+          break;
+        }
+        case 'current': {
+          currentSentinal(change);
+          break;
+        }
+        case 'children': {
+          childrenSentinal(change);
+          break;
+        }
+        case 'refresh': {
+          refreshSentinal(change);
+          break;
+        }
+      }
+    });
 
     browserModel.currentPath.push('1');
 
+    await awaitSignalType(browserModel.changed, 'current');
+
     expect(pathSentinal).toBeCalledTimes(1);
-    expect(childrenSentinal).toBeCalledTimes(1);
+    expect(currentSentinal).toBeCalledTimes(1);
 
     await browserModel.refresh();
 
-    expect(childrenSentinal).toBeCalledTimes(3); // honestly not that sure why this is 3...
-    expect(pathSentinal).toBeCalledTimes(1);
+    expect(refreshSentinal).toBeCalledTimes(1);
   });
 });

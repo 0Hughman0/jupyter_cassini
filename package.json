@@ -1,6 +1,6 @@
 {
   "name": "jupyter_cassini",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Jupyterlab extension for interacting with Cassini projects",
   "keywords": [
     "jupyter",
@@ -53,7 +53,8 @@
     "test": "jest",
     "watch": "run-p watch:src watch:labextension",
     "watch:labextension": "jupyter labextension watch .",
-    "watch:src": "tsc -w --sourceMap"
+    "watch:src": "tsc -w --sourceMap",
+    "build-schema": "datamodel-codegen --input=openapi.yaml  --openapi-scopes schemas paths parameters --output=jupyter_cassini_server/schema/models.py --output-model-type=pydantic_v2.BaseModel && jlpm openapi-typescript openapi.yaml -o src/schema/schema.d.ts"
   },
   "dependencies": {
     "@jupyterlab/application": "^4.0.2",
@@ -76,15 +77,23 @@
     "@lumino/coreutils": "^2.1.1",
     "@lumino/widgets": "^2.2.0",
     "@tanstack/react-table": "^8.9.3",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "openapi-fetch": "^0.11.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@jupyterlab/builder": "^4.0.0",
     "@jupyterlab/testutils": "^4.0.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.5.0",
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/user-event": "^14.5.2",
     "@types/jest": "^29.2.0",
     "@types/json-schema": "^7.0.11",
-    "@types/react": "^18.0.26",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^5.55.0",
     "@typescript-eslint/parser": "^5.55.0",
     "css-loader": "^6.7.1",
@@ -95,6 +104,7 @@
     "jest-retries": "^1.0.1",
     "mkdirp": "^1.0.3",
     "npm-run-all": "^4.1.5",
+    "openapi-typescript": "^7.3.0",
     "prettier": "^2.8.7",
     "rimraf": "^4.4.1",
     "source-map-loader": "^1.0.2",

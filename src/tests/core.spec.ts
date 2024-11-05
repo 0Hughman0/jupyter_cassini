@@ -1,43 +1,67 @@
-import { Contents } from '@jupyterlab/services';
-
-import { ITreeData, TreeManager, TierModelTreeManager, Cassini } from '../core';
-import { TierModel } from '../models';
-import { ITreeResponse } from '../services';
+import 'jest';
 
 import {
-  HOME_RESPONSE,
-  WP1_RESPONSE,
-  WP1_1_RESPONSE,
-  mockServer,
-  TEST_HLT_CONTENT,
-  TEST_META_CONTENT,
-  createTierFiles
-} from './tools';
+  ITreeData,
+  TreeManager,
+  TierModelTreeManager,
+  Cassini,
+  cassini
+} from '../core';
+import { NotebookTierModel } from '../models';
+import { TreeResponse } from '../schema/types';
+import { treeResponseToData } from '../utils';
 
-import 'jest';
+import {
+  HOME_TREE,
+  WP1_TREE,
+  WP1_1_TREE,
+  TEST_META_CONTENT,
+  WP1_INFO,
+  WP1_1_INFO,
+  TEST_HLT_CONTENT,
+  TEST_NEW_CHILD_INFO
+} from './test_cases';
+import {
+  mockServerAPI,
+  createTierFiles,
+  awaitSignalType,
+  mockCassini
+} from './tools';
+import { Notification } from '@jupyterlab/apputils';
+// import { signalToPromise } from '@jupyterlab/coreutils';
 
 describe('TreeManager', () => {
   beforeEach(() => {
-    mockServer();
+    mockServerAPI({
+      '/tree/{ids}': [
+        { path: '', response: HOME_TREE },
+        { path: '1', response: WP1_TREE },
+        { path: '1/1', response: WP1_1_TREE },
+        { path: '1/1/a', response: WP1_1_TREE } // cheeky
+      ],
+      '/lookup': [
+        { query: { name: 'WP1' }, response: WP1_INFO },
+        { query: { name: 'WP1.1' }, response: WP1_1_INFO }
+      ]
+    });
   });
 
   test('conversion', () => {
-    const treeData: ITreeData = TreeManager._treeResponseToData(
-      HOME_RESPONSE as ITreeResponse,
-      ['1', '1', 'a']
-    );
+    const treeData: ITreeData = treeResponseToData(HOME_TREE as TreeResponse, [
+      '1',
+      '1',
+      'a'
+    ]);
 
     expect(treeData.started).toEqual(
-      HOME_RESPONSE.started === undefined
-        ? null
-        : new Date(HOME_RESPONSE.started)
+      HOME_TREE.started === undefined ? null : new Date(HOME_TREE.started)
     );
 
-    expect(treeData.identifiers).toEqual(['1', '1', 'a']);
+    expect(treeData.ids).toEqual(['1', '1', 'a']);
 
     for (const id of Object.keys(treeData.children)) {
       const dataChild = treeData.children[id];
-      const responseChild = HOME_RESPONSE.children[id];
+      const responseChild = HOME_TREE.children[id];
 
       expect(dataChild.started).toEqual(
         responseChild.started === undefined
@@ -50,7 +74,7 @@ describe('TreeManager', () => {
   test('initial', async () => {
     const treeManager = new TreeManager();
 
-    const homeData = TreeManager._treeResponseToData(HOME_RESPONSE, []);
+    const homeData = treeResponseToData(HOME_TREE, []);
 
     const first = await treeManager.initialize();
     expect(first).toMatchObject(homeData);
@@ -63,7 +87,7 @@ describe('TreeManager', () => {
   test('forcing-fetch', async () => {
     let treeManager = new TreeManager();
 
-    const homeData = TreeManager._treeResponseToData(HOME_RESPONSE, []);
+    const homeData = treeResponseToData(HOME_TREE, []);
 
     const first = await treeManager.initialize();
 
@@ -87,7 +111,7 @@ describe('TreeManager', () => {
     let treeManager = new TreeManager();
     await treeManager.initialize();
 
-    const wp1_Data = TreeManager._treeResponseToData(WP1_RESPONSE, ['1']);
+    const wp1_Data = treeResponseToData(WP1_TREE, ['1']);
 
     expect(treeManager.cache['children']['1']).not.toHaveProperty('children');
 
@@ -109,10 +133,7 @@ describe('TreeManager', () => {
     let treeManager = new TreeManager();
     await treeManager.initialize();
 
-    const wp1_1_Data = TreeManager._treeResponseToData(WP1_1_RESPONSE, [
-      '1',
-      '1'
-    ]);
+    const wp1_1_Data = treeResponseToData(WP1_1_TREE, ['1', '1']);
 
     const first = await treeManager.get(['1', '1']);
     expect(first).toMatchObject(wp1_1_Data);
@@ -128,7 +149,7 @@ describe('TreeManager', () => {
 
     const first = await treeManager.lookup('WP1');
 
-    const wp1_1_Data = TreeManager._treeResponseToData(WP1_RESPONSE, ['1']);
+    const wp1_1_Data = treeResponseToData(WP1_TREE, ['1']);
 
     expect(first).toMatchObject(wp1_1_Data);
 
@@ -149,61 +170,88 @@ describe('TreeManager', () => {
 
 describe('TreeModelManager', () => {
   let modelManager: TierModelTreeManager;
-  let metaFile: Contents.IModel;
 
   beforeEach(async () => {
-    ({ metaFile } = await createTierFiles(TEST_META_CONTENT, TEST_HLT_CONTENT));
+    mockServerAPI({
+      '/lookup': [
+        { query: { name: 'WP1' }, response: WP1_INFO },
+        { query: { name: 'WP1.1' }, response: WP1_INFO } // cheeky
+      ]
+    });
+
+    await createTierFiles([
+      { path: WP1_INFO.metaPath, content: TEST_META_CONTENT },
+      { path: WP1_1_INFO.metaPath, content: TEST_META_CONTENT },
+      { path: WP1_INFO.hltsPath || '', content: TEST_HLT_CONTENT },
+      { path: WP1_1_INFO.hltsPath || '', content: TEST_HLT_CONTENT }
+    ]);
 
     modelManager = new TierModelTreeManager();
   });
 
   test('initialise', async () => {
-    const first = modelManager.get('WP1')({
-      name: 'WP1',
-      metaPath: metaFile.path,
-      identifiers: ['1']
-    });
+    const first = await modelManager.get('WP1');
 
-    expect(first).toBeInstanceOf(TierModel);
+    expect(first).toBeInstanceOf(NotebookTierModel);
 
-    const cachedFirst = modelManager.get('WP1')({
-      name: 'WP1',
-      metaPath: metaFile.path,
-      identifiers: ['1']
-    });
+    const cachedFirst = await modelManager.get('WP1');
 
     expect(first).toBe(cachedFirst);
 
-    const second = modelManager.get('WP1.2')({
-      name: 'WP1.2',
-      metaPath: metaFile.path,
-      identifiers: ['1', '2']
-    });
+    const second = await modelManager.get('WP1.1');
 
     expect(second).not.toBe(first);
 
-    const cachedSecond = modelManager.get('WP1.2')({
-      name: 'WP1.2',
-      metaPath: metaFile.path,
-      identifiers: ['1', '2']
-    });
+    const cachedSecond = await modelManager.get('WP1.1');
 
     expect(second).toBe(cachedSecond);
 
     expect(modelManager.cache['WP1']).toBe(first);
-    expect(modelManager.cache['WP1.2']).toBe(second);
+    expect(modelManager.cache['WP1.1']).toBe(second);
+  });
+
+  test('force-refresh', async () => {
+    const first = (await modelManager.get('WP1')) as NotebookTierModel;
+    await first.ready;
+
+    expect(first).toBeInstanceOf(NotebookTierModel);
+
+    first.description = 'updated description';
+
+    expect(first.description).toEqual('updated description');
+
+    const sentinal = jest.fn();
+
+    first.changed.connect((sender, change) => {
+      if (change.type == 'meta') {
+        sentinal(change);
+      }
+    });
+
+    await createTierFiles([
+      { path: WP1_INFO.metaPath, content: TEST_META_CONTENT }
+    ]); // overright the meta  file with it's old content
+
+    const second = (await modelManager.get('WP1', true)) as NotebookTierModel;
+    await awaitSignalType(second.changed, 'meta');
+
+    expect(first).toBe(second);
+    expect(second.description).toEqual('this is a test');
+
+    expect(sentinal).toBeCalled();
   });
 });
 
 describe('cassini', () => {
   test('init', async () => {
+    mockServerAPI({
+      '/tree/{ids}': [{ path: '', response: HOME_TREE }]
+    });
+
+    const { manager } = await createTierFiles([]);
+
     const cassini = new Cassini();
     expect(cassini.ready).toBeDefined();
-
-    const { manager } = await createTierFiles(
-      TEST_META_CONTENT,
-      TEST_HLT_CONTENT
-    );
 
     await cassini.initialize(
       null as any,
@@ -213,6 +261,76 @@ describe('cassini', () => {
       null as any
     );
 
-    expect(cassini.ready).resolves.toBe(undefined);
+    expect(cassini.ready).resolves.toBe(true);
+  });
+
+  test('init-sever-not-setup', async () => {
+    mockServerAPI({
+      '/tree/{ids}': [
+        {
+          path: '',
+          response: {
+            reason: 'Bad Request',
+            message: 'Bad query'
+          },
+          status: 400
+        }
+      ]
+    });
+
+    const mockWarn = (console.warn = jest.fn());
+
+    const { manager } = await createTierFiles([]);
+
+    const cassini = new Cassini();
+    expect(cassini.ready).toBeDefined();
+
+    await cassini
+      .initialize(null as any, manager, null as any, null as any, null as any)
+      .catch(() => {});
+
+    await expect(cassini.ready).rejects.toBe(false);
+    expect(mockWarn).toBeCalled();
+  });
+
+  test('new child', async () => {
+    mockCassini();
+    mockServerAPI({
+      '/tree/{ids}': [{ path: '', response: HOME_TREE }],
+      '/newChild': [{ body: TEST_NEW_CHILD_INFO, response: WP1_INFO }]
+    });
+
+    const home_tree = treeResponseToData(HOME_TREE, []);
+    const parent = await cassini.newChild(home_tree, TEST_NEW_CHILD_INFO);
+
+    expect(Object.keys(parent?.children || [])).toContain('1');
+  });
+
+  test('new child bad request notifies', async () => {
+    mockCassini();
+    mockServerAPI({
+      '/tree/{ids}': [{ path: '', response: HOME_TREE }],
+      '/newChild': [
+        {
+          body: TEST_NEW_CHILD_INFO,
+          response: {
+            reason: 'Bad Request',
+            message: 'Bad query'
+          },
+          status: 405
+        }
+      ]
+    });
+
+    const home_tree = treeResponseToData(HOME_TREE, []);
+    const parent = await cassini.newChild(home_tree, TEST_NEW_CHILD_INFO);
+
+    // await signalToPromise(Notification.manager.changed)
+
+    expect(Object.keys(parent?.children || [])).not.toContain('1');
+
+    expect(Notification.manager.notifications[0].message).toContain(
+      'Bad Request'
+    );
   });
 });

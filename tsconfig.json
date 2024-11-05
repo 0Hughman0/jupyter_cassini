@@ -22,5 +22,5 @@
     "skipLibCheck": true,
     "strictPropertyInitialization": false
   },
-  "include": ["src/*", "src/ui/*"]
+  "include": ["src/*", "src/ui/*", "src/schema/*"]
 }

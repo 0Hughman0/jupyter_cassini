@@ -1,4 +1,6 @@
 import { JSONObject } from '@lumino/coreutils';
+import { CommandRegistry } from '@lumino/commands';
+import { ISignal } from '@lumino/signaling';
 
 import { URLExt } from '@jupyterlab/coreutils';
 import {
@@ -7,112 +9,172 @@ import {
   ServerConnection
 } from '@jupyterlab/services';
 import { ServiceManagerMock } from '@jupyterlab/services/lib/testutils';
+import { CodeMirrorEditorFactory } from '@jupyterlab/codemirror';
+import { defaultRenderMime, signalToPromise } from '@jupyterlab/testutils';
 
-import { cassini } from '../core';
-import { ITreeResponse, ITierInfo } from '../services';
+import { Cassini, cassini } from '../core';
+import { IModelChange } from '../models';
+import { paths } from '../schema/schema';
+import { CassiniErrorInfo } from '../schema/types';
 
-export const TEST_META_CONTENT: JSONObject = {
-  description: 'this is a test',
-  conclusion: 'concluded',
-  started: '01/22/2023',
-  temperature: 273
-};
+let cassiniMocked = false;
 
-export const TEST_HLT_CONTENT = {
-  cos: [{ data: { 'text/markdown': '## cos' }, metadata: {}, transient: {} }]
-};
+export function mockCassini(): Cassini {
+  cassini.tierModelManager.cache = {};
+  cassini.treeManager.cache = {};
 
-export const HOME_RESPONSE: ITreeResponse = require('./test_home_branch.json');
-export const WP1_RESPONSE: ITreeResponse = require('./test_WP1_branch.json');
-export const WP1_1_RESPONSE: ITreeResponse = require('./test_WP1_1_branch.json');
+  if (cassiniMocked) {
+    return cassini;
+  }
 
-export async function createTierFiles(
-  metaContent: JSONObject,
-  hltsContent?: JSONObject
-): Promise<{
-  manager: ServiceManager.IManager;
-  metaFile: Contents.IModel;
-  hltsFile: Contents.IModel;
-}> {
-  const manager = new ServiceManagerMock();
-  cassini.contentService = manager;
+  cassini.contentService = new ServiceManagerMock();
+  cassini.contentFactory = new CodeMirrorEditorFactory();
+  cassini.rendermimeRegistry = defaultRenderMime();
+  cassini.commandRegistry = new CommandRegistry();
 
-  const metaFile = (await manager.contents.newUntitled({
-    path: '/WorkPackages/WP1/.exps/',
-    type: 'file'
-  })) as any;
-
-  (metaFile as any)['content'] = JSON.stringify(metaContent);
-
-  const hltsFile = await manager.contents.newUntitled({
-    path: '/WorkPackages/WP1/.exps/', // filename is set as unique
-    type: 'file'
-  });
-
-  (hltsFile as any)['content'] = JSON.stringify(hltsContent);
-
-  return { manager, metaFile, hltsFile };
+  cassiniMocked = true;
+  return cassini;
 }
 
-export function mockServer() {
-  ServerConnection.makeRequest = jest.fn((url, init, settings) => {
-    const { pathname, search } = URLExt.parse(url);
+export interface IFile {
+  path: string;
+  content: JSONObject;
+}
 
-    const query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
+export async function createTierFiles(files: IFile[]): Promise<{
+  manager: ServiceManager.IManager;
+  files: Contents.IModel[];
+}> {
+  mockCassini();
+  const manager = cassini.contentService;
 
-    switch (pathname) {
-      case '/jupyter_cassini/tree': {
-        let responseData: ITreeResponse;
+  const filesOut: Contents.IModel[] = [];
 
-        switch (query.identifiers?.toString()) {
-          case [].toString(): {
-            responseData = HOME_RESPONSE;
-            break;
-          }
-          case ['1'].toString(): {
-            responseData = WP1_RESPONSE;
-            break;
-          }
-          case ['1', '1'].toString(): {
-            responseData = WP1_1_RESPONSE;
-            break;
-          }
-          default: {
-            throw 'No mock data for request';
-          }
+  for (const file of files) {
+    const newFile = await manager.contents.newUntitled({
+      path: file.path,
+      type: 'file'
+    });
+
+    (newFile as any)['content'] = JSON.stringify(file.content);
+    await manager.contents.rename(newFile.path, file.path);
+
+    filesOut.push(newFile);
+  }
+
+  return { manager: manager, files: filesOut };
+}
+
+export interface MockAPICall {
+  query?: { [key: string]: string };
+  body?: any;
+  response: CassiniErrorInfo | any;
+  status?: number;
+  path?: undefined;
+}
+
+export interface MockAPIPathCall {
+  path: string;
+  response: CassiniErrorInfo | any;
+  status?: number;
+}
+
+export type MockAPICalls = {
+  [endpoint in keyof paths]?: (MockAPICall | MockAPIPathCall)[];
+};
+
+export function mockServerAPI(
+  calls: MockAPICalls
+): jest.SpyInstance<
+  Promise<Response>,
+  [url: string, init: RequestInit, settings: ServerConnection.ISettings],
+  any
+> {
+  const pathResponses: { [path: string]: MockAPIPathCall } = {};
+
+  for (const [endpoint, responses] of Object.entries(calls)) {
+    if (endpoint.includes('{') && endpoint.includes('}')) {
+      for (const response of responses) {
+        if (response.path !== undefined) {
+          const fullPath = endpoint.replace(/\{(.+)\}/, response.path);
+          pathResponses[fullPath] = response;
         }
-        return new Promise(resolve =>
-          resolve(new Response(JSON.stringify(responseData)))
-        );
-      }
-
-      case '/jupyter_cassini/lookup': {
-        let responseData: ITierInfo;
-
-        switch (query.id) {
-          case 'Home': {
-            responseData = { identifiers: [], ...(HOME_RESPONSE as any) };
-            break;
-          }
-          case 'WP1': {
-            responseData = { identifiers: ['1'], ...(WP1_RESPONSE as any) };
-            break;
-          }
-          case 'WP1.1': {
-            responseData = {
-              identifiers: ['1', '1'],
-              ...(WP1_1_RESPONSE as any)
-            };
-            break;
-          }
-          default: {
-            throw 'No mock data for request';
-          }
-        }
-        return new Promise(resolve =>
-          resolve(new Response(JSON.stringify(responseData)))
-        );
       }
     }
-  }) as jest.Mocked<typeof ServerConnection.makeRequest>;
+  }
+
+  const mockedServer = (
+    url: string,
+    init: RequestInit,
+    settings: ServerConnection.ISettings
+  ) => {
+    const { pathname, search } = URLExt.parse(url);
+    const endpoint = decodeURIComponent(
+      pathname.replace('/jupyter_cassini', '')
+    ) as keyof MockAPICalls;
+
+    const mockPathResponse = pathResponses[endpoint];
+
+    if (mockPathResponse) {
+      return Promise.resolve(
+        new Response(JSON.stringify(mockPathResponse.response), {
+          status: mockPathResponse.status ?? 200
+        })
+      );
+    }
+    const mockResponses = calls[endpoint] as MockAPICall[] | undefined;
+
+    if (!mockResponses) {
+      throw TypeError(
+        `No mocked responses found for this endpoint ${endpoint}`
+      );
+    }
+
+    if (init.method == 'GET') {
+      const query = search ? URLExt.queryStringToObject(search.slice(1)) : {};
+
+      for (const response of mockResponses) {
+        if (JSON.stringify(response.query) == JSON.stringify(query)) {
+          return Promise.resolve(
+            new Response(JSON.stringify(response.response), {
+              status: response.status ?? 200
+            })
+          );
+        }
+      }
+    } else if (init.method == 'POST' && init.body) {
+      for (const response of mockResponses) {
+        if (
+          JSON.stringify(response.body) ==
+          new TextDecoder().decode(init.body as any)
+        ) {
+          return Promise.resolve(
+            new Response(JSON.stringify(response.response), {
+              status: response.status ?? 200
+            })
+          );
+        }
+      }
+    }
+    throw TypeError(`No mocked responses found for this query, ${url}`);
+  };
+
+  const mock = jest.spyOn(ServerConnection, 'makeRequest');
+  mock.mockImplementation(mockedServer);
+
+  return mock;
+}
+
+export async function awaitSignalType<C extends IModelChange>(
+  signal: ISignal<any, C>,
+  type: C['type']
+): Promise<C> {
+  let value: C | null = null;
+
+  while (value?.type !== type) {
+    const [_, payload] = await signalToPromise(signal);
+    value = payload;
+  }
+
+  return value;
 }

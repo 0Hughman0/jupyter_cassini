@@ -1,128 +1,153 @@
 import shutil
 import os
-from unittest.mock import MagicMock
-import itertools
-import importlib
+from unittest.mock import Mock
 import sys
 
 import pytest
-from cassini import env, Project
+from tornado.httpclient import HTTPClientError
+from cassini import env
+from cassini.utils import find_project
 
-from .. import find_project
+from ..schema.models import NotebookTierInfo, FolderTierInfo, TreeResponse, Status, Status1, NewChildInfo
 
 
 CWD = os.getcwd()
 
 
 @pytest.fixture
-def refresh_project():
-    def wrapped():
-        Project._instance = None
-        env.project = None
-
-        if 'project' in sys.modules:
-            del sys.modules['project']
-        if 'my_project' in sys.modules:
-            del sys.modules['my_project']
+def project_via_env(tmp_path):
+    env._reset()
     
-        importlib.invalidate_caches()
+    assert env.project is None
 
-        if os.environ.get('CASSINI_PROJECT'):
-            del os.environ['CASSINI_PROJECT']
+    project_file = shutil.copy(
+        "jupyter_cassini_server/tests/project/cas_project.py",
+        tmp_path / "cas_project.py",
+    )
 
-    return wrapped
+    os.environ["CASSINI_PROJECT"] = project_file.as_posix()
+    project = find_project()
+    project.setup_files()
 
+    yield project
 
-def test_find_not_set(tmp_path, refresh_project):
-    project = shutil.copy('jupyter_cassini_server/tests/project_cases/basic.py', tmp_path / 'project.py')
-
-    refresh_project()
-
-    assert 'CASSINI_PROJECT' not in os.environ
-    
-    assert not env.project
-
-    with pytest.raises(KeyError):
-        find_project(MagicMock())
+    del sys.modules['cas_project']
 
 
-@pytest.fixture(params=list(
-        itertools.product(
-        ['basic.py', 'not_project.py'],
-        ['', 'subdir'],
-        ['project.py', 'my_project.py'],
-        ['{module}', '{module_file}', '{directory}'],
-        ['', ':{project_obj}'],
-        [False, True]
-)))
-def cas_project(request, tmp_path, refresh_project):
-    project_in, subdir, project_out, module_format, obj_format, relative_path = \
-        request.param
-    
-    os.chdir(CWD)
-    
-    if obj_format == ':{project_obj}' and module_format == '{directory}':
-        return pytest.skip("Valid CASSINI_PATH cannot be constructed from directory and object specifier")
-
-    if module_format == '{directory}' and project_out != 'project.py':
-        return pytest.skip("Valid CASSINI_PATH cannot be constructed from directory if project not called project.py")
-    
-    if module_format == '{module}' and subdir:
-        return pytest.skip("Valid CASSINI_PATH cannot be constructed from just module if it's inside a subdir")
-
-    project_out = tmp_path / subdir / project_out if subdir else tmp_path / project_out
-    project_out.parent.mkdir(exist_ok=True)
-    project_file = shutil.copy(f'jupyter_cassini_server/tests/project_cases/{project_in}', project_out)
-
-    project_obj = 'project' if project_in == 'basic.py' else 'my_project'
-
-    if project_obj == 'my_project' and obj_format == '':
-        return pytest.skip("Finding project won't work if non `project` name used and obj not specified")
-
-    module = project_out.name.replace('.py', '')
-
-    if relative_path or module_format == '{module}':
-        os.chdir(tmp_path)
-
-    if relative_path:
-        module_file = project_file.relative_to(os.getcwd())
-    else:
-        module_file = project_file
-    
-    directory = str(module_file.parent)
-
-    path_part = module_format.format(module=module, module_file=module_file, directory=directory)
-    obj_part = obj_format.format(project_obj=project_obj)
-    
-    yield path_part + obj_part, request.param, project_out.parent
-
-
-def test_find_project(cas_project, refresh_project):
-    refresh_project()
-
-    assert 'CASSINI_PROJECT' not in os.environ
-    assert not env.project
-
-    os.environ['CASSINI_PROJECT'] = cas_project[0]
-
-    print('\n', cas_project[0], '\n')
-                    
-    project = find_project(MagicMock())
-
-    assert project.test_project
-    assert project.project_folder == cas_project[2]
-
-
-@pytest.fixture
-def project_via_env(refresh_project, tmp_path):
-
-    refresh_project()    
-    project_file = shutil.copy('jupyter_cassini_server/tests/project_cases/basic.py', tmp_path / 'my_project.py')
-    
-    os.environ['CASSINI_PROJECT'] = project_file.as_posix()
-
-
-async def test_server_ready(project_via_env, jp_fetch):
-    reponse = await jp_fetch('jupyter_cassini', 'lookup')
+async def test_lookup_home(project_via_env, jp_fetch) -> None:
+    reponse = await jp_fetch("jupyter_cassini", "lookup", params={"name": "Home"})
 
     assert reponse.code == 200
+
+    home_info = FolderTierInfo.model_validate_json(reponse.body.decode())
+    assert home_info.name == 'Home'
+
+
+async def test_lookup_WP1(project_via_env, jp_fetch) -> None:
+    project = project_via_env
+    project['WP1'].setup_files()
+
+    reponse = await jp_fetch("jupyter_cassini", "lookup", params={"name": "WP1"})
+
+    assert reponse.code == 200
+
+    info = NotebookTierInfo.model_validate_json(reponse.body.decode())
+    assert info.name == 'WP1'
+
+
+async def test_tree_home(project_via_env, jp_fetch) -> None:    
+    reponse = await jp_fetch("jupyter_cassini", "tree")
+
+    assert reponse.code == 200
+
+    tree = TreeResponse.model_validate_json(reponse.body.decode())
+    assert tree.name == 'Home'
+
+
+async def test_tree_home_with_query_bit(project_via_env, jp_fetch) -> None:    
+    reponse = await jp_fetch("jupyter_cassini", "tree/?1231623")
+
+    assert reponse.code == 200
+
+    tree = TreeResponse.model_validate_json(reponse.body.decode())
+    assert tree.name == 'Home'
+    
+
+async def test_tree_WP1(project_via_env, jp_fetch) -> None:    
+    project = project_via_env
+    project['WP1'].setup_files()
+
+    reponse = await jp_fetch("jupyter_cassini", "tree/1")
+
+    assert reponse.code == 200
+
+    tree = TreeResponse.model_validate_json(reponse.body.decode())
+    assert tree.name == 'WP1'
+
+
+async def test_tree_WP1_1(project_via_env, jp_fetch) -> None:    
+    project = project_via_env
+    project['WP1'].setup_files()
+    project['WP1.1'].setup_files()
+
+    reponse = await jp_fetch("jupyter_cassini", "tree/1/1")
+
+    assert reponse.code == 200
+
+    tree = TreeResponse.model_validate_json(reponse.body.decode())
+    assert tree.name == 'WP1.1'
+
+
+async def test_tree_WP1_1_with_query_bit(project_via_env, jp_fetch) -> None:    
+    project = project_via_env
+    project['WP1'].setup_files()
+    project['WP1.1'].setup_files()
+
+    reponse = await jp_fetch("jupyter_cassini", "tree/1/1?1232341")
+
+    assert reponse.code == 200
+
+    tree = TreeResponse.model_validate_json(reponse.body.decode())
+    assert tree.name == 'WP1.1'
+
+
+async def test_tree_old_query(project_via_env, jp_fetch) -> None:    
+    project = project_via_env
+    project['WP1'].setup_files()
+
+    with pytest.raises(HTTPClientError):
+        reponse = await jp_fetch("jupyter_cassini", "tree", params={"ids[]": ["1", "2"]})
+    
+
+async def test_open_valid(project_via_env, jp_fetch) -> None:
+    project = project_via_env
+    project['Home'].open_folder = Mock()
+
+    assert not project['Home'].open_folder.called
+
+    response = await jp_fetch("jupyter_cassini", "open", params={'name': 'Home'})
+
+    assert Status.model_validate_json(response.body.decode()).status == Status1.success
+    assert project['Home'].open_folder.called
+
+
+async def test_open_invalid(project_via_env, jp_fetch) -> None:
+    response = await jp_fetch("jupyter_cassini", "open", params={'name': 'sdfdf'})
+
+    assert Status.model_validate_json(response.body.decode()).status == Status1.failure
+
+
+async def test_new_child(project_via_env, jp_fetch) -> None:
+    project = project_via_env
+    new_child_info = NewChildInfo(id='1', parent='Home', template='WorkPackage.ipynb')
+
+    assert not project['WP1'].exists()
+
+    response = await jp_fetch("jupyter_cassini", "newChild", body=new_child_info.model_dump_json(), method='POST')
+
+    assert response.code == 200
+    tree = TreeResponse.model_validate_json(response.body.decode())
+    assert tree.name == 'WP1'
+
+    assert project['WP1'].exists()
+

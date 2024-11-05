@@ -8,6 +8,11 @@
   overflow-y: auto;
 }
 
+.cas-tier-widget-content > div,
+h1 {
+  padding: 5px;
+}
+
 .cas-tier-widget-content h1,
 h2 {
   margin-top: 0;
@@ -23,6 +28,11 @@ h2 {
 .cas-markdown-editor-content {
   flex-grow: 1;
   border: var(--jp-border-width) solid var(--jp-cell-editor-border-color);
+}
+
+.cas-MetaEditor-table {
+  width: 100%;
+  max-width: 400px;
 }
 
 .cas-icon-area {
@@ -59,11 +69,20 @@ h2 {
 .cas-CassiniCrumbs-box {
   position: relative;
   border-bottom: var(--jp-border-color2) solid 1px;
+  padding: 5px;
 }
 
 .cas-CassiniCrumbs-row {
   display: flex;
   position: inherit;
+}
+
+.cas-CassiniCrumbs-row span {
+  align-self: flex-end;
+  padding-top: 3px;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  margin-top: 4px;
 }
 
 .cas-TierBrowser {
@@ -78,7 +97,19 @@ h2 {
   background-color: var(--jp-error-color3) !important;
 }
 
-.cas-ChildrenTable-table {
+div.cas-invalid-id * {
+  background-color: var(--jp-error-color3) !important;
+}
+
+.cas-SplitPanel > .lm-SplitPanel-handle {
+  background-color: var(--jp-layout-color3);
+}
+
+.cas-ChildrenTable-table h1 {
+  padding: 5px;
+}
+
+.cas-ChildrenTable-table table {
   width: 100%;
   table-layout: auto;
 }
@@ -88,7 +119,7 @@ h2 {
 }
 
 .cas-ChildrenSummaryWidget {
-  height: 100%;
+  height: 100px;
   overflow: auto;
 }
 
@@ -108,8 +139,34 @@ h2 {
 
 .cas-ChildrenSummaryTable-table {
   width: 100%;
+  overflow: auto;
 }
 
 .cas-ChildrenSummaryTable-table tr:hover {
   background-color: var(--jp-layout-color2);
+}
+
+.cas-dialogue-input input {
+  width: 100%;
+}
+
+.cas-dialogue-input textarea {
+  width: 98%;
+  resize: vertical;
+  min-height: 75px;
+}
+
+.cas-floating-preview {
+  top: 0;
+  position: absolute;
+  right: 0;
+}
+
+.cas-new-child-body {
+  overflow: auto !important;
+  min-width: 400px;
+}
+
+.cas-new-child-input {
+  overflow: visible !important;
 }

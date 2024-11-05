@@ -1,0 +1,346 @@
+openapi: 3.0.3
+info:
+  title: Jupyter Cassini API Spec
+  version: 0.3.0
+servers:
+  - url: http://localhost:8888/jupyter_cassini/
+security:
+  - auth: []
+components:
+  securitySchemes:
+    auth:
+      type: apiKey
+      name: token
+      in: query
+  schemas:
+    Status:
+      type: object
+      properties:
+        status: 
+          type: string
+          enum:
+            - success
+            - failure
+      required:
+        - status
+
+    TierInfo:
+      type: object
+      oneOf:
+        - $ref: "#/components/schemas/FolderTierInfo"
+        - $ref: "#/components/schemas/NotebookTierInfo"
+      discriminator:
+        propertyName: tierType
+        mapping:
+          folder: "#/components/schemas/FolderTierInfo"
+          notebook: "#/components/schemas/NotebookTierInfo"
+    
+    CommonTierInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        ids:
+          type: array
+          items: 
+            type: string
+        children:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/TreeChildResponse"
+      required:
+        - name
+        - ids
+    
+    FolderTierInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CommonTierInfo"
+      
+    NotebookTierInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CommonTierInfo"
+      properties:
+        started: 
+          type: string
+          format: date-time
+        notebookPath:
+          type: string
+        metaPath:
+          type: string
+        hltsPath:
+          type: string
+        metaSchema:
+          $ref: "#/components/schemas/metaSchema"
+      required:
+        - started
+        - notebookPath
+        - metaPath
+        - metaSchema
+
+    objectDef:
+      type: object
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+        default: {}
+        format: 
+          type: string
+        enum:
+          type: array
+          items: 
+            $ref: "#/components/schemas/objectDef/properties/type"
+        x-cas-field:
+          type: string
+          enum:
+            - private
+            - core
+        $ref:
+          type: string
+      oneOf:
+        - required: [type]
+        - required: [$ref]
+        - required: [type, enum]
+      additionalProperties: true
+
+    metaSchema:
+      type: object
+      properties:
+        properties:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/objectDef"
+        additionalProperties:
+          $ref: "#/components/schemas/objectDef"
+        $defs: {}
+        type:
+          type: string
+      required:
+        - properties
+        - additionalProperties
+
+    ChildClsInfo:
+      type: object
+      oneOf:
+        - $ref: "#/components/schemas/ChildClsFolderInfo"
+        - $ref: "#/components/schemas/ChildClsNotebookInfo"     
+      discriminator:
+        propertyName: tierType
+        mapping:
+          folder: "#/components/schemas/ChildClsFolderInfo"
+          notebook: "#/components/schemas/ChildClsNotebookInfo"
+    
+    CommonChildClsInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        idRegex:
+          type: string
+        namePartTemplate:
+          type: string
+      required:
+        - name
+        - idRegex
+        - namePartTemplate
+
+    ChildClsFolderInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CommonChildClsInfo"
+      
+    ChildClsNotebookInfo:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CommonChildClsInfo"
+      properties:
+        templates:
+          type: array
+          items: 
+            type: string
+        metaSchema:
+            $ref: "#/components/schemas/metaSchema"
+        additionalMetaKeys:
+          type: array
+          items:
+            type: string
+      required:
+        - templates
+        - metaSchema
+        - additionalMetaKeys
+
+    TreePathQuery:
+      type: object
+      properties:
+        path:
+          type: array
+          items:
+            type: string  
+      required:
+        - path
+
+    TreeChildResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        info:
+          type: string
+        outcome:
+          type: string
+        started:
+          type: string
+          format: date-time
+        hltsPath:
+          type: string
+        metaPath:
+          type: string
+        notebookPath:
+          type: string
+        additionalMeta:
+          type: object
+          additionalProperties: true
+      required:
+        - name
+    
+    TreeResponse:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/TreeChildResponse"
+      properties:
+        folder:
+          type: string
+        childClsInfo:          
+          $ref: "#/components/schemas/ChildClsInfo"
+        children:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/TreeChildResponse"
+      required:
+        - name
+        - folder
+        - children
+
+    NewChildInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        parent:
+          type: string
+        template:
+          type: string
+      additionalProperties: true
+      required:
+        - id
+        - parent
+    
+    CassiniErrorInfo:
+      type: object
+      properties:
+        reason:
+          type: string
+        message:
+          type: string
+      required:
+        - reason
+        - message        
+
+paths: 
+  /lookup:
+      get:
+        summary: Lookup a tier
+        description: Look up a tier by name and respond with info about it.
+        parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+          required: true
+
+        responses:
+          "200":
+            description: "Tier Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/TierInfo"
+          "404":
+            description: "Not Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/CassiniErrorInfo"
+  /tree/{ids}:
+    get:
+      summary: View the tier tree
+      description: Get the children of a particular tier (or home)
+      parameters:
+      - name: ids
+        in: path
+        schema:
+          type: string
+        required: true
+      responses:
+        "200":
+          description: Found tree
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TreeResponse"
+        "404":
+            description: "Not Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/CassiniErrorInfo"
+  /open:
+    get:
+      summary: Open a tier in file explorer
+      description: Use `tier.open_folder()` python side on specified tier.
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Open successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+        "404":
+            description: "Not Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/CassiniErrorInfo"
+  /newChild:
+    post:
+      summary: Create a new child
+      description: Create a new child
+      requestBody:
+        content:
+          application/json:
+            schema: 
+              $ref: "#/components/schemas/NewChildInfo"
+      responses:
+        "200":
+          description: Child made
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TreeResponse"
+        "404":
+            description: "Not Found"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/CassiniErrorInfo"
+
+

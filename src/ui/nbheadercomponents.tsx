@@ -169,14 +169,12 @@ export class ChildrenSummaryWidget extends ReactWidget {
 
   render() {
     return (
-      <div>
-        <ChildrenSummary
-          children={this.data}
-          onChildLaunch={this.onChildLaunch}
-          onChildView={this.onChildView}
-          onCreateChild={this.onCreateChild}
-        />
-      </div>
+      <ChildrenSummary
+        children={this.data}
+        onChildLaunch={this.onChildLaunch}
+        onChildView={this.onChildView}
+        onCreateChild={this.onCreateChild}
+      />
     );
   }
 }

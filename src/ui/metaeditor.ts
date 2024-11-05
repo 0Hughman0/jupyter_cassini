@@ -1,89 +1,346 @@
 import { Panel } from '@lumino/widgets';
-import { JSONObject } from '@lumino/coreutils';
 
 import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
 import { RenderMimeRegistry } from '@jupyterlab/rendermime';
 import { PathExt } from '@jupyterlab/coreutils';
 
-import { TierModel } from '../models';
+import { FolderTierModel, NotebookTierModel } from '../models';
 import { MetaTableWidget } from './metatable';
-import { JSONValue } from '@lumino/coreutils';
+import { JSONObject, JSONValue } from '@lumino/coreutils';
+import { Signal, ISignal } from '@lumino/signaling';
 
 import { cassini } from '../core';
+import {
+  InputBooleanDialog,
+  InputItemsDialog,
+  InputNumberDialog,
+  InputPasswordDialog,
+  InputTextDialog,
+  InputDateDialog,
+  InputDatetimeDialog,
+  InputJSONDialog,
+  InputDialogBase,
+  ValidatingInput
+} from './dialogwidgets';
+import { MetaSchema, ObjectDef } from '../schema/types';
+import { CasServerError } from '../services';
+
+export function createMetaInput(
+  propertySchema: ObjectDef,
+  currentValue: any | null,
+  label: string | undefined
+): InputDialogBase<any> {
+  if (propertySchema.enum && propertySchema.type) {
+    const items = propertySchema.enum as (typeof propertySchema.type)[];
+    return new InputItemsDialog({
+      label: label,
+      current: items.indexOf(currentValue),
+      items: items,
+      title: '',
+      editable: false
+    });
+  }
+
+  switch (propertySchema.type) {
+    case 'string': {
+      const currentValueString = currentValue as string | undefined;
+
+      if (!propertySchema.format) {
+        return new InputTextDialog({
+          label: label,
+          text: currentValueString,
+          title: ''
+        });
+      }
+
+      switch (propertySchema.format) {
+        case 'date':
+          return new InputDateDialog({
+            label: label,
+            value: currentValueString
+              ? new Date(currentValueString)
+              : undefined,
+            title: ''
+          });
+        case 'date-time':
+          return new InputDatetimeDialog({
+            label: label,
+            value: currentValueString
+              ? new Date(currentValueString)
+              : undefined,
+            title: ''
+          });
+        case 'password':
+          return new InputPasswordDialog({
+            label: label,
+            text: currentValueString,
+            title: ''
+          });
+        default:
+          return new InputTextDialog({
+            label: label,
+            text: currentValueString,
+            title: ''
+          });
+      }
+    }
+
+    case 'number': {
+      const currentValueNumber = currentValue as number | undefined;
+
+      return new InputNumberDialog({
+        label: label,
+        value: currentValueNumber,
+        title: ''
+      });
+    }
+
+    case 'integer': {
+      const currentValueInteger = currentValue as number | undefined;
+      return new InputNumberDialog({
+        label: label,
+        value: currentValueInteger,
+        title: ''
+      });
+    }
+
+    case 'boolean': {
+      const currentValueBool = currentValue as boolean | undefined;
+
+      return new InputBooleanDialog({
+        label: label,
+        value: currentValueBool,
+        title: ''
+      });
+    }
+
+    case 'array': {
+      const currentValueArray = currentValue as JSONObject | undefined;
+
+      return new InputJSONDialog({
+        label: label,
+        value: currentValueArray,
+        title: ''
+      });
+    }
+
+    case 'object': {
+      const currentValueObject = currentValue as JSONObject | undefined;
+
+      return new InputJSONDialog({
+        label: label,
+        value: currentValueObject,
+        title: ''
+      });
+    }
+
+    default: {
+      const currentValueUnknown = currentValue as any;
+
+      return new InputJSONDialog({
+        label: label,
+        value: currentValueUnknown,
+        title: ''
+      });
+    }
+  }
+}
+
+export function createValidatedInput(
+  propertySchema: ObjectDef,
+  currentVal: any,
+  label: string | undefined
+): ValidatingInput<any> {
+  const input = createMetaInput(propertySchema, currentVal, label);
+
+  let validator: (value: any) => boolean;
+  let postProcessor;
+
+  if (input instanceof InputJSONDialog) {
+    validator = (value: JSONObject) => value !== undefined;
+  } else {
+    validator = (value: any) => cassini.ajv.validate(propertySchema, value);
+  }
+
+  if (input instanceof InputDateDialog) {
+    postProcessor = (value: Date | undefined) => {
+      if (value === undefined || isNaN(value.getTime())) {
+        return undefined;
+      } else {
+        return value.toISOString().slice(0, 10);
+      }
+    };
+  } else if (input instanceof InputDatetimeDialog) {
+    postProcessor = (value: Date | undefined) => {
+      if (value === undefined || isNaN(value.getTime())) {
+        return undefined;
+      } else {
+        return value.toISOString();
+      }
+    };
+  } else {
+    postProcessor = undefined;
+  }
+
+  const validatedInput = new ValidatingInput(input, validator, postProcessor);
+
+  return validatedInput;
+}
+
+export namespace MetaEditor {
+  export type Update =
+    | NotebookTierModel.ModelChange
+    | { type: 'onlyDisplay'; values: string[] | null };
+}
+
+const noOp = () => {
+  return undefined;
+};
 
 /**
  * Widget for modifying the meta of a TierModel.
  */
 export class MetaEditor extends Panel {
-  protected model: TierModel;
+  protected _model: NotebookTierModel | null;
   table: MetaTableWidget;
 
-  constructor(tierModel: TierModel, attributes?: string[]) {
+  _onlyDisplay: string[] | null;
+
+  constructor(tierModel: NotebookTierModel | null, onlyDisplay?: string[]) {
     super();
+    this._onlyDisplay = onlyDisplay || null;
+    this._model = tierModel;
 
-    this.model = tierModel;
-
-    const table = (this.table = new MetaTableWidget(
+    this.table = new MetaTableWidget(
+      { properties: {}, additionalProperties: {} },
       {},
-      this.onMetaUpdate.bind(this),
-      this.onRemoveMeta.bind(this),
-      this.model.changed
-    ));
+      noOp,
+      noOp
+    );
 
-    this.addWidget(table);
+    this.addWidget(this.table);
 
-    if (attributes) {
-      this.render(attributes);
+    this.handleNewModel(null, tierModel);
+  }
+
+  get model(): NotebookTierModel | null {
+    return this._model;
+  }
+
+  set model(newModel: NotebookTierModel | null) {
+    const oldModel = this._model;
+    this._model = newModel;
+    this.handleNewModel(oldModel, newModel);
+  }
+
+  get onlyDisplay(): string[] | null {
+    return this._onlyDisplay;
+  }
+
+  set onlyDisplay(values: string[] | null) {
+    this._onlyDisplay = values;
+
+    if (this.model) {
+      this.handleModelChange(this.model, {
+        type: 'onlyDisplay',
+        values: values
+      });
     }
   }
 
-  ready() {
-    /**
-     * Does the widget have all the data it needs to render correctly?
-     */
-    return this.model.ready;
+  handleModelChange(model: NotebookTierModel, update: MetaEditor.Update): void {
+    switch (update.type) {
+      case 'ready':
+      case 'onlyDisplay':
+      case 'meta': {
+        const { schema, values } = this.getSchemaValues();
+        this.table.values = values;
+        this.table.schema = schema;
+        break;
+      }
+    }
+
+    this.table.update();
   }
 
-  onMetaUpdate(attribute: string, newValue: string): void {
-    /**
-     * TODO this is badly named and maybe not the best implementation
-     *
-     * inserts updated meta into model.
-     */
-    const meta = this.model.metaFile?.model.toJSON() as JSONObject;
+  handleNewModel(
+    oldModel: NotebookTierModel | null,
+    newModel: NotebookTierModel | null
+  ): void {
+    if (oldModel) {
+      Signal.disconnectBetween(oldModel, this);
+    }
 
-    meta[attribute] = JSON.parse(newValue);
+    if (!newModel) {
+      this.table.values = {};
+      this.table.schema = { properties: {}, additionalProperties: {} };
+      this.table.handleRemoveMetaKey = noOp;
+      this.table.handleSetMetaValue = noOp;
 
-    this.model.metaFile?.model.fromJSON(meta);
+      this.table.update();
+      return;
+    }
+
+    const onSetMetaValue = (
+      attribute: string,
+      newValue: JSONValue | undefined
+    ) => {
+      newValue && newModel.setMetaValue(attribute, newValue);
+    };
+    const onRemoveMetaKey = (attribute: string) => {
+      newModel.removeMeta(attribute);
+    };
+
+    this.table.handleSetMetaValue = onSetMetaValue.bind(this);
+    this.table.handleRemoveMetaKey = onRemoveMetaKey.bind(this);
+
+    this.handleModelChange(newModel, { type: 'meta' });
+    newModel.changed.connect(this.handleModelChange, this);
   }
 
-  onRemoveMeta(attribute: string) {
-    /**
-     * TODO this is badly named and maybe not the best implementation
-     *
-     * Removes a meta from the model
-     */
-    const meta = this.model.metaFile?.model.toJSON() as JSONObject;
-    delete meta[attribute];
+  private getSchemaValues() {
+    if (!this.model) {
+      return {
+        schema: { properties: {}, additionalProperties: {} },
+        values: {}
+      };
+    }
 
-    this.model.metaFile?.model.fromJSON(meta);
+    if (this.onlyDisplay === null) {
+      return {
+        schema: this.model.publicMetaSchema,
+        values: this.model.additionalMeta
+      };
+    } else {
+      return MetaEditor._getSelectMeta(
+        this.model.publicMetaSchema,
+        this.model.additionalMeta,
+        this.onlyDisplay
+      );
+    }
   }
 
-  render(attributes: string[]) {
-    /**
-     * Asks the widget to re-render with the attributes provided. This is a bit odd, but is kinda needed because of how mimetype renders.
-     */
-    this.ready().then(() => {
-      const meta: { [name: string]: JSONValue } = {};
+  private static _getSelectMeta(
+    schema: MetaSchema,
+    values: JSONObject,
+    includes: string[]
+  ): { schema: MetaSchema; values: JSONObject } {
+    const newSchema: MetaSchema = {
+      properties: {},
+      additionalProperties: schema.additionalProperties,
+      $defs: schema.$defs
+    };
+    const newValues: JSONObject = {};
 
-      for (const key of attributes) {
-        const val = this.model.additionalMeta[key];
-        meta[key] = val;
+    for (const include of includes) {
+      if (Object.keys(schema.properties).includes(include)) {
+        newSchema.properties[include] = schema.properties[include];
       }
 
-      this.table.attributes = meta;
-      this.table.update();
-    });
+      newValues[include] = values[include];
+    }
+
+    return { schema: newSchema, values: newValues };
   }
 }
 
@@ -99,9 +356,9 @@ export class RenderMimeMetaEditor
   implements IRenderMime.IRenderer
 {
   protected _path: string;
-  protected tierModel: TierModel;
+  protected _model: NotebookTierModel | null;
   protected editor: MetaEditor;
-  private fetchModel: Promise<TierModel | undefined>;
+  private fetchModel: Promise<NotebookTierModel | undefined | void>;
 
   /**
    * Strange thing is that the data from the rendermime are not passed at initialisation, but during renderModel, hence we have to be ready for that.
@@ -124,24 +381,42 @@ export class RenderMimeMetaEditor
     const resolver = options.resolver as RenderMimeRegistry.UrlResolver; // uhoh this could be unstable!
     this._path = resolver.path;
 
-    this.fetchModel = cassini.treeManager.lookup(this.name).then(tierInfo => {
-      if (!tierInfo) {
-        return;
-      }
+    this.fetchModel = cassini.tierModelManager
+      .get(this.name)
+      .then(tierModel => {
+        if (!tierModel || tierModel instanceof FolderTierModel) {
+          return;
+        }
 
-      this.tierModel = cassini.tierModelManager.get(tierInfo.name)(tierInfo);
-
-      console.log('B');
-      console.log(this.tierModel);
-      return this.tierModel;
-    });
-
+        this.model = tierModel;
+        return this.model;
+      })
+      .catch((reason: CasServerError) =>
+        console.debug(
+          `Couldn't load widget because tier model couldn't be loaded for ${this.name}`
+        )
+      );
     this.fetchModel.then(model => {
       if (model) {
         this.editor = new MetaEditor(model);
         this.addWidget(this.editor);
       }
     });
+  }
+
+  get modelChanged(): ISignal<this, NotebookTierModel | null> {
+    return this._modelChanged;
+  }
+
+  private _modelChanged = new Signal<this, NotebookTierModel | null>(this);
+
+  get model(): NotebookTierModel | null {
+    return this._model;
+  }
+
+  set model(model: NotebookTierModel | null) {
+    this._model = model;
+    this._modelChanged.emit(model);
   }
 
   /**
@@ -171,14 +446,14 @@ export class RenderMimeMetaEditor
     // mimedata seems to have to be an Object, or it won't be save properly
     const data = model.data[this._mimeType] as any as IMetaEditorRendorMimeData;
 
-    let attributes = data['values'] as string | string[];
+    let attributes = data['values'];
 
     if (typeof attributes === 'string') {
       attributes = [attributes];
     }
 
     this.ready().then(() => {
-      this.editor.render(attributes as string[]);
+      this.editor.onlyDisplay = attributes || null;
     });
 
     return Promise.resolve();

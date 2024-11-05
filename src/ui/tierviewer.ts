@@ -1,4 +1,5 @@
 import { BoxPanel, Panel, Widget } from '@lumino/widgets';
+import { Signal, ISignal } from '@lumino/signaling';
 
 import {
   Toolbar,
@@ -19,18 +20,10 @@ import { IMimeBundle } from '@jupyterlab/nbformat';
 import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
 
 import { cassini } from '../core';
-import { TierModel } from '../models';
+import { NotebookTierModel } from '../models';
 import { MetaEditor } from './metaeditor';
-
-export function createElementWidget(
-  element: string,
-  textContent: string
-): Widget {
-  const node = document.createElement(element);
-  node.textContent = textContent;
-  const widget = new Widget({ node: node });
-  return widget;
-}
+import { CasServerError } from '../services';
+import { createElementWidget } from '../utils';
 
 /**
  * Widget for editing markdown content.
@@ -46,24 +39,15 @@ export class MarkdownEditor extends Panel {
   editButton: ToolbarButton;
   checkButton: ToolbarButton;
 
-  onContentChanged: (content: string) => void;
-
   /**
    *
    * @param content
    * @param rendered
-   * @param onContentChanged - callback that's called with the content of the widget when the check Button is pressed...
    */
-  constructor(
-    content: string,
-    rendered: boolean,
-    onContentChanged: (content: string) => void
-  ) {
+  constructor(content: string, rendered: boolean) {
     super();
 
     this.addClass('cas-MarkdownEditor');
-
-    this.onContentChanged = onContentChanged;
 
     const iconArea = document.createElement('div');
     iconArea.className = 'cas-icon-area';
@@ -115,8 +99,16 @@ export class MarkdownEditor extends Panel {
     this.onAfterAttach = () => {
       Widget.attach(this.editButton, iconArea);
       Widget.attach(this.checkButton, iconArea);
+
+      this.setRendered(rendered);
     };
   }
+
+  get contentChanged(): ISignal<this, string> {
+    return this._contentChanged;
+  }
+
+  private _contentChanged = new Signal<this, string>(this);
 
   /**
    * The content of the text editor.
@@ -138,7 +130,7 @@ export class MarkdownEditor extends Panel {
     this.onStateChanged();
 
     if (val === true) {
-      this.onContentChanged(this.source);
+      this._contentChanged.emit(this.source);
     }
   }
 
@@ -187,15 +179,20 @@ export class TierViewer extends BoxPanel {
   concCell: MarkdownEditor;
   highlightsBox: Panel | undefined;
   metaView: MetaEditor;
-  model: TierModel;
+  _model: NotebookTierModel | null;
   toolbar: Toolbar;
+  launchButton: ToolbarButton;
 
   protected hltsRenderPromise: Promise<boolean>;
 
-  constructor(tierData: TierModel.IOptions) {
+  constructor(model: NotebookTierModel | null = null) {
     super();
-    this.model = cassini.tierModelManager.get(tierData.name)(tierData);
-    console.log(this.model);
+
+    this.modelChanged.connect(
+      (sender, model) => this.handleNewModel(model),
+      this
+    );
+    this.model = model;
 
     this.addClass('cas-tier-widget');
 
@@ -212,18 +209,15 @@ export class TierViewer extends BoxPanel {
     const refreshButton = new ToolbarButton({
       icon: refreshIcon,
       onClick: () => {
-        this.fetch();
+        this.refresh();
       },
       tooltip: 'Fetch from disk'
     });
 
-    const launchButton = new ToolbarButton({
+    const launchButton = (this.launchButton = new ToolbarButton({
       icon: launchIcon,
-      onClick: () => {
-        cassini.launchTier(this.model);
-      },
-      tooltip: `Open ${this.model.name}`
-    });
+      tooltip: 'Open Tier'
+    }));
 
     toolbar.addItem('save', saveButton);
     toolbar.addItem('refresh', refreshButton);
@@ -241,75 +235,140 @@ export class TierViewer extends BoxPanel {
 
     content.addWidget(this.tierTitle);
 
-    content.addWidget(createElementWidget('h2', 'Description'));
+    const descriptionContent = new Panel();
+    descriptionContent.node.title = 'description-section';
+
+    descriptionContent.addWidget(createElementWidget('h2', 'Description'));
 
     const descriptionCell = (this.descriptionCell = new MarkdownEditor(
-      this.model.description,
-      true,
-      description => (this.model.description = description)
+      '',
+      true
     ));
 
-    content.addWidget(descriptionCell);
+    descriptionContent.addWidget(descriptionCell);
 
-    content.addWidget(createElementWidget('h2', 'Highlights'));
+    content.addWidget(descriptionContent);
+
+    const highlightsContent = new Panel();
+    highlightsContent.node.title = 'highlights-section';
+
+    highlightsContent.addWidget(createElementWidget('h2', 'Highlights'));
 
     this.highlightsBox = new Panel();
     this.highlightsBox.addClass('cas-tier-highlights-box');
 
-    this.hltsRenderPromise = Promise.resolve(true);
-    this.renderHighlights();
+    highlightsContent.addWidget(this.highlightsBox);
 
-    content.addWidget(this.highlightsBox);
+    content.addWidget(highlightsContent);
 
-    content.addWidget(createElementWidget('h2', 'Conclusion'));
+    const conclusionContent = new Panel();
+    conclusionContent.node.title = 'conclusion-section';
 
-    const concCell = (this.concCell = new MarkdownEditor(
-      this.model.conclusion,
-      true,
-      conclusion => (this.model.conclusion = conclusion)
-    ));
+    conclusionContent.addWidget(createElementWidget('h2', 'Conclusion'));
 
-    content.addWidget(concCell);
+    const concCell = (this.concCell = new MarkdownEditor('', true));
 
-    content.addWidget(createElementWidget('h2', 'Meta'));
+    conclusionContent.addWidget(concCell);
 
-    const metaView = (this.metaView = new MetaEditor(
-      this.model,
-      Object.keys(this.model.additionalMeta)
-    ));
+    content.addWidget(conclusionContent);
 
-    content.addWidget(metaView);
+    const metaContent = new Panel();
+    metaContent.node.title = 'meta-section';
 
-    this.model.ready.then(() => this.onContentChanged());
-    this.model.changed.connect(model => this.onContentChanged());
+    metaContent.addWidget(createElementWidget('h2', 'Meta'));
+
+    const metaView = (this.metaView = new MetaEditor(this.model));
+
+    metaContent.addWidget(metaView);
+
+    content.addWidget(metaContent);
+  }
+
+  get modelChanged(): ISignal<TierViewer, NotebookTierModel.NewModel> {
+    return this._modelChanged;
+  }
+
+  private _modelChanged = new Signal<TierViewer, NotebookTierModel.NewModel>(
+    this
+  );
+
+  get model(): NotebookTierModel | null {
+    return this._model;
+  }
+
+  set model(model: NotebookTierModel | null) {
+    const oldModel = this._model;
+    this._model = model;
+    this._modelChanged.emit({ old: oldModel, new: model });
   }
 
   /**
    * Handle the model changing and update the contents of the widget.
    * @returns
    */
-  onContentChanged(): void {
-    if (!this.model.metaFile) {
+  handleModelChanged(
+    model: NotebookTierModel,
+    change: NotebookTierModel.ModelChange
+  ): void {
+    switch (change.type) {
+      case 'ready': {
+        this.descriptionCell.source = model.description;
+        this.concCell.source = model.conclusion;
+        this.renderHighlights(model);
+        this.tierTitle.node.textContent = model.name + (model.dirty ? '*' : '');
+        break;
+      }
+      case 'meta': {
+        this.descriptionCell.source = model.description;
+        this.concCell.source = model.conclusion;
+        break;
+      }
+      case 'hlts': {
+        this.renderHighlights(model);
+        break;
+      }
+      case 'dirty': {
+        this.tierTitle.node.textContent = model.name + (model.dirty ? '*' : '');
+        break;
+      }
+    }
+  }
+
+  handleNewModel(change: NotebookTierModel.NewModel): void {
+    if (change.old) {
+      Signal.disconnectBetween(change.old, this);
+      Signal.disconnectSender(this.descriptionCell);
+      Signal.disconnectSender(this.concCell);
+    }
+
+    if (!change.new) {
       return;
     }
 
-    if (this.model.dirty) {
-      this.tierTitle.node.textContent = this.model.name + '*';
-    } else {
-      this.tierTitle.node.textContent = this.model.name;
-    }
+    const model = change.new;
 
-    this.descriptionCell.source = this.model.description;
+    console.log(model);
 
-    this.concCell.source = this.model.conclusion;
+    model.changed.connect(this.handleModelChanged, this);
 
-    // the update could be new meta
-    this.metaView.render(Object.keys(this.model.additionalMeta));
+    this.descriptionCell.contentChanged.connect((sender, description) => {
+      model.description = description;
+    }, this);
 
-    this.renderHighlights();
+    this.concCell.contentChanged.connect((sender, conclusion) => {
+      model.conclusion = conclusion;
+    }, this);
+
+    this.launchButton.onClick = () => {
+      cassini.launchTier(model);
+    };
+
+    this.metaView.model = model;
+
+    this.handleModelChanged(model, { type: 'ready' });
   }
 
-  renderHighlights() {
+  private renderHighlights(model: NotebookTierModel) {
     if (!this.highlightsBox) {
       return true;
     }
@@ -321,11 +380,11 @@ export class TierViewer extends BoxPanel {
     const registry = cassini.rendermimeRegistry.clone({
       resolver: new RenderMimeRegistry.UrlResolver({
         contents: cassini.contentService.contents,
-        path: this.model.notebookPath as string
+        path: model.notebookPath as string
       })
     });
 
-    for (const data of this.model.hltsOutputs) {
+    for (const data of model.hltsOutputs) {
       const mimeBundle = data.data as IMimeBundle;
 
       for (const mimeType of Object.keys(mimeBundle)) {
@@ -338,10 +397,19 @@ export class TierViewer extends BoxPanel {
   }
 
   save(): void {
-    this.model.save(); // this could be bad if people are half-way through editing a value in a different widget somewhere.
+    this.model && this.model.save(); // this could be bad if people are half-way through editing a value in a different widget somewhere.
   }
 
-  fetch(): void {
-    this.model.revert();
+  refresh(): void {
+    cassini.tierModelManager
+      .get(this.model?.name || '', true)
+      .then(tierModel => {
+        if (tierModel instanceof NotebookTierModel) {
+          this.model = tierModel;
+        }
+      })
+      .catch(reason => {
+        CasServerError.notifyOrThrow(reason);
+      });
   }
 }
