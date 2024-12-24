@@ -131,7 +131,7 @@ export class NotebookTierModel implements IDisposable {
       const hltsFile = (this._hltsFile = new Context({
         manager: cassini.contentService,
         factory: new TextModelFactory(),
-        path: options.hltsPath as string
+        path: options.hltsPath,
       }));
 
       hltsFile.model.contentChanged.connect(() => {
@@ -314,13 +314,13 @@ export class NotebookTierModel implements IDisposable {
   }
 
   /**
-   * Writes the current state of the metaFile and hltsFile models to the disk.
+   * Writes the current state of the metaFile to the disk.
    *
    * If another program has made changes to these docs in the mean-time e.g. a user is manually changing tier.meta in their python-side code
    * Jupyter may complain, creating a big window about the conflict... this is useful!
    */
   save(): Promise<void> {
-    return Promise.all([this.metaFile?.save(), this.hltsFile?.save()]).then();
+    return Promise.all([this.metaFile.save()]).then();
   }
 
   /**
