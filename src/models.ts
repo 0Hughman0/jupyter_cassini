@@ -131,7 +131,7 @@ export class NotebookTierModel implements IDisposable {
       const hltsFile = (this._hltsFile = new Context({
         manager: cassini.contentService,
         factory: new TextModelFactory(),
-        path: options.hltsPath,
+        path: options.hltsPath
       }));
 
       hltsFile.model.contentChanged.connect(() => {

@@ -1,6 +1,6 @@
 const jestJupyterLab = require('@jupyterlab/testutils/lib/jest-config');
 
-process.env.TZ = 'UTC';  // ensures test are run in UTC
+process.env.TZ = 'UTC'; // ensures test are run in UTC
 
 const esModules = [
   '@codemirror',
