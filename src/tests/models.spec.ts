@@ -246,16 +246,16 @@ describe('TierModel', () => {
 
       expect(tier.hltsFile).not.toBeFalsy();
 
-      if ( tier.hltsFile ) {
-        const hltsSentinal = tier.hltsFile.save = jest.fn();
-        const metaSentinal = tier.metaFile.save = jest.fn();
+      if (tier.hltsFile) {
+        const hltsSentinal = (tier.hltsFile.save = jest.fn());
+        const metaSentinal = (tier.metaFile.save = jest.fn());
 
         await tier.save();
 
         expect(metaSentinal).toBeCalled();
         expect(hltsSentinal).not.toBeCalled();
       }
-    })
+    });
   });
 });
 
