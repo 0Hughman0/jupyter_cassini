@@ -237,6 +237,25 @@ describe('TierModel', () => {
       expect(tier.description).toBe('load from file');
       expect(tier.dirty).toBe(false);
     });
+
+    test("save doesn't save hlts", async () => {
+      expect(WP1_INFO.hltsPath).toBeDefined();
+
+      const tier = new NotebookTierModel(WP1_INFO);
+      await tier.ready;
+
+      expect(tier.hltsFile).not.toBeFalsy();
+
+      if ( tier.hltsFile ) {
+        const hltsSentinal = tier.hltsFile.save = jest.fn();
+        const metaSentinal = tier.metaFile.save = jest.fn();
+
+        await tier.save();
+
+        expect(metaSentinal).toBeCalled();
+        expect(hltsSentinal).not.toBeCalled();
+      }
+    })
   });
 });
 

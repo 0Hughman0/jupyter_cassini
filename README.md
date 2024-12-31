@@ -14,4 +14,4 @@ The server serves up information about the contents of a users project. The fron
 
 ## Contributing
 
-Check out the contribution guide [here](https://0hughman0.github.io/Cassini/latest/contributing.html)
+Check out the contribution guide [here](https://0hughman0.github.io/Cassini/latest/contributing/)
